@@ -1,0 +1,74 @@
+# Happy path — exercises every major construct in Boran
+
+# --- constants ---
+const MAX_SIZE : int = 100;
+const PI : float = 3.14159;
+const GREETING : string = "Hello, Boran!";
+const NEWLINE : char = '\n';
+const FLAG : bool = true;
+
+# --- struct definition ---
+const Point : struct = { x : float, y : float };
+
+# --- enum definition ---
+const Direction : enum = { north, south, east, west };
+
+# --- function definition ---
+const distance : fn = (a : Point, b : Point) : float {
+    let dx : float = a.x - b.x;
+    let dy : float = a.y - b.y;
+    return dx * dx + dy * dy;
+}
+
+const greet : fn = (name : string) {
+    print("Hello, ");
+    print(name);
+}
+
+# --- variable declarations ---
+let count : int = 0;
+let label : string = "items";
+let origin : Point = { 0.0, 0.0 };
+let heading : Direction = Direction.north;
+
+# --- assignment ---
+count = MAX_SIZE - 1;
+
+# --- for iteration (for-each) ---
+let scores : int[5] = [10, 20, 30, 40, 50];
+let total : int = 0;
+for score in scores {
+    total += score;
+}
+
+# --- for while loop ---
+let i : int = 0;
+for i < 10 {
+    i++;
+}
+
+# --- for repeat-until ---
+let j : int = 0;
+for {
+    j = j + 1;
+} j >= 5;
+
+# --- if / else if / else ---
+if total > 100 {
+    print("high");
+} else if total == 100 {
+    print("exact");
+} else {
+    print("low");
+}
+
+# --- nested statements ---
+let result : float = distance(origin, origin);
+if result == 0.0 {
+    let msg : string = "same point";
+    print(msg);
+}
+
+# --- input ---
+let username : string = input("Enter name: ");
+greet(username);

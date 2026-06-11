@@ -1,0 +1,12 @@
+# Multi-character char literals
+
+let a : char = 'x';
+let b : char = '\n';
+let c : char = '\\';
+
+# these should all error
+let d : char = 'ab';
+let e : char = 'abc';
+let f : char = '\na';
+let g : char = '';
+let h : char = 'zz';

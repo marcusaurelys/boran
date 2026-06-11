@@ -1,0 +1,10 @@
+# Unclosed string literals
+
+let a : string = "this is fine";
+
+let b : string = "this is not closed;
+let c : string = "also fine";
+
+let d : string = "closed" ;
+let e : string = "no closing quote at all
+let f : string = "backslash at end\

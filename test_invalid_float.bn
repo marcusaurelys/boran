@@ -1,0 +1,12 @@
+# Invalid float literals
+
+let a : float = 3.14;
+let b : float = .75;
+let c : float = 0.0;
+
+# these should all error
+let d : float = 3.14.2;
+let e : float = 1.2.3.4;
+let f : float = 1..5;
+let g : float = 3.;
+let h : float = 12.45.2;

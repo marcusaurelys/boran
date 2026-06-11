@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"time"
 )
 
 type TokenType string
@@ -284,9 +286,6 @@ func (s *Scanner) readIdentifier() string {
 	return s.input[start:s.position]
 }
 
-// consumeJunkSuffix eats any alphanumeric/underscore/dot run that follows an
-// already-bad token, so the scanner recovers cleanly instead of emitting a
-// cascade of confusing tokens from the same garbage source text.
 func (s *Scanner) consumeJunkSuffix() {
 	for isLetter(s.ch) || isDigit(s.ch) || s.ch == '_' || s.ch == '.' {
 		s.readChar()
@@ -492,31 +491,75 @@ func isValidEscape(ch byte) bool {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: boran <source_file>")
+	// 1. Enforce argument constraints
+	if len(os.Args) < 2 || len(os.Args) > 3 {
+		fmt.Fprintln(os.Stderr, "usage: boran <source_file> [output_file_or_stdout]")
 		os.Exit(1)
 	}
+
+	// 2. Read the Boran source file
 	data, err := os.ReadFile(os.Args[1])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: could not read %q: %v\n", os.Args[1], err)
 		os.Exit(1)
 	}
 
-	fmt.Println("--- Boran Lexical Scan ---")
+	// 3. Determine output destination (os.Args[2] can be a file name, "stdout", or defaulted)
+	var outputWriter io.Writer = os.Stdout // Default fallback
+	usingCustomFile := false
+
+	if len(os.Args) == 3 {
+		arg2 := os.Args[2]
+		if arg2 != "stdout" {
+			// Create or overwrite the specified file path
+			f, err := os.Create(arg2)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error: could not create output file %q: %v\n", arg2, err)
+				os.Exit(1)
+			}
+			defer f.Close()
+			outputWriter = f
+			usingCustomFile = true
+		}
+	}
+
+	timeStart := time.Now()
+
+	// Print a header locally to standard output to track activity if dumping to a file
+	if usingCustomFile {
+		fmt.Printf("Dumping lexical scan analysis of %s to %s...\n", os.Args[1], os.Args[2])
+	} else {
+		fmt.Fprintln(outputWriter, "--- Boran Lexical Scan ---")
+	}
+
 	scanner := NewScanner(string(data))
 	hadError := false
 
+	// 4. Token Processing loop utilizing the selected writer
 	for {
 		tok := scanner.NextToken()
 		if tok.Type == TOKEN_EOF {
 			break
 		}
 		if tok.Type == TOKEN_ERROR {
-			fmt.Fprintf(os.Stderr, "[ERROR] %d:%d  %s\n", tok.Line, tok.Col, tok.Literal)
+			// If writing to a file dump, we still output the visual layout to the file
+			// but we keep a record on os.Stderr for standard diagnostics.
+			fmt.Fprintf(outputWriter, "[ERROR] %d:%d  %s\n", tok.Line, tok.Col, tok.Literal)
+			if usingCustomFile {
+				fmt.Fprintf(os.Stderr, "[ERROR] %d:%d  %s\n", tok.Line, tok.Col, tok.Literal)
+			}
 			hadError = true
 		} else {
-			fmt.Printf("%d:%-3d  %-15s  %q\n", tok.Line, tok.Col, tok.Type, tok.Literal)
+			fmt.Fprintf(outputWriter, "%d:%-3d  %-15s  %q\n", tok.Line, tok.Col, tok.Type, tok.Literal)
 		}
+	}
+
+	// 5. Final performance metric calculation
+	elapsed := time.Since(timeStart)
+	if usingCustomFile {
+		fmt.Printf("Scan complete. Time to run: %s\n", elapsed)
+	} else {
+		fmt.Fprintf(outputWriter, "Time to run %s\n", elapsed)
 	}
 
 	if hadError {

@@ -1,0 +1,11 @@
+# Invalid string literal — bad escape sequences
+
+let a : string = "Hello\nWorld";
+let b : string = "tab\there";
+let c : string = "backslash\\end";
+let d : string = "quote\"inside";
+
+# these should all error
+let e : string = "bad escape \q here";
+let f : string = "another \x bad one";
+let g : string = "and a \z too";

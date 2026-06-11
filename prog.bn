@@ -5,4 +5,5 @@ let validString = "Hello\nBoran!";
 print(validString.42);
 if (myFloat >= 0.1) {
 	print(validString);
+    print('idkman');
 }
