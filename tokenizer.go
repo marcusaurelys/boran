@@ -90,6 +90,7 @@ func (s *Scanner) col() int {
 	return s.position - s.lineStart + 1
 }
 
+// Consumes a character and increments the scanner's position
 func (s *Scanner) readChar() {
 	if s.readPosition >= len(s.input) {
 		s.ch = 0
@@ -100,6 +101,7 @@ func (s *Scanner) readChar() {
 	s.readPosition++
 }
 
+// Peeks at the next character
 func (s *Scanner) peekChar() byte {
 	if s.readPosition >= len(s.input) {
 		return 0
@@ -126,6 +128,7 @@ func (s *Scanner) skipWhitespaceAndComments() {
 	}
 }
 
+// Skips to the next token
 func (s *Scanner) NextToken() Token {
 	s.skipWhitespaceAndComments()
 
@@ -304,8 +307,6 @@ func (s *Scanner) readNumberLiteral(line, col int) Token {
 	if s.ch == '.' {
 		peek := s.peekChar()
 		if peek == '.' {
-			// e.g. "1.." — first dot can only start a float if digits follow;
-			// two dots in a row is always malformed.
 			s.consumeJunkSuffix()
 			return Token{TOKEN_ERROR,
 				fmt.Sprintf("invalid numeric literal %q: consecutive dots", s.input[start:s.position]),
@@ -318,8 +319,6 @@ func (s *Scanner) readNumberLiteral(line, col int) Token {
 			for isDigit(s.ch) {
 				s.readChar()
 			}
-			// FIX: after reading e.g. "3.2", a second '.' means "3.2.something"
-			// which is always invalid — a float cannot be dotted like a struct.
 			if s.ch == '.' {
 				s.consumeJunkSuffix()
 				return Token{TOKEN_ERROR,
@@ -327,11 +326,8 @@ func (s *Scanner) readNumberLiteral(line, col int) Token {
 					line, col}
 			}
 		}
-		// peek is a letter or something else: leave the '.' for the next token
-		// so "obj.field" after arithmetic still works (parser's job).
 	}
 
-	// letter/underscore immediately after a number is always an error (e.g. 123abc)
 	if isLetter(s.ch) || s.ch == '_' {
 		s.consumeJunkSuffix()
 		return Token{TOKEN_ERROR,
@@ -361,7 +357,7 @@ func (s *Scanner) readFloatStartingWithDot(line, col int) Token {
 	for isDigit(s.ch) {
 		s.readChar()
 	}
-	// FIX: ".5.3" — second dot after a leading-dot float is invalid.
+
 	if s.ch == '.' {
 		s.consumeJunkSuffix()
 		return Token{TOKEN_ERROR,
@@ -455,7 +451,6 @@ func (s *Scanner) readCharLiteral(line, col int) Token {
 	}
 	s.readChar() // step past body
 
-	// FIX: 'ab' — too many characters; consume to closing quote so scanner
 	// recovers and doesn't re-tokenise the overflow as separate tokens.
 	if s.ch != '\'' {
 		for s.ch != '\'' && s.ch != '\n' && s.ch != 0 {
@@ -504,14 +499,33 @@ func main() {
 		os.Exit(1)
 	}
 
-	// 3. Determine output destination (os.Args[2] can be a file name, "stdout", or defaulted)
-	var outputWriter io.Writer = os.Stdout // Default fallback
+	// --- TOKENS IN MEMORY FIRST ---
+	timeStart := time.Now()
+	scanner := NewScanner(string(data))
+
+	var tokens []Token
+	hadError := false
+
+	for {
+		tok := scanner.NextToken()
+		if tok.Type == TOKEN_EOF {
+			break
+		}
+		if tok.Type == TOKEN_ERROR {
+			hadError = true
+		}
+		tokens = append(tokens, tok)
+	}
+	elapsed := time.Since(timeStart)
+	// ------------------------------
+
+	// 3. Determine output destination
+	var outputWriter io.Writer = os.Stdout
 	usingCustomFile := false
 
 	if len(os.Args) == 3 {
 		arg2 := os.Args[2]
 		if arg2 != "stdout" {
-			// Create or overwrite the specified file path
 			f, err := os.Create(arg2)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "error: could not create output file %q: %v\n", arg2, err)
@@ -523,43 +537,26 @@ func main() {
 		}
 	}
 
-	timeStart := time.Now()
+	// 5. Final performance metrics
+	if usingCustomFile {
+		fmt.Printf("Scan complete. Time to run: %s\n", elapsed)
+	} else {
+		fmt.Fprintf(outputWriter, "Time to run %s\n", elapsed)
+	}
 
-	// Print a header locally to standard output to track activity if dumping to a file
+	// 4. Dump everything to the writer at once
 	if usingCustomFile {
 		fmt.Printf("Dumping lexical scan analysis of %s to %s...\n", os.Args[1], os.Args[2])
 	} else {
 		fmt.Fprintln(outputWriter, "--- Boran Lexical Scan ---")
 	}
 
-	scanner := NewScanner(string(data))
-	hadError := false
-
-	// 4. Token Processing loop utilizing the selected writer
-	for {
-		tok := scanner.NextToken()
-		if tok.Type == TOKEN_EOF {
-			break
-		}
+	for _, tok := range tokens {
 		if tok.Type == TOKEN_ERROR {
-			// If writing to a file dump, we still output the visual layout to the file
-			// but we keep a record on os.Stderr for standard diagnostics.
 			fmt.Fprintf(outputWriter, "[ERROR] %d:%d  %s\n", tok.Line, tok.Col, tok.Literal)
-			if usingCustomFile {
-				fmt.Fprintf(os.Stderr, "[ERROR] %d:%d  %s\n", tok.Line, tok.Col, tok.Literal)
-			}
-			hadError = true
 		} else {
 			fmt.Fprintf(outputWriter, "%d:%-3d  %-15s  %q\n", tok.Line, tok.Col, tok.Type, tok.Literal)
 		}
-	}
-
-	// 5. Final performance metric calculation
-	elapsed := time.Since(timeStart)
-	if usingCustomFile {
-		fmt.Printf("Scan complete. Time to run: %s\n", elapsed)
-	} else {
-		fmt.Fprintf(outputWriter, "Time to run %s\n", elapsed)
 	}
 
 	if hadError {
