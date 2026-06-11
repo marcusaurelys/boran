@@ -1,0 +1,8 @@
+# This is a Boran Line Comment
+let 2string : fn = (x : int){(string) x} 
+const myFloat = 12.45.2;
+let validString = "Hello\nBoran!";
+print(validString.42);
+if (myFloat >= 0.1) {
+	print(validString);
+}
