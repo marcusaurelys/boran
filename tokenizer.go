@@ -540,9 +540,8 @@ func main() {
 	// 5. Final performance metrics
 	if usingCustomFile {
 		fmt.Printf("Scan complete. Time to run: %s\n", elapsed)
-	} else {
-		fmt.Fprintf(outputWriter, "Time to run %s\n", elapsed)
 	}
+	fmt.Fprintf(outputWriter, "Time to run %s\n", elapsed)
 
 	// 4. Dump everything to the writer at once
 	if usingCustomFile {
