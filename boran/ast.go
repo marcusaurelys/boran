@@ -292,8 +292,7 @@ func (e *FnCall) exprNode() {}
 
 type MethodCall struct {
 	pos
-	Receiver   string // identifier name, or "this"
-	IsThis     bool
+	Base       Expr // the receiver expression, e.g. Identifier("a"), ThisExpr, or a nested chain
 	MethodName string
 	Args       []Expr
 }
@@ -302,7 +301,7 @@ func (e *MethodCall) exprNode() {}
 
 type IndexExpr struct {
 	pos
-	Array string
+	Base  Expr // the expression being indexed (may itself be an IndexExpr/MemberAccess/FnCall for chaining)
 	Index Expr
 }
 
@@ -310,7 +309,7 @@ func (e *IndexExpr) exprNode() {}
 
 type MemberAccess struct {
 	pos
-	Base  string
+	Base  Expr // the expression the field is accessed on (Identifier, ThisExpr, or a nested chain)
 	Field string
 }
 

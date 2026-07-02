@@ -96,11 +96,11 @@ func getNodeLabel(n Node) string {
 	case *FnCall:
 		return fmt.Sprintf("FN_CALL (%s)", node.Callee)
 	case *MethodCall:
-		return fmt.Sprintf("METHOD_CALL [%s.%s]", node.Receiver, node.MethodName)
+		return fmt.Sprintf("METHOD_CALL [.%s]", node.MethodName)
 	case *MemberAccess:
-		return fmt.Sprintf("MEMBER_ACCESS [%s.%s]", node.Base, node.Field)
+		return fmt.Sprintf("MEMBER_ACCESS [.%s]", node.Field)
 	case *IndexExpr:
-		return fmt.Sprintf("INDEX_ACCESS [%s]", node.Array)
+		return "INDEX_ACCESS"
 	case *ThisExpr:
 		return "THIS"
 	case *GroupExpr:
@@ -186,13 +186,14 @@ func getChildren(n Node) []Node {
 			add(a)
 		}
 	case *MethodCall:
+		add(node.Base)
 		for _, a := range node.Args {
 			add(a)
 		}
 	case *MemberAccess:
-		// Bare member access has no children nodes, it's a leaf
+		add(node.Base)
 	case *IndexExpr:
-		add(node.Index)
+		add(node.Base, node.Index)
 	case *InputExpr:
 		add(node.Prompt)
 	case *PrintStmt:

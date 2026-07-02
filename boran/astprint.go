@@ -113,10 +113,7 @@ func printNode(n Node, depth int) string {
 		res += indent + ")\n"
 
 	case *MethodCall:
-		recv := node.Receiver
-		if node.IsThis {
-			recv = "this"
-		}
+		recv := strings.TrimSpace(printNode(node.Base, 0))
 		res += fmt.Sprintf("%sMETHOD_CALL %s.%s(\n", indent, recv, node.MethodName)
 		for _, arg := range node.Args {
 			res += printNode(arg, depth+1)
@@ -124,10 +121,10 @@ func printNode(n Node, depth int) string {
 		res += indent + ")\n"
 
 	case *IndexExpr:
-		res += fmt.Sprintf("%sINDEX %s[%s]\n", indent, node.Array, printNode(node.Index, 0))
+		res += fmt.Sprintf("%sINDEX %s[%s]\n", indent, strings.TrimSpace(printNode(node.Base, 0)), printNode(node.Index, 0))
 
 	case *MemberAccess:
-		res += fmt.Sprintf("%sMEMBER %s.%s\n", indent, node.Base, node.Field)
+		res += fmt.Sprintf("%sMEMBER %s.%s\n", indent, strings.TrimSpace(printNode(node.Base, 0)), node.Field)
 
 	case *ThisExpr:
 		res += indent + "THIS\n"

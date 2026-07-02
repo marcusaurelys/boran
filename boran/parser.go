@@ -175,9 +175,14 @@ func (p *Parser) parseStmt() Stmt {
 		return p.parseBlock()
 	}
 
-	// 3. Assignments (Lookahead for identifier or 'this' followed by =, [, or .)
-	if p.isAssignmentStart() {
-		return p.parseAssignStmt()
+	// 3. Identifier / 'this' led statements: could be an assignment
+	//    (possibly through a chain: a.start.x = 1;) or an expression
+	//    statement (possibly through a chain: a.start.normalize();).
+	//    A single token of lookahead can't tell these apart once chaining
+	//    is involved, so parse the full postfix expression first and then
+	//    decide based on what follows it.
+	if tok.Type == TOKEN_IDENTIFIER || (tok.Type == TOKEN_KEYWORD && tok.Literal == "this") {
+		return p.parseIdentOrThisStmt()
 	}
 
 	// 4. Expression Statements (e.g. ++i;, myFunc();)
@@ -187,48 +192,55 @@ func (p *Parser) parseStmt() Stmt {
 	return &ExprStmt{pos: pos{tok.Line, tok.Col}, Call: expr}
 }
 
-func (p *Parser) isAssignmentStart() bool {
+// parseIdentOrThisStmt parses a statement that begins with an identifier or
+// 'this'. It first parses the full chained expression (a, a.start,
+// a.start.x, matrix[0][1], a.start.normalize(), this.x, ...); if that is
+// immediately followed by '=' it's an assignment (and the parsed expression
+// must reduce to a valid lvalue per the grammar: ident, ident[expr],
+// ident.field, or this.field), otherwise it's a bare expression statement.
+func (p *Parser) parseIdentOrThisStmt() Stmt {
 	tok := p.current()
-	if tok.Type != TOKEN_IDENTIFIER && !(tok.Type == TOKEN_KEYWORD && tok.Literal == "this") {
-		return false
+	startPos := pos{tok.Line, tok.Col}
+	expr := p.parseExpr()
+
+	if p.current().Type == TOKEN_OP_ASSIGN {
+		target := p.exprToAssignTarget(expr, startPos)
+		p.advance() // consume '='
+		val := p.parseExpr()
+		p.consume(TOKEN_SEMICOLON)
+		return &AssignStmt{pos: startPos, Target: target, Value: val}
 	}
-	// Look ahead for =, [, or .
-	next := p.peek()
-	return next.Type == TOKEN_OP_ASSIGN || next.Type == TOKEN_LBRACKET || next.Type == TOKEN_OP_DOT
+
+	p.consume(TOKEN_SEMICOLON)
+	return &ExprStmt{pos: startPos, Call: expr}
 }
 
-func (p *Parser) parseAssignStmt() *AssignStmt {
-	tok := p.advance() // Consume identifier or 'this'
-	startPos := pos{tok.Line, tok.Col}
-	target := AssignTarget{pos: startPos}
+// exprToAssignTarget converts an already-parsed expression into an
+// AssignTarget, matching the grammar's four assignment forms:
+// ident = ...; ident[expr] = ...; ident.field = ...; this.field = ...;
+// Anything deeper (e.g. a.start.x = 1;) or non-lvalue (e.g. a call) is a
+// parse error, since it isn't a form assign_stmt supports.
+func (p *Parser) exprToAssignTarget(e Expr, at pos) AssignTarget {
+	switch v := e.(type) {
+	case *Identifier:
+		return AssignTarget{pos: at, Kind: TargetIdent, Name: v.Name}
 
-	if tok.Literal == "this" {
-		p.consume(TOKEN_OP_DOT)
-		field := p.consume(TOKEN_IDENTIFIER)
-		target.Kind = TargetThisMember
-		target.Field = field.Literal
-	} else {
-		target.Name = tok.Literal
-		switch p.current().Type {
-		case TOKEN_LBRACKET:
-			p.advance()
-			target.IndexExpr = p.parseExpr()
-			p.consume(TOKEN_RBRACKET)
-			target.Kind = TargetIndex
-		case TOKEN_OP_DOT:
-			p.advance()
-			field := p.consume(TOKEN_IDENTIFIER)
-			target.Field = field.Literal
-			target.Kind = TargetMember
-		default:
-			target.Kind = TargetIdent
+	case *IndexExpr:
+		if base, ok := v.Base.(*Identifier); ok {
+			return AssignTarget{pos: at, Kind: TargetIndex, Name: base.Name, IndexExpr: v.Index}
+		}
+
+	case *MemberAccess:
+		if _, ok := v.Base.(*ThisExpr); ok {
+			return AssignTarget{pos: at, Kind: TargetThisMember, Field: v.Field}
+		}
+		if base, ok := v.Base.(*Identifier); ok {
+			return AssignTarget{pos: at, Kind: TargetMember, Name: base.Name, Field: v.Field}
 		}
 	}
 
-	p.consume(TOKEN_OP_ASSIGN)
-	val := p.parseExpr()
-	p.consume(TOKEN_SEMICOLON)
-	return &AssignStmt{pos: startPos, Target: target, Value: val}
+	p.fail(p.current(), "invalid assignment target")
+	return AssignTarget{pos: at}
 }
 
 func (p *Parser) parseForStmt() Stmt {
@@ -547,78 +559,6 @@ func (p *Parser) parseParam() Param {
 // (assign_stmt, fn_call-as-stmt, method_call-as-stmt, io_stmt's input form)
 // ============================================================================
 
-func (p *Parser) parseIdentifierStmt() Stmt {
-	name := p.consume(TOKEN_IDENTIFIER)
-
-	switch p.current().Type {
-	case TOKEN_OP_ASSIGN:
-		p.advance()
-		// Logic removed: 'if p.isKeyword("input")' is no longer needed
-		// because parseExpr() will handle input() automatically.
-		val := p.parseExpr()
-		p.consume(TOKEN_SEMICOLON)
-		return &AssignStmt{
-			pos:    pos{name.Line, name.Col},
-			Target: AssignTarget{pos: pos{name.Line, name.Col}, Kind: TargetIdent, Name: name.Literal},
-			Value:  val,
-		}
-
-	case TOKEN_OP_INC, TOKEN_OP_DEC: // ADDED: Handle postfix i++;
-		p.pos-- // Step back to include identifier in the expression
-		expr := p.parseExpr()
-		p.consume(TOKEN_SEMICOLON)
-		return &ExprStmt{pos: pos{name.Line, name.Col}, Call: expr}
-
-	// ... (LBRACKET and OP_DOT cases remain similar) ...
-
-	case TOKEN_LPAREN:
-		p.advance()
-		args := p.parseArgList()
-		p.consume(TOKEN_RPAREN)
-		p.consume(TOKEN_SEMICOLON)
-		return &ExprStmt{pos: pos{name.Line, name.Col}, Call: &FnCall{
-			pos:    pos{name.Line, name.Col},
-			Callee: name.Literal,
-			Args:   args,
-		}}
-
-	default:
-		// If it's just a bare identifier like 'x;', it's still a valid ExprStmt
-		p.consume(TOKEN_SEMICOLON)
-		return &ExprStmt{pos: pos{name.Line, name.Col}, Call: &Identifier{
-			pos:  pos{name.Line, name.Col},
-			Name: name.Literal,
-		}}
-	}
-}
-
-// this . identifier ( arg_list ) ;   -- method call statement
-// this . identifier = expr ;        -- field assignment
-func (p *Parser) parseThisStmt() Stmt {
-	start := p.consumeKeyword("this")
-	p.consume(TOKEN_OP_DOT)
-	field := p.consume(TOKEN_IDENTIFIER)
-
-	if p.current().Type == TOKEN_LPAREN {
-		p.advance()
-		args := p.parseArgList()
-		p.consume(TOKEN_RPAREN)
-		p.consume(TOKEN_SEMICOLON)
-		return &ExprStmt{pos: pos{start.Line, start.Col}, Call: &MethodCall{
-			pos: pos{start.Line, start.Col}, IsThis: true, MethodName: field.Literal, Args: args,
-		}}
-	}
-
-	p.consume(TOKEN_OP_ASSIGN)
-	val := p.parseExpr()
-	p.consume(TOKEN_SEMICOLON)
-	return &AssignStmt{
-		pos:    pos{start.Line, start.Col},
-		Target: AssignTarget{pos: pos{start.Line, start.Col}, Kind: TargetThisMember, Field: field.Literal},
-		Value:  val,
-	}
-}
-
 // ============================================================================
 // Control flow
 // ============================================================================
@@ -835,60 +775,72 @@ func (p *Parser) parsePrimary() Expr {
 	return nil
 }
 
-// <primary_tail> → '(' <arg_list> ')'            (fn_call)
+// <primary_tail> → '(' <arg_list> ')' <chain_tail>      (fn_call, then further chaining)
 //
-//	| '[' <expr> ']'                (index_expr)
-//	| '.' <identifier> <method_tail> (member_access | method_call)
-//	| ε                              (bare identifier)
+//	| <chain_tail>                                    (bare identifier, then further chaining)
 //
-// <method_tail> → '(' <arg_list> ')' | ε
+// <chain_tail> → ( '[' <expr> ']' | '.' <identifier> <method_tail> )*
+//
+// This loops so chained access like a.start.x, matrix[0][1], and
+// makePoint().x all parse as a single nested expression instead of
+// stopping after the first segment.
 func (p *Parser) parsePrimaryTail(nameTok Token) Expr {
-	switch p.current().Type {
-	case TOKEN_LPAREN:
-		p.advance()
-		args := p.parseArgList()
-		p.consume(TOKEN_RPAREN)
-		return &FnCall{pos: pos{nameTok.Line, nameTok.Col}, Callee: nameTok.Literal, Args: args}
-
-	case TOKEN_LBRACKET:
-		p.advance()
-		idx := p.parseExpr()
-		p.consume(TOKEN_RBRACKET)
-		return &IndexExpr{pos: pos{nameTok.Line, nameTok.Col}, Array: nameTok.Literal, Index: idx}
-
-	case TOKEN_OP_DOT:
-		p.advance()
-		field := p.consume(TOKEN_IDENTIFIER)
-		if p.current().Type == TOKEN_LPAREN {
-			p.advance()
-			args := p.parseArgList()
-			p.consume(TOKEN_RPAREN)
-			return &MethodCall{pos: pos{nameTok.Line, nameTok.Col}, Receiver: nameTok.Literal, MethodName: field.Literal, Args: args}
-		}
-		return &MemberAccess{pos: pos{nameTok.Line, nameTok.Col}, Base: nameTok.Literal, Field: field.Literal}
-
-	default:
-		return &Identifier{pos: pos{nameTok.Line, nameTok.Col}, Name: nameTok.Literal}
-	}
-}
-
-// <this_tail> → '.' <identifier> ('(' <arg_list> ')')?  | ε
-// (Grammar defines `this.ident(args)` as a method_call; reading a plain
-// `this.field` as a value is a natural, symmetric extension of the
-// assign_stmt form `this.ident = expr`, so it is supported here too.)
-func (p *Parser) parseThisTail(thisTok Token) Expr {
-	if p.current().Type != TOKEN_OP_DOT {
-		return &ThisExpr{pos: pos{thisTok.Line, thisTok.Col}}
-	}
-	p.advance()
-	field := p.consume(TOKEN_IDENTIFIER)
+	var expr Expr
 	if p.current().Type == TOKEN_LPAREN {
 		p.advance()
 		args := p.parseArgList()
 		p.consume(TOKEN_RPAREN)
-		return &MethodCall{pos: pos{thisTok.Line, thisTok.Col}, IsThis: true, MethodName: field.Literal, Args: args}
+		expr = &FnCall{pos: pos{nameTok.Line, nameTok.Col}, Callee: nameTok.Literal, Args: args}
+	} else {
+		expr = &Identifier{pos: pos{nameTok.Line, nameTok.Col}, Name: nameTok.Literal}
 	}
-	return &MemberAccess{pos: pos{thisTok.Line, thisTok.Col}, Base: "this", Field: field.Literal}
+	return p.parseChainTail(expr)
+}
+
+// <this_tail> → '.' <identifier> <method_tail> <chain_tail> | ε
+// (Grammar defines `this.ident(args)` as a method_call; reading a plain
+// `this.field` as a value is a natural, symmetric extension of the
+// assign_stmt form `this.ident = expr`, so it is supported here too.)
+func (p *Parser) parseThisTail(thisTok Token) Expr {
+	var expr Expr = &ThisExpr{pos: pos{thisTok.Line, thisTok.Col}}
+	if p.current().Type != TOKEN_OP_DOT {
+		return expr
+	}
+	return p.parseChainTail(expr)
+}
+
+// parseChainTail repeatedly consumes '[' <expr> ']' and '.' <identifier>
+// (optionally followed by a call) suffixes, building up a nested chain of
+// IndexExpr / MemberAccess / MethodCall around base. It stops as soon as
+// none of those tokens follow, leaving the parser positioned there.
+func (p *Parser) parseChainTail(base Expr) Expr {
+	expr := base
+	for {
+		switch p.current().Type {
+		case TOKEN_LBRACKET:
+			tok := p.current()
+			p.advance()
+			idx := p.parseExpr()
+			p.consume(TOKEN_RBRACKET)
+			expr = &IndexExpr{pos: pos{tok.Line, tok.Col}, Base: expr, Index: idx}
+
+		case TOKEN_OP_DOT:
+			tok := p.current()
+			p.advance()
+			field := p.consume(TOKEN_IDENTIFIER)
+			if p.current().Type == TOKEN_LPAREN {
+				p.advance()
+				args := p.parseArgList()
+				p.consume(TOKEN_RPAREN)
+				expr = &MethodCall{pos: pos{tok.Line, tok.Col}, Base: expr, MethodName: field.Literal, Args: args}
+			} else {
+				expr = &MemberAccess{pos: pos{tok.Line, tok.Col}, Base: expr, Field: field.Literal}
+			}
+
+		default:
+			return expr
+		}
+	}
 }
 
 // <arg_list> → <args> | ε
