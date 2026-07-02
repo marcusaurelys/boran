@@ -1,7 +1,7 @@
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:32:48 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_happy.bn
+ NEW RUN: 2026-07-02 15:43:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_happy.bn
 ================================================================================
 
 --- PARSE TREE ---
@@ -158,33 +158,33 @@
 Scope Level 0:
   NAME            | KIND       | TYPE       | LINE:COL  
   -------------------------------------------------------
+  count           | let        | int        | 29:5
+  scores          | let        | array      | 38:5
+  MAX_SIZE        | const      | int        | 4:7
+  distance        | fn         | fn         | 17:7
   i               | let        | int        | 45:5
+  Point           | struct     | struct     | 11:7
+  label           | let        | string     | 30:5
+  greet           | fn         | fn         | 23:7
+  total           | let        | int        | 39:5
+  result          | let        | float      | 66:5
+  username        | let        | string     | 73:5
+  FLAG            | const      | bool       | 8:7
+  Direction       | enum       | enum       | 14:7
+  NEWLINE         | const      | char       | 7:7
+  origin          | let        | Point      | 31:5
+  heading         | let        | Direction  | 32:5
   j               | let        | int        | 51:5
   PI              | const      | float      | 5:7
   GREETING        | const      | string     | 6:7
-  label           | let        | string     | 30:5
-  scores          | let        | array      | 38:5
-  total           | let        | int        | 39:5
-  result          | let        | float      | 66:5
-  FLAG            | const      | bool       | 8:7
-  Point           | struct     | struct     | 11:7
-  Direction       | enum       | enum       | 14:7
-  distance        | fn         | fn         | 17:7
-  origin          | let        | Point      | 31:5
-  NEWLINE         | const      | char       | 7:7
-  count           | let        | int        | 29:5
-  username        | let        | string     | 73:5
-  MAX_SIZE        | const      | int        | 4:7
-  greet           | fn         | fn         | 23:7
-  heading         | let        | Direction  | 32:5
 
   Scope Level 1:
     NAME            | KIND       | TYPE       | LINE:COL  
     -------------------------------------------------------
-    a               | param      | Point      | 17:24
     b               | param      | Point      | 17:35
     dx              | let        | float      | 18:9
     dy              | let        | float      | 19:9
+    a               | param      | Point      | 17:24
 
   Scope Level 1:
     NAME            | KIND       | TYPE       | LINE:COL  
@@ -199,7 +199,7 @@ Scope Level 0:
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:32:48 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_invalid_float.bn
+ NEW RUN: 2026-07-02 15:43:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_invalid_float.bn
 ================================================================================
 
 --- PARSE TREE ---
@@ -218,9 +218,9 @@ Scope Level 0:
 Scope Level 0:
   NAME            | KIND       | TYPE       | LINE:COL  
   -------------------------------------------------------
+  c               | let        | float      | 5:5
   a               | let        | float      | 3:5
   b               | let        | float      | 4:5
-  c               | let        | float      | 5:5
 
 
 --- SYNTAX ERRORS (5) ---
@@ -232,7 +232,7 @@ Scope Level 0:
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:32:48 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_invalid_string.bn
+ NEW RUN: 2026-07-02 15:43:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_invalid_string.bn
 ================================================================================
 
 --- PARSE TREE ---
@@ -265,7 +265,1216 @@ Scope Level 0:
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:32:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_multichar_char.bn
+ NEW RUN: 2026-07-02 15:43:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_iris.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [MAX_ROWS : int]
+    │   └── VALUE_EXPR
+    │       └── LITERAL (150)
+    ├── CONST_DECL [MAX_COLS : int]
+    │   └── VALUE_EXPR
+    │       └── LITERAL (4)
+    ├── CONST_DECL [LEARNING_RATE : float]
+    │   └── VALUE_EXPR
+    │       └── LITERAL (0.01)
+    ├── CONST_DECL [TOTAL_EPOCHS : int]
+    │   └── VALUE_EXPR
+    │       └── LITERAL (500)
+    ├── CONST_DECL [EPSILON : float]
+    │   └── VALUE_EXPR
+    │       └── LITERAL (0.00001)
+    ├── CONST_DECL [IrisRecord : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [sepal_length : float]
+    │       ├── FIELD_DEF [sepal_width : float]
+    │       ├── FIELD_DEF [petal_length : float]
+    │       └── FIELD_DEF [petal_width : float]
+    ├── CONST_DECL [ModelWeights : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [slope : float]
+    │       └── FIELD_DEF [intercept : float]
+    ├── CONST_DECL [PredictionMetrics : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [mse : float]
+    │       ├── FIELD_DEF [mae : float]
+    │       └── FIELD_DEF [r_squared : float]
+    ├── CONST_DECL [compute_mean : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [sum : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0.0)
+    │           ├── LET_DECL [i : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_WHILE
+    │           │   ├── BINARY_OP (<)
+    │           │   │   ├── IDENTIFIER (i)
+    │           │   │   └── IDENTIFIER (size)
+    │           │   └── BLOCK
+    │           │       ├── ASSIGNMENT -> sum
+    │           │       │   └── BINARY_OP (+)
+    │           │       │       ├── IDENTIFIER (sum)
+    │           │       │       └── INDEX_ACCESS [arr]
+    │           │       │           └── IDENTIFIER (i)
+    │           │       └── EXPR_STMT
+    │           │           └── UNARY_OP (++) (postfix)
+    │           │               └── IDENTIFIER (i)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [compute_variance : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [variance_sum : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0.0)
+    │           ├── LET_DECL [i : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_WHILE
+    │           │   ├── BINARY_OP (<)
+    │           │   │   ├── IDENTIFIER (i)
+    │           │   │   └── IDENTIFIER (size)
+    │           │   └── BLOCK
+    │           │       ├── LET_DECL [diff : float]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── BINARY_OP (-)
+    │           │       │           ├── INDEX_ACCESS [arr]
+    │           │       │           │   └── IDENTIFIER (i)
+    │           │       │           └── IDENTIFIER (mean)
+    │           │       ├── ASSIGNMENT -> variance_sum
+    │           │       │   └── BINARY_OP (+)
+    │           │       │       ├── IDENTIFIER (variance_sum)
+    │           │       │       └── PAREN_EXPR
+    │           │       │           └── BINARY_OP (*)
+    │           │       │               ├── IDENTIFIER (diff)
+    │           │       │               └── IDENTIFIER (diff)
+    │           │       └── EXPR_STMT
+    │           │           └── UNARY_OP (++) (postfix)
+    │           │               └── IDENTIFIER (i)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [compute_covariance : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [cov_sum : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0.0)
+    │           ├── LET_DECL [i : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_WHILE
+    │           │   ├── BINARY_OP (<)
+    │           │   │   ├── IDENTIFIER (i)
+    │           │   │   └── IDENTIFIER (size)
+    │           │   └── BLOCK
+    │           │       ├── ASSIGNMENT -> cov_sum
+    │           │       │   └── BINARY_OP (+)
+    │           │       │       ├── IDENTIFIER (cov_sum)
+    │           │       │       └── PAREN_EXPR
+    │           │       │           └── BINARY_OP (*)
+    │           │       │               ├── PAREN_EXPR
+    │           │       │               │   └── BINARY_OP (-)
+    │           │       │               │       ├── INDEX_ACCESS [x]
+    │           │       │               │       │   └── IDENTIFIER (i)
+    │           │       │               │       └── IDENTIFIER (x_mean)
+    │           │       │               └── PAREN_EXPR
+    │           │       │                   └── BINARY_OP (-)
+    │           │       │                       ├── INDEX_ACCESS [y]
+    │           │       │                       │   └── IDENTIFIER (i)
+    │           │       │                       └── IDENTIFIER (y_mean)
+    │           │       └── EXPR_STMT
+    │           │           └── UNARY_OP (++) (postfix)
+    │           │               └── IDENTIFIER (i)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [train_analytical : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [x_mean : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (compute_mean)
+    │           │           ├── IDENTIFIER (x)
+    │           │           └── IDENTIFIER (size)
+    │           ├── LET_DECL [y_mean : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (compute_mean)
+    │           │           ├── IDENTIFIER (y)
+    │           │           └── IDENTIFIER (size)
+    │           ├── LET_DECL [variance_x : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (compute_variance)
+    │           │           ├── IDENTIFIER (x)
+    │           │           ├── IDENTIFIER (x_mean)
+    │           │           └── IDENTIFIER (size)
+    │           ├── LET_DECL [covariance_xy : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (compute_covariance)
+    │           │           ├── IDENTIFIER (x)
+    │           │           ├── IDENTIFIER (x_mean)
+    │           │           ├── IDENTIFIER (y)
+    │           │           ├── IDENTIFIER (y_mean)
+    │           │           └── IDENTIFIER (size)
+    │           ├── LET_DECL [m : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0.0)
+    │           ├── IF_STMT
+    │           │   ├── BINARY_OP (!=)
+    │           │   │   ├── IDENTIFIER (variance_x)
+    │           │   │   └── LITERAL (0.0)
+    │           │   └── BLOCK
+    │           │       └── ASSIGNMENT -> m
+    │           │           └── BINARY_OP (/)
+    │           │               ├── IDENTIFIER (covariance_xy)
+    │           │               └── IDENTIFIER (variance_x)
+    │           ├── LET_DECL [c : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (-)
+    │           │           ├── IDENTIFIER (y_mean)
+    │           │           └── PAREN_EXPR
+    │           │               └── BINARY_OP (*)
+    │           │                   ├── IDENTIFIER (m)
+    │           │                   └── IDENTIFIER (x_mean)
+    │           ├── LET_DECL [weights : ModelWeights]
+    │           │   └── STRUCT_INSTANCE
+    │           │       ├── FIELD_INIT [slope]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── IDENTIFIER (m)
+    │           │       └── FIELD_INIT [intercept]
+    │           │           └── VALUE_EXPR
+    │           │               └── IDENTIFIER (c)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [train_gradient_descent : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [m : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0.0)
+    │           ├── LET_DECL [c : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0.0)
+    │           ├── LET_DECL [epoch : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_WHILE
+    │           │   ├── BINARY_OP (<)
+    │           │   │   ├── IDENTIFIER (epoch)
+    │           │   │   └── IDENTIFIER (epochs)
+    │           │   └── BLOCK
+    │           │       ├── LET_DECL [m_gradient : float]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── LITERAL (0.0)
+    │           │       ├── LET_DECL [c_gradient : float]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── LITERAL (0.0)
+    │           │       ├── LET_DECL [i : int]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── LITERAL (0)
+    │           │       ├── FOR_WHILE
+    │           │       │   ├── BINARY_OP (<)
+    │           │       │   │   ├── IDENTIFIER (i)
+    │           │       │   │   └── IDENTIFIER (size)
+    │           │       │   └── BLOCK
+    │           │       │       ├── LET_DECL [prediction : float]
+    │           │       │       │   └── VALUE_EXPR
+    │           │       │       │       └── BINARY_OP (+)
+    │           │       │       │           ├── PAREN_EXPR
+    │           │       │       │           │   └── BINARY_OP (*)
+    │           │       │       │           │       ├── IDENTIFIER (m)
+    │           │       │       │           │       └── INDEX_ACCESS [x]
+    │           │       │       │           │           └── IDENTIFIER (i)
+    │           │       │       │           └── IDENTIFIER (c)
+    │           │       │       ├── LET_DECL [error : float]
+    │           │       │       │   └── VALUE_EXPR
+    │           │       │       │       └── BINARY_OP (-)
+    │           │       │       │           ├── IDENTIFIER (prediction)
+    │           │       │       │           └── INDEX_ACCESS [y]
+    │           │       │       │               └── IDENTIFIER (i)
+    │           │       │       ├── ASSIGNMENT -> m_gradient
+    │           │       │       │   └── BINARY_OP (+)
+    │           │       │       │       ├── IDENTIFIER (m_gradient)
+    │           │       │       │       └── PAREN_EXPR
+    │           │       │       │           └── BINARY_OP (*)
+    │           │       │       │               ├── IDENTIFIER (error)
+    │           │       │       │               └── INDEX_ACCESS [x]
+    │           │       │       │                   └── IDENTIFIER (i)
+    │           │       │       ├── ASSIGNMENT -> c_gradient
+    │           │       │       │   └── BINARY_OP (+)
+    │           │       │       │       ├── IDENTIFIER (c_gradient)
+    │           │       │       │       └── IDENTIFIER (error)
+    │           │       │       └── EXPR_STMT
+    │           │       │           └── UNARY_OP (++) (postfix)
+    │           │       │               └── IDENTIFIER (i)
+    │           │       ├── ASSIGNMENT -> m_gradient
+    │           │       │   └── BINARY_OP (/)
+    │           │       │       ├── PAREN_EXPR
+    │           │       │       │   └── BINARY_OP (*)
+    │           │       │       │       ├── LITERAL (2.0)
+    │           │       │       │       └── IDENTIFIER (m_gradient)
+    │           │       │       └── IDENTIFIER (size)
+    │           │       ├── ASSIGNMENT -> c_gradient
+    │           │       │   └── BINARY_OP (/)
+    │           │       │       ├── PAREN_EXPR
+    │           │       │       │   └── BINARY_OP (*)
+    │           │       │       │       ├── LITERAL (2.0)
+    │           │       │       │       └── IDENTIFIER (c_gradient)
+    │           │       │       └── IDENTIFIER (size)
+    │           │       ├── ASSIGNMENT -> m
+    │           │       │   └── BINARY_OP (-)
+    │           │       │       ├── IDENTIFIER (m)
+    │           │       │       └── PAREN_EXPR
+    │           │       │           └── BINARY_OP (*)
+    │           │       │               ├── IDENTIFIER (lr)
+    │           │       │               └── IDENTIFIER (m_gradient)
+    │           │       ├── ASSIGNMENT -> c
+    │           │       │   └── BINARY_OP (-)
+    │           │       │       ├── IDENTIFIER (c)
+    │           │       │       └── PAREN_EXPR
+    │           │       │           └── BINARY_OP (*)
+    │           │       │               ├── IDENTIFIER (lr)
+    │           │       │               └── IDENTIFIER (c_gradient)
+    │           │       └── EXPR_STMT
+    │           │           └── UNARY_OP (++) (postfix)
+    │           │               └── IDENTIFIER (epoch)
+    │           ├── LET_DECL [final_weights : ModelWeights]
+    │           │   └── STRUCT_INSTANCE
+    │           │       ├── FIELD_INIT [slope]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── IDENTIFIER (m)
+    │           │       └── FIELD_INIT [intercept]
+    │           │           └── VALUE_EXPR
+    │           │               └── IDENTIFIER (c)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [evaluate_predictions : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [y_mean : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (compute_mean)
+    │           │           ├── IDENTIFIER (y)
+    │           │           └── IDENTIFIER (size)
+    │           ├── LET_DECL [ss_tot : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0.0)
+    │           ├── LET_DECL [ss_res : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0.0)
+    │           ├── LET_DECL [absolute_error_sum : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0.0)
+    │           ├── LET_DECL [i : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_WHILE
+    │           │   ├── BINARY_OP (<)
+    │           │   │   ├── IDENTIFIER (i)
+    │           │   │   └── IDENTIFIER (size)
+    │           │   └── BLOCK
+    │           │       ├── LET_DECL [prediction : float]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── BINARY_OP (+)
+    │           │       │           ├── PAREN_EXPR
+    │           │       │           │   └── BINARY_OP (*)
+    │           │       │           │       ├── MEMBER_ACCESS [model.slope]
+    │           │       │           │       └── INDEX_ACCESS [x]
+    │           │       │           │           └── IDENTIFIER (i)
+    │           │       │           └── MEMBER_ACCESS [model.intercept]
+    │           │       ├── LET_DECL [residual : float]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── BINARY_OP (-)
+    │           │       │           ├── INDEX_ACCESS [y]
+    │           │       │           │   └── IDENTIFIER (i)
+    │           │       │           └── IDENTIFIER (prediction)
+    │           │       ├── ASSIGNMENT -> ss_res
+    │           │       │   └── BINARY_OP (+)
+    │           │       │       ├── IDENTIFIER (ss_res)
+    │           │       │       └── PAREN_EXPR
+    │           │       │           └── BINARY_OP (*)
+    │           │       │               ├── IDENTIFIER (residual)
+    │           │       │               └── IDENTIFIER (residual)
+    │           │       ├── LET_DECL [total_deviation : float]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── BINARY_OP (-)
+    │           │       │           ├── INDEX_ACCESS [y]
+    │           │       │           │   └── IDENTIFIER (i)
+    │           │       │           └── IDENTIFIER (y_mean)
+    │           │       ├── ASSIGNMENT -> ss_tot
+    │           │       │   └── BINARY_OP (+)
+    │           │       │       ├── IDENTIFIER (ss_tot)
+    │           │       │       └── PAREN_EXPR
+    │           │       │           └── BINARY_OP (*)
+    │           │       │               ├── IDENTIFIER (total_deviation)
+    │           │       │               └── IDENTIFIER (total_deviation)
+    │           │       ├── IF_STMT
+    │           │       │   ├── BINARY_OP (<)
+    │           │       │   │   ├── IDENTIFIER (residual)
+    │           │       │   │   └── LITERAL (0.0)
+    │           │       │   ├── BLOCK
+    │           │       │   │   └── ASSIGNMENT -> absolute_error_sum
+    │           │       │   │       └── BINARY_OP (-)
+    │           │       │   │           ├── IDENTIFIER (absolute_error_sum)
+    │           │       │   │           └── IDENTIFIER (residual)
+    │           │       │   └── BLOCK
+    │           │       │       └── ASSIGNMENT -> absolute_error_sum
+    │           │       │           └── BINARY_OP (+)
+    │           │       │               ├── IDENTIFIER (absolute_error_sum)
+    │           │       │               └── IDENTIFIER (residual)
+    │           │       └── EXPR_STMT
+    │           │           └── UNARY_OP (++) (postfix)
+    │           │               └── IDENTIFIER (i)
+    │           ├── LET_DECL [calculated_mse : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (/)
+    │           │           ├── IDENTIFIER (ss_res)
+    │           │           └── IDENTIFIER (size)
+    │           ├── LET_DECL [calculated_mae : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (/)
+    │           │           ├── IDENTIFIER (absolute_error_sum)
+    │           │           └── IDENTIFIER (size)
+    │           ├── LET_DECL [calculated_r2 : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (-)
+    │           │           ├── LITERAL (1.0)
+    │           │           └── PAREN_EXPR
+    │           │               └── BINARY_OP (/)
+    │           │                   ├── IDENTIFIER (ss_res)
+    │           │                   └── IDENTIFIER (ss_tot)
+    │           ├── LET_DECL [stats : PredictionMetrics]
+    │           │   └── STRUCT_INSTANCE
+    │           │       ├── FIELD_INIT [mse]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── IDENTIFIER (calculated_mse)
+    │           │       ├── FIELD_INIT [mae]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── IDENTIFIER (calculated_mae)
+    │           │       └── FIELD_INIT [r_squared]
+    │           │           └── VALUE_EXPR
+    │           │               └── IDENTIFIER (calculated_r2)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [run_pipeline : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("Initializing Boran Iris Predictive Analytics Engine Pipeline...")
+    │           │   └── LITERAL ('\n')
+    │           ├── LET_DECL [x_data : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (3.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (3.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (3.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (3.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (3.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (3.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (3.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (3.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (3.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (3.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (3.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (6.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (6.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (6.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (6.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (6.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (6.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (6.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (6.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (6.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (6.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (6.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (4.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (5.4)
+    │           │       └── VALUE_EXPR
+    │           │           └── LITERAL (5.1)
+    │           ├── LET_DECL [y_data : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.7)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.6)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.8)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.4)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.5)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.3)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.9)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2.3)
+    │           │       └── VALUE_EXPR
+    │           │           └── LITERAL (1.8)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("--- Phase 1: Analytical Closed-Form OLS Fit ---")
+    │           │   └── LITERAL ('\n')
+    │           ├── LET_DECL [analytical_model : ModelWeights]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (train_analytical)
+    │           │           ├── IDENTIFIER (x_data)
+    │           │           ├── IDENTIFIER (y_data)
+    │           │           └── LITERAL (150)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("Analytical Slope: ")
+    │           │   ├── MEMBER_ACCESS [analytical_model.slope]
+    │           │   └── LITERAL ('\n')
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("Analytical Intercept: ")
+    │           │   ├── MEMBER_ACCESS [analytical_model.intercept]
+    │           │   └── LITERAL ('\n')
+    │           ├── LET_DECL [metrics_ols : PredictionMetrics]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (evaluate_predictions)
+    │           │           ├── IDENTIFIER (x_data)
+    │           │           ├── IDENTIFIER (y_data)
+    │           │           ├── LITERAL (150)
+    │           │           └── IDENTIFIER (analytical_model)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("OLS Mean Squared Error: ")
+    │           │   ├── MEMBER_ACCESS [metrics_ols.mse]
+    │           │   └── LITERAL ('\n')
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("OLS Coeff of Determination (R2): ")
+    │           │   ├── MEMBER_ACCESS [metrics_ols.r_squared]
+    │           │   └── LITERAL ('\n')
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("--- Phase 2: Iterative Gradient Descent Optimization ---")
+    │           │   └── LITERAL ('\n')
+    │           ├── LET_DECL [gd_model : ModelWeights]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (train_gradient_descent)
+    │           │           ├── IDENTIFIER (x_data)
+    │           │           ├── IDENTIFIER (y_data)
+    │           │           ├── LITERAL (150)
+    │           │           ├── IDENTIFIER (TOTAL_EPOCHS)
+    │           │           └── IDENTIFIER (LEARNING_RATE)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("GD Model Slope: ")
+    │           │   ├── MEMBER_ACCESS [gd_model.slope]
+    │           │   └── LITERAL ('\n')
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("GD Model Intercept: ")
+    │           │   ├── MEMBER_ACCESS [gd_model.intercept]
+    │           │   └── LITERAL ('\n')
+    │           ├── LET_DECL [metrics_gd : PredictionMetrics]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (evaluate_predictions)
+    │           │           ├── IDENTIFIER (x_data)
+    │           │           ├── IDENTIFIER (y_data)
+    │           │           ├── LITERAL (150)
+    │           │           └── IDENTIFIER (gd_model)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("GD Mean Squared Error: ")
+    │           │   ├── MEMBER_ACCESS [metrics_gd.mse]
+    │           │   └── LITERAL ('\n')
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("GD Coeff of Determination (R2): ")
+    │           │   ├── MEMBER_ACCESS [metrics_gd.r_squared]
+    │           │   └── LITERAL ('\n')
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("--- Phase 3: Interactive Inference System ---")
+    │           │   └── LITERAL ('\n')
+    │           ├── LET_DECL [user_query : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── INPUT_EXPR
+    │           │           └── LITERAL ("Enter Petal Length to Predict Width (or type 'exit'): ")
+    │           ├── PRINT_STMT
+    │           │   └── LITERAL ("Received Query Value: ")
+    │           ├── PRINT_STMT
+    │           │   └── IDENTIFIER (user_query)
+    │           └── PRINT_STMT
+    │               └── LITERAL ('\n')
+    └── EXPR_STMT
+        └── FN_CALL (run_pipeline)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | LINE:COL  
+  -------------------------------------------------------
+  PredictionMetrics | struct     | struct     | 26:7
+  MAX_COLS        | const      | int        | 8:7
+  ModelWeights    | struct     | struct     | 21:7
+  train_gradient_descent | fn         | fn         | 82:7
+  MAX_ROWS        | const      | int        | 7:7
+  EPSILON         | const      | float      | 11:7
+  IrisRecord      | struct     | struct     | 14:7
+  compute_mean    | fn         | fn         | 33:7
+  compute_variance | fn         | fn         | 43:7
+  compute_covariance | fn         | fn         | 54:7
+  LEARNING_RATE   | const      | float      | 9:7
+  TOTAL_EPOCHS    | const      | int        | 10:7
+  train_analytical | fn         | fn         | 65:7
+  evaluate_predictions | fn         | fn         | 114:7
+  run_pipeline    | fn         | fn         | 148:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    sum             | let        | float      | 34:9
+    i               | let        | int        | 35:9
+    arr             | param      | array      | 33:28
+    size            | param      | int        | 33:46
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    size            | param      | int        | 43:64
+    variance_sum    | let        | float      | 44:9
+    i               | let        | int        | 45:9
+    arr             | param      | array      | 43:32
+    mean            | param      | float      | 43:50
+
+    Scope Level 2:
+      NAME            | KIND       | TYPE       | LINE:COL  
+      -------------------------------------------------------
+      diff            | let        | float      | 47:13
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    size            | param      | int        | 54:98
+    cov_sum         | let        | float      | 55:9
+    i               | let        | int        | 56:9
+    x               | param      | array      | 54:34
+    x_mean          | param      | float      | 54:50
+    y               | param      | array      | 54:66
+    y_mean          | param      | float      | 54:82
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    y_mean          | let        | float      | 67:9
+    covariance_xy   | let        | float      | 70:9
+    x               | param      | array      | 65:32
+    x_mean          | let        | float      | 66:9
+    variance_x      | let        | float      | 69:9
+    m               | let        | float      | 72:9
+    c               | let        | float      | 77:9
+    weights         | let        | ModelWeights | 78:9
+    y               | param      | array      | 65:48
+    size            | param      | int        | 65:64
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    y               | param      | array      | 82:54
+    size            | param      | int        | 82:70
+    epochs          | param      | int        | 82:82
+    lr              | param      | float      | 82:96
+    m               | let        | float      | 83:9
+    x               | param      | array      | 82:38
+    c               | let        | float      | 84:9
+    epoch           | let        | int        | 86:9
+    final_weights   | let        | ModelWeights | 110:9
+
+    Scope Level 2:
+      NAME            | KIND       | TYPE       | LINE:COL  
+      -------------------------------------------------------
+      m_gradient      | let        | float      | 88:13
+      c_gradient      | let        | float      | 89:13
+      i               | let        | int        | 91:13
+
+      Scope Level 3:
+        NAME            | KIND       | TYPE       | LINE:COL  
+        -------------------------------------------------------
+        prediction      | let        | float      | 93:17
+        error           | let        | float      | 94:17
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    absolute_error_sum | let        | float      | 118:9
+    calculated_mse  | let        | float      | 139:9
+    calculated_r2   | let        | float      | 141:9
+    stats           | let        | PredictionMetrics | 143:9
+    ss_tot          | let        | float      | 116:9
+    ss_res          | let        | float      | 117:9
+    i               | let        | int        | 120:9
+    x               | param      | array      | 114:36
+    y               | param      | array      | 114:52
+    size            | param      | int        | 114:68
+    model           | param      | ModelWeights | 114:80
+    y_mean          | let        | float      | 115:9
+    calculated_mae  | let        | float      | 140:9
+
+    Scope Level 2:
+      NAME            | KIND       | TYPE       | LINE:COL  
+      -------------------------------------------------------
+      prediction      | let        | float      | 122:13
+      residual        | let        | float      | 123:13
+      total_deviation | let        | float      | 127:13
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    metrics_ols     | let        | PredictionMetrics | 184:9
+    gd_model        | let        | ModelWeights | 189:9
+    metrics_gd      | let        | PredictionMetrics | 193:9
+    user_query      | let        | string     | 199:9
+    x_data          | let        | array      | 153:9
+    y_data          | let        | array      | 166:9
+    analytical_model | let        | ModelWeights | 180:9
+
+
+
+================================================================================
+ NEW RUN: 2026-07-02 15:43:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_multichar_char.bn
 ================================================================================
 
 --- PARSE TREE ---
@@ -284,9 +1493,9 @@ Scope Level 0:
 Scope Level 0:
   NAME            | KIND       | TYPE       | LINE:COL  
   -------------------------------------------------------
+  c               | let        | char       | 5:5
   a               | let        | char       | 3:5
   b               | let        | char       | 4:5
-  c               | let        | char       | 5:5
 
 
 --- SYNTAX ERRORS (5) ---
@@ -298,7 +1507,7 @@ Scope Level 0:
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:32:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_unclosed_string.bn
+ NEW RUN: 2026-07-02 15:43:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_unclosed_string.bn
 ================================================================================
 
 --- PARSE TREE ---
@@ -314,8 +1523,8 @@ Scope Level 0:
 Scope Level 0:
   NAME            | KIND       | TYPE       | LINE:COL  
   -------------------------------------------------------
-  a               | let        | string     | 3:5
   d               | let        | string     | 9:5
+  a               | let        | string     | 3:5
 
 
 --- SYNTAX ERRORS (2) ---

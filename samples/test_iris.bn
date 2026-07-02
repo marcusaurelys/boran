@@ -1,0 +1,206 @@
+# ==============================================================================
+# iris_analytics.bn
+# Production-Grade Linear Regression Pipeline for the Iris Dataset in Boran
+# ==============================================================================
+
+# --- Compile-time Constants ---
+const MAX_ROWS : int = 150;
+const MAX_COLS : int = 4;
+const LEARNING_RATE : float = 0.01;
+const TOTAL_EPOCHS : int = 500;
+const EPSILON : float = 0.00001;
+
+# --- Core Struct Definitions ---
+const IrisRecord : struct = {
+    sepal_length : float,
+    sepal_width : float,
+    petal_length : float,
+    petal_width : float
+};
+
+const ModelWeights : struct = {
+    slope : float,
+    intercept : float
+};
+
+const PredictionMetrics : struct = {
+    mse : float,
+    mae : float,
+    r_squared : float
+};
+
+# --- Math & Statistical Functions ---
+const compute_mean : fn = (arr : float[150], size : int) : float {
+    let sum : float = 0.0;
+    let i : int = 0;
+    for i < size {
+        sum = sum + arr[i];
+        i++;
+    }
+    return sum / size;
+};
+
+const compute_variance : fn = (arr : float[150], mean : float, size : int) : float {
+    let variance_sum : float = 0.0;
+    let i : int = 0;
+    for i < size {
+        let diff : float = arr[i] - mean;
+        variance_sum = variance_sum + (diff * diff);
+        i++;
+    }
+    return variance_sum / size;
+};
+
+const compute_covariance : fn = (x : float[150], x_mean : float, y : float[150], y_mean : float, size : int) : float {
+    let cov_sum : float = 0.0;
+    let i : int = 0;
+    for i < size {
+        cov_sum = cov_sum + ((x[i] - x_mean) * (y[i] - y_mean));
+        i++;
+    }
+    return cov_sum / size;
+};
+
+# --- Machine Learning Engine Block ---
+const train_analytical : fn = (x : float[150], y : float[150], size : int) : ModelWeights {
+    let x_mean : float = compute_mean(x, size);
+    let y_mean : float = compute_mean(y, size);
+    
+    let variance_x : float = compute_variance(x, x_mean, size);
+    let covariance_xy : float = compute_covariance(x, x_mean, y, y_mean, size);
+    
+    let m : float = 0.0;
+    if variance_x != 0.0 {
+        m = covariance_xy / variance_x;
+    }
+    
+    let c : float = y_mean - (m * x_mean);
+    let weights : ModelWeights = { slope : m, intercept : c };
+    return weights;
+};
+
+const train_gradient_descent : fn = (x : float[150], y : float[150], size : int, epochs : int, lr : float) : ModelWeights {
+    let m : float = 0.0;
+    let c : float = 0.0;
+    
+    let epoch : int = 0;
+    for epoch < epochs {
+        let m_gradient : float = 0.0;
+        let c_gradient : float = 0.0;
+        
+        let i : int = 0;
+        for i < size {
+            let prediction : float = (m * x[i]) + c;
+            let error : float = prediction - y[i];
+            
+            m_gradient = m_gradient + (error * x[i]);
+            c_gradient = c_gradient + error;
+            i++;
+        }
+        
+        m_gradient = (2.0 * m_gradient) / size;
+        c_gradient = (2.0 * c_gradient) / size;
+        
+        m = m - (lr * m_gradient);
+        c = c - (lr * c_gradient);
+        
+        epoch++;
+    }
+    
+    let final_weights : ModelWeights = { slope : m, intercept : c };
+    return final_weights;
+};
+
+const evaluate_predictions : fn = (x : float[150], y : float[150], size : int, model : ModelWeights) : PredictionMetrics {
+    let y_mean : float = compute_mean(y, size);
+    let ss_tot : float = 0.0;
+    let ss_res : float = 0.0;
+    let absolute_error_sum : float = 0.0;
+    
+    let i : int = 0;
+    for i < size {
+        let prediction : float = (model.slope * x[i]) + model.intercept;
+        let residual : float = y[i] - prediction;
+        
+        ss_res = ss_res + (residual * residual);
+        
+        let total_deviation : float = y[i] - y_mean;
+        ss_tot = ss_tot + (total_deviation * total_deviation);
+        
+        if residual < 0.0 {
+            absolute_error_sum = absolute_error_sum - residual;
+        } else {
+            absolute_error_sum = absolute_error_sum + residual;
+        }
+        
+        i++;
+    }
+    
+    let calculated_mse : float = ss_res / size;
+    let calculated_mae : float = absolute_error_sum / size;
+    let calculated_r2 : float = 1.0 - (ss_res / ss_tot);
+    
+    let stats : PredictionMetrics = { mse : calculated_mse, mae : calculated_mae, r_squared : calculated_r2 };
+    return stats;
+};
+
+# --- Main Pipeline Execution Flow ---
+const run_pipeline : fn = () {
+    print("Initializing Boran Iris Predictive Analytics Engine Pipeline...", '\n');
+
+    # --- Iris Dataset Ingestion Space ---
+    # Feature 0: Petal Length (X) | Target: Petal Width (Y)
+    let x_data : float[150] = [
+        1.4, 1.4, 1.3, 1.5, 1.4, 1.7, 1.4, 1.5, 1.4, 1.5, 1.5, 1.6, 1.4, 1.1, 1.2,
+        1.5, 1.3, 1.4, 1.7, 1.5, 1.7, 1.5, 1.0, 1.7, 1.9, 1.6, 1.6, 1.5, 1.4, 1.6,
+        1.6, 1.5, 1.5, 1.4, 1.5, 1.2, 1.3, 1.4, 1.3, 1.5, 1.3, 1.3, 1.3, 1.6, 1.9,
+        1.4, 1.6, 1.4, 1.5, 1.4, 4.7, 4.5, 4.9, 4.0, 4.6, 4.5, 4.7, 3.3, 4.6, 3.9,
+        3.5, 4.2, 4.0, 4.7, 3.6, 4.4, 4.5, 4.1, 4.5, 3.9, 4.8, 4.0, 4.9, 4.7, 4.3,
+        4.4, 4.8, 5.0, 4.5, 3.5, 3.8, 3.7, 3.9, 5.1, 4.5, 4.5, 4.7, 4.4, 4.1, 4.0,
+        4.4, 4.6, 4.0, 3.3, 4.2, 4.2, 4.2, 4.3, 3.0, 4.1, 6.0, 5.1, 5.9, 5.6, 5.8,
+        6.6, 4.5, 6.3, 5.8, 6.1, 5.1, 5.3, 5.5, 5.0, 5.1, 5.3, 5.5, 6.7, 6.9, 5.0,
+        5.7, 4.9, 6.7, 4.9, 5.7, 6.0, 4.8, 4.9, 5.6, 5.8, 6.1, 6.4, 5.6, 5.1, 5.6,
+        6.1, 5.6, 5.5, 4.8, 5.4, 5.6, 5.1, 5.1, 5.9, 5.7, 5.2, 5.0, 5.2, 5.4, 5.1
+    ];
+
+    let y_data : float[150] = [
+        0.2, 0.2, 0.2, 0.2, 0.2, 0.4, 0.3, 0.2, 0.2, 0.1, 0.2, 0.2, 0.1, 0.1, 0.2,
+        0.4, 0.4, 0.3, 0.3, 0.3, 0.2, 0.4, 0.2, 0.5, 0.2, 0.2, 0.4, 0.2, 0.2, 0.2,
+        0.2, 0.4, 0.1, 0.2, 0.2, 0.2, 0.2, 0.1, 0.2, 0.2, 0.3, 0.3, 0.2, 0.6, 0.4,
+        0.3, 0.2, 0.2, 0.2, 0.2, 1.4, 1.5, 1.5, 1.3, 1.5, 1.3, 1.6, 1.0, 1.3, 1.4,
+        1.0, 1.5, 1.0, 1.4, 1.3, 1.4, 1.5, 1.0, 1.5, 1.1, 1.8, 1.3, 1.5, 1.2, 1.3,
+        1.4, 1.4, 1.7, 1.5, 1.0, 1.1, 1.0, 1.2, 1.6, 1.5, 1.6, 1.5, 1.3, 1.3, 1.3,
+        1.2, 1.4, 1.2, 1.0, 1.3, 1.2, 1.3, 1.3, 1.1, 1.3, 2.5, 1.9, 2.1, 1.8, 2.2,
+        2.1, 1.7, 1.8, 1.8, 2.5, 2.0, 1.9, 2.1, 2.0, 2.4, 2.3, 1.8, 2.2, 2.3, 1.5,
+        2.3, 2.0, 2.0, 1.8, 2.1, 1.8, 1.8, 1.8, 2.1, 1.6, 1.9, 2.0, 2.2, 1.5, 1.4,
+        2.3, 2.4, 1.8, 1.8, 2.1, 2.4, 2.3, 1.9, 2.3, 2.5, 2.3, 1.9, 2.0, 2.3, 1.8
+    ];
+
+    print("--- Phase 1: Analytical Closed-Form OLS Fit ---", '\n');
+    let analytical_model : ModelWeights = train_analytical(x_data, y_data, 150);
+    print("Analytical Slope: ", analytical_model.slope, '\n');
+    print("Analytical Intercept: ", analytical_model.intercept, '\n');
+
+    let metrics_ols : PredictionMetrics = evaluate_predictions(x_data, y_data, 150, analytical_model);
+    print("OLS Mean Squared Error: ", metrics_ols.mse, '\n');
+    print("OLS Coeff of Determination (R2): ", metrics_ols.r_squared, '\n');
+
+    print("--- Phase 2: Iterative Gradient Descent Optimization ---", '\n');
+    let gd_model : ModelWeights = train_gradient_descent(x_data, y_data, 150, TOTAL_EPOCHS, LEARNING_RATE);
+    print("GD Model Slope: ", gd_model.slope, '\n');
+    print("GD Model Intercept: ", gd_model.intercept, '\n');
+
+    let metrics_gd : PredictionMetrics = evaluate_predictions(x_data, y_data, 150, gd_model);
+    print("GD Mean Squared Error: ", metrics_gd.mse, '\n');
+    print("GD Coeff of Determination (R2): ", metrics_gd.r_squared, '\n');
+
+    # --- Verification Interactive Block ---
+    print("--- Phase 3: Interactive Inference System ---", '\n');
+    let user_query : string = input("Enter Petal Length to Predict Width (or type 'exit'): ");
+    print("Received Query Value: ");
+    print(user_query);
+    print('\n');
+};
+
+# Execute Production Execution Matrix Frame
+run_pipeline();
