@@ -122,14 +122,6 @@ type PrintStmt struct {
 
 func (s *PrintStmt) stmtNode() {}
 
-type InputStmt struct {
-	pos
-	VarName string
-	Prompt  Expr
-}
-
-func (s *InputStmt) stmtNode() {}
-
 type ReturnStmt struct {
 	pos
 	Value Expr // nil for bare `return;`
@@ -259,6 +251,13 @@ type UnaryExpr struct {
 	Operand Expr
 	Postfix bool // true for `x++` / `x--`
 }
+
+type InputExpr struct {
+	pos
+	Prompt Expr
+}
+
+func (e *InputExpr) exprNode() {}
 
 func (e *UnaryExpr) exprNode() {}
 

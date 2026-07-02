@@ -28,7 +28,7 @@ const greet : fn = (name : string) {
 # --- variable declarations ---
 let count : int = 0;
 let label : string = "items";
-let origin : Point = { 0.0, 0.0 };
+let origin : Point = { x : 0.0, y : 0.0 };
 let heading : Direction = Direction.north;
 
 # --- assignment ---

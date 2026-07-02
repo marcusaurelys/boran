@@ -39,6 +39,9 @@ func main() {
 
 	fmt.Printf("Parsed %d top-level statement(s).\n", len(program.Statements))
 
+	fmt.Println("\n--- AST ---")
+	fmt.Print(PrintAST(program))
+
 	if len(parser.Errors) > 0 {
 		fmt.Printf("\n--- %d syntax error(s) ---\n", len(parser.Errors))
 		for _, e := range parser.Errors {

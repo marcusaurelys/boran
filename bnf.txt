@@ -14,8 +14,7 @@
                           | <for_repeat_stmt>
                           | <io_stmt>
                           | <return_stmt>
-                          | <fn_call> ';'
-                          | <method_call> ';'
+                          | <expr> ';'           # FIXED: Allows ++i; and fn_call();
                           | <block>
 
 # ---- Declarations --------------------------------------------------------
@@ -35,8 +34,6 @@
 <ptr_type>             ::= 'ptr' <datatype>
 
 # ---- Values ---------------------------------------------------------------
-# NOTE: which alternative applies is picked by declared-type context, not
-# by the token stream alone (see point 3 above).
 
 <value>                 ::= <literal>
                           | <expr>
@@ -79,7 +76,7 @@
 <params_tail>            ::= ',' <param> <params_tail> | ε
 <param>                  ::= <identifier> ':' <datatype>
 
-# ---- Expressions (right-recursive, left-factored) --------------------------
+# ---- Expressions ----------------------------------------------------------
 
 <expr>                   ::= <bool_expr>
 
@@ -108,8 +105,8 @@
 <unary_expr>                    ::= '-' <unary_expr>
                                   | '++' <unary_expr>
                                   | '--' <unary_expr>
-                                  | '*' <unary_expr>        (* pointer dereference *)
-                                  | '&' <unary_expr>        (* address-of *)
+                                  | '*' <unary_expr>
+                                  | '&' <unary_expr>
                                   | <postfix_expr>
 
 <postfix_expr>                   ::= <primary> <postfix_tail>
@@ -118,25 +115,19 @@
 <primary>                         ::= <literal>
                                    | 'this' <this_tail>
                                    | '(' <expr> ')'
+                                   | 'input' '(' <expr> ')'             # FIXED: input as expression
                                    | <identifier> <primary_tail>
 
 <this_tail>                       ::= '.' <identifier> <method_tail> | ε
-<primary_tail>                    ::= '(' <arg_list> ')'                (* fn_call *)
-                                    | '[' <expr> ']'                     (* index_expr *)
-                                    | '.' <identifier> <method_tail>     (* member_access | method_call *)
-                                    | ε                                  (* bare identifier *)
+<primary_tail>                    ::= '(' <arg_list> ')'                
+                                    | '[' <expr> ']'                     
+                                    | '.' <identifier> <method_tail>     
+                                    | ε                                  
 <method_tail>                     ::= '(' <arg_list> ')' | ε
-
-<fn_call>                          ::= <identifier> '(' <arg_list> ')'
-<method_call>                      ::= <identifier> '.' <identifier> '(' <arg_list> ')'
-                                    | 'this' '.' <identifier> '(' <arg_list> ')'
 
 <arg_list>                          ::= <args> | ε
 <args>                               ::= <expr> <args_tail>
 <args_tail>                         ::= ',' <expr> <args_tail> | ε
-
-<index_expr>                        ::= <identifier> '[' <expr> ']'
-<member_access>                     ::= <identifier> '.' <identifier>
 
 # ---- Statements -------------------------------------------------------------
 
@@ -151,10 +142,11 @@
 
 <for_iter_stmt>                       ::= 'for' <identifier> 'in' <expr> <block>
 <for_while_stmt>                      ::= 'for' <bool_expr> <block>
-<for_repeat_stmt>                     ::= 'for' <block> <bool_expr>
+<for_repeat_stmt>                     ::= 'for' <block> <bool_expr> ';'  # FIXED: added semicolon
 
 <io_stmt>                             ::= 'print' '(' <expr> <print_args_tail> ')' ';'
-                                       | <identifier> '=' 'input' '(' <expr> ')' ';'
+                                       # FIXED: input removed from here, now in <primary>
+
 <print_args_tail>                     ::= ',' <expr> <print_args_tail> | ε
 
 <return_stmt>                         ::= 'return' <expr> ';'
