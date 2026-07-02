@@ -1,0 +1,273 @@
+
+
+================================================================================
+ NEW RUN: 2026-07-02 15:19:23 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_happy.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [MAX_SIZE : int]
+    │   └── LITERAL (100)
+    ├── CONST_DECL [PI : float]
+    │   └── LITERAL (3.14159)
+    ├── CONST_DECL [GREETING : string]
+    │   └── LITERAL ("Hello, Boran!")
+    ├── CONST_DECL [NEWLINE : char]
+    │   └── LITERAL ('\n')
+    ├── CONST_DECL [FLAG : bool]
+    │   └── LITERAL (true)
+    ├── CONST_DECL [Point : struct]
+    ├── CONST_DECL [Direction : enum]
+    ├── CONST_DECL [distance : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [dx : float]
+    │           │   └── BINARY_OP (-)
+    │           │       ├── *main.MemberAccess
+    │           │       └── *main.MemberAccess
+    │           ├── LET_DECL [dy : float]
+    │           │   └── BINARY_OP (-)
+    │           │       ├── *main.MemberAccess
+    │           │       └── *main.MemberAccess
+    │           └── RETURN_STMT
+    ├── CONST_DECL [greet : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── PRINT_STMT
+    │           │   └── LITERAL ("Hello, ")
+    │           └── PRINT_STMT
+    │               └── IDENTIFIER (name)
+    ├── LET_DECL [count : int]
+    │   └── LITERAL (0)
+    ├── LET_DECL [label : string]
+    │   └── LITERAL ("items")
+    ├── LET_DECL [origin : Point]
+    ├── LET_DECL [heading : Direction]
+    │   └── *main.MemberAccess
+    ├── ASSIGNMENT -> count
+    │   └── BINARY_OP (-)
+    │       ├── IDENTIFIER (MAX_SIZE)
+    │       └── LITERAL (1)
+    ├── LET_DECL [scores : array]
+    ├── LET_DECL [total : int]
+    │   └── LITERAL (0)
+    ├── FOR_ITER [in score]
+    │   ├── IDENTIFIER (scores)
+    │   └── BLOCK
+    │       └── ASSIGNMENT -> total
+    │           └── BINARY_OP (+)
+    │               ├── IDENTIFIER (total)
+    │               └── IDENTIFIER (score)
+    ├── LET_DECL [i : int]
+    │   └── LITERAL (0)
+    ├── FOR_WHILE
+    │   ├── BINARY_OP (<)
+    │   │   ├── IDENTIFIER (i)
+    │   │   └── LITERAL (10)
+    │   └── BLOCK
+    │       └── EXPR_STMT
+    │           └── UNARY_OP (++)
+    │               └── IDENTIFIER (i)
+    ├── LET_DECL [j : int]
+    │   └── LITERAL (0)
+    ├── FOR_REPEAT_UNTIL
+    │   ├── BLOCK
+    │   │   └── ASSIGNMENT -> j
+    │   │       └── BINARY_OP (+)
+    │   │           ├── IDENTIFIER (j)
+    │   │           └── LITERAL (1)
+    │   └── BINARY_OP (>=)
+    │       ├── IDENTIFIER (j)
+    │       └── LITERAL (5)
+    ├── IF_STMT
+    │   ├── BINARY_OP (>)
+    │   │   ├── IDENTIFIER (total)
+    │   │   └── LITERAL (100)
+    │   ├── BLOCK
+    │   │   └── PRINT_STMT
+    │   │       └── LITERAL ("high")
+    │   └── IF_STMT
+    │       ├── BINARY_OP (==)
+    │       │   ├── IDENTIFIER (total)
+    │       │   └── LITERAL (100)
+    │       ├── BLOCK
+    │       │   └── PRINT_STMT
+    │       │       └── LITERAL ("exact")
+    │       └── BLOCK
+    │           └── PRINT_STMT
+    │               └── LITERAL ("low")
+    ├── LET_DECL [result : float]
+    │   └── FN_CALL (distance)
+    │       ├── IDENTIFIER (origin)
+    │       └── IDENTIFIER (origin)
+    ├── IF_STMT
+    │   ├── BINARY_OP (==)
+    │   │   ├── IDENTIFIER (result)
+    │   │   └── LITERAL (0.0)
+    │   └── BLOCK
+    │       ├── LET_DECL [msg : string]
+    │       │   └── LITERAL ("same point")
+    │       └── PRINT_STMT
+    │           └── IDENTIFIER (msg)
+    ├── LET_DECL [username : string]
+    │   └── INPUT_EXPR
+    │       └── LITERAL ("Enter name: ")
+    └── EXPR_STMT
+        └── FN_CALL (greet)
+            └── IDENTIFIER (username)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | LINE:COL  
+  -------------------------------------------------------
+  PI              | const      | float      | 5:7
+  NEWLINE         | const      | char       | 7:7
+  distance        | fn         | fn         | 17:7
+  MAX_SIZE        | const      | int        | 4:7
+  Point           | struct     | struct     | 11:7
+  greet           | fn         | fn         | 23:7
+  heading         | let        | Direction  | 32:5
+  scores          | let        | array      | 38:5
+  total           | let        | int        | 39:5
+  result          | let        | float      | 66:5
+  username        | let        | string     | 73:5
+  GREETING        | const      | string     | 6:7
+  origin          | let        | Point      | 31:5
+  i               | let        | int        | 45:5
+  Direction       | enum       | enum       | 14:7
+  count           | let        | int        | 29:5
+  label           | let        | string     | 30:5
+  j               | let        | int        | 51:5
+  FLAG            | const      | bool       | 8:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    dy              | let        | float      | 19:9
+    a               | param      | Point      | 17:24
+    b               | param      | Point      | 17:35
+    dx              | let        | float      | 18:9
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    name            | param      | string     | 23:21
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    msg             | let        | string     | 68:9
+
+
+
+================================================================================
+ NEW RUN: 2026-07-02 15:19:23 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_invalid_float.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── LET_DECL [a : float]
+    │   └── LITERAL (3.14)
+    ├── LET_DECL [b : float]
+    │   └── LITERAL (.75)
+    └── LET_DECL [c : float]
+        └── LITERAL (0.0)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | LINE:COL  
+  -------------------------------------------------------
+  b               | let        | float      | 4:5
+  c               | let        | float      | 5:5
+  a               | let        | float      | 3:5
+
+
+--- SYNTAX ERRORS (5) ---
+   8:17: unexpected token ERROR ("invalid float literal \"3.14.2\": unexpected '.' after fractional part") in expression
+   9:17: unexpected token ERROR ("invalid float literal \"1.2.3.4\": unexpected '.' after fractional part") in expression
+   10:17: unexpected token ERROR ("invalid numeric literal \"1..5\": consecutive dots") in expression
+   11:18: expected SEMICOLON but found DOT (".")
+   12:17: unexpected token ERROR ("invalid float literal \"12.45.2\": unexpected '.' after fractional part") in expression
+
+
+================================================================================
+ NEW RUN: 2026-07-02 15:19:23 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_invalid_string.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── LET_DECL [a : string]
+    │   └── LITERAL ("Hello\nWorld")
+    ├── LET_DECL [b : string]
+    │   └── LITERAL ("tab\there")
+    ├── LET_DECL [c : string]
+    │   └── LITERAL ("backslash\\end")
+    └── LET_DECL [d : string]
+        └── LITERAL ("quote\"inside")
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | LINE:COL  
+  -------------------------------------------------------
+  a               | let        | string     | 3:5
+  b               | let        | string     | 4:5
+  c               | let        | string     | 5:5
+  d               | let        | string     | 6:5
+
+
+--- SYNTAX ERRORS (1) ---
+   9:18: unexpected token ERROR ("invalid escape sequence '\\q' in string at line 9 col 18") in expression
+
+
+================================================================================
+ NEW RUN: 2026-07-02 15:19:23 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_multichar_char.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── LET_DECL [a : char]
+    │   └── LITERAL ('x')
+    ├── LET_DECL [b : char]
+    │   └── LITERAL ('\n')
+    └── LET_DECL [c : char]
+        └── LITERAL ('\\')
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | LINE:COL  
+  -------------------------------------------------------
+  a               | let        | char       | 3:5
+  b               | let        | char       | 4:5
+  c               | let        | char       | 5:5
+
+
+--- SYNTAX ERRORS (5) ---
+   8:16: unexpected token ERROR ("char literal contains more than one character at line 8 col 16") in expression
+   9:16: unexpected token ERROR ("char literal contains more than one character at line 9 col 16") in expression
+   10:16: unexpected token ERROR ("char literal contains more than one character at line 10 col 16") in expression
+   11:16: unexpected token ERROR ("empty char literal at line 11 col 16") in expression
+   12:16: unexpected token ERROR ("char literal contains more than one character at line 12 col 16") in expression
+
+
+================================================================================
+ NEW RUN: 2026-07-02 15:19:23 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_unclosed_string.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── LET_DECL [a : string]
+    │   └── LITERAL ("this is fine")
+    └── LET_DECL [d : string]
+        └── LITERAL ("closed")
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | LINE:COL  
+  -------------------------------------------------------
+  d               | let        | string     | 9:5
+  a               | let        | string     | 3:5
+
+
+--- SYNTAX ERRORS (2) ---
+   5:18: unexpected token ERROR ("unterminated string literal (unexpected newline) at line 5 col 18") in expression
+   10:18: unexpected token ERROR ("unterminated string literal (unexpected newline) at line 10 col 18") in expression
