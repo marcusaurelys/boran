@@ -1,10 +1,8 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"io"
-	"os"
-	"time"
 )
 
 type TokenType string
@@ -485,6 +483,31 @@ func isValidEscape(ch byte) bool {
 	return false
 }
 
+func TokenizeAll(source string) ([]Token, error) {
+	//tokenizes everything and returns a list of tokens for the parser
+	scanner := NewScanner(source)
+	var tokens []Token
+	hadError := false
+
+	for {
+		tok := scanner.NextToken()
+		tokens = append(tokens, tok)
+		if tok.Type == TOKEN_EOF {
+			break
+		}
+		if tok.Type == TOKEN_ERROR {
+			hadError = true
+		}
+
+	}
+	if hadError {
+		return tokens, errors.New("TOKENIZER ERROR.")
+	}
+	return tokens, nil
+
+}
+
+/*
 func main() {
 	// 1. Enforce argument constraints
 	if len(os.Args) < 2 || len(os.Args) > 3 {
@@ -562,3 +585,4 @@ func main() {
 		os.Exit(1)
 	}
 }
+*/

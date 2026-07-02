@@ -1,0 +1,3 @@
+module boran
+
+go 1.23.0

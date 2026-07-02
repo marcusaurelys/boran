@@ -1,0 +1,169 @@
+<program>            ::= <stmt_list>
+
+<stmt_list>           ::= <stmt> <stmt_list>
+                         | ε
+
+<block>               ::= '{' <stmt_list> '}'
+
+<stmt>                 ::= <const_decl>
+                          | <let_decl>
+                          | <assign_stmt>
+                          | <if_stmt>
+                          | <for_iter_stmt>
+                          | <for_while_stmt>
+                          | <for_repeat_stmt>
+                          | <io_stmt>
+                          | <return_stmt>
+                          | <fn_call> ';'
+                          | <method_call> ';'
+                          | <block>
+
+# ---- Declarations --------------------------------------------------------
+
+<const_decl>          ::= 'const' <identifier> ':' <datatype> '=' <value> ';'
+                         | 'const' <identifier> ':' <identifier> '=' <value> ';'
+
+<let_decl>            ::= 'let' <identifier> ':' <datatype> '=' <value> ';'
+                         | 'let' <identifier> ':' <identifier> '=' <value> ';'
+
+<datatype>             ::= 'int' | 'float' | 'char' | 'string' | 'bool'
+                          | <arr_type> | <fn_type> | <ptr_type>
+                          | 'struct' | 'enum'
+
+<arr_type>             ::= <datatype> '[' INT_LIT ']'
+<fn_type>               ::= 'fn'
+<ptr_type>             ::= 'ptr' <datatype>
+
+# ---- Values ---------------------------------------------------------------
+# NOTE: which alternative applies is picked by declared-type context, not
+# by the token stream alone (see point 3 above).
+
+<value>                 ::= <literal>
+                          | <expr>
+                          | <arr_literal>
+                          | <struct_literal>
+                          | <struct_instance>
+                          | <enum_body>
+                          | <fn_literal>
+
+<literal>               ::= INT_LIT | FLOAT_LIT | CHAR_LIT | STRING_LIT
+                          | BOOL_LIT | 'null'
+
+<arr_literal>           ::= '[' <arr_elements> ']'
+                          | '[' ']'
+<arr_elements>          ::= <value> <arr_elements_tail>
+<arr_elements_tail>     ::= ',' <value> <arr_elements_tail> | ε
+
+<struct_literal>        ::= '{' <struct_field_inits> '}'
+<struct_field_inits>    ::= <struct_field_init> <struct_field_inits_tail>
+<struct_field_inits_tail> ::= ',' <struct_field_init> <struct_field_inits_tail> | ε
+<struct_field_init>     ::= <identifier> ':' <datatype>
+                          | <identifier> ':' <identifier>
+                          | <identifier> ':' <fn_literal>
+
+<struct_instance>       ::= '{' <instance_field_inits> '}'
+                          | '{' '}'
+<instance_field_inits>  ::= <instance_field_init> <instance_field_inits_tail>
+<instance_field_inits_tail> ::= ',' <instance_field_init> <instance_field_inits_tail> | ε
+<instance_field_init>   ::= <identifier> ':' <value>
+
+<enum_body>              ::= '{' <enum_variants> '}'
+<enum_variants>          ::= <enum_variant> <enum_variants_tail>
+<enum_variants_tail>     ::= ',' <enum_variant> <enum_variants_tail> | ε
+<enum_variant>           ::= <identifier>
+
+<fn_literal>             ::= '(' <param_list> ')' ':' <datatype> <block>
+                          | '(' <param_list> ')' <block>
+<param_list>             ::= <params> | ε
+<params>                 ::= <param> <params_tail>
+<params_tail>            ::= ',' <param> <params_tail> | ε
+<param>                  ::= <identifier> ':' <datatype>
+
+# ---- Expressions (right-recursive, left-factored) --------------------------
+
+<expr>                   ::= <bool_expr>
+
+<bool_expr>               ::= <bool_term> <bool_expr_tail>
+<bool_expr_tail>          ::= '||' <bool_term> <bool_expr_tail> | ε
+
+<bool_term>                ::= <bool_factor> <bool_term_tail>
+<bool_term_tail>           ::= '&&' <bool_factor> <bool_term_tail> | ε
+
+<bool_factor>               ::= '!' <bool_factor>
+                              | <arith_expr> <rel_op_tail>
+<rel_op_tail>                ::= <rel_op> <arith_expr> | ε
+<rel_op>                     ::= '==' | '!=' | '<' | '>' | '<=' | '>='
+
+<arith_expr>                  ::= <arith_term> <arith_expr_tail>
+<arith_expr_tail>             ::= '+' <arith_term> <arith_expr_tail>
+                                | '-' <arith_term> <arith_expr_tail>
+                                | ε
+
+<arith_term>                   ::= <unary_expr> <arith_term_tail>
+<arith_term_tail>              ::= '*' <unary_expr> <arith_term_tail>
+                                 | '/' <unary_expr> <arith_term_tail>
+                                 | '%' <unary_expr> <arith_term_tail>
+                                 | ε
+
+<unary_expr>                    ::= '-' <unary_expr>
+                                  | '++' <unary_expr>
+                                  | '--' <unary_expr>
+                                  | '*' <unary_expr>        (* pointer dereference *)
+                                  | '&' <unary_expr>        (* address-of *)
+                                  | <postfix_expr>
+
+<postfix_expr>                   ::= <primary> <postfix_tail>
+<postfix_tail>                   ::= '++' | '--' | ε
+
+<primary>                         ::= <literal>
+                                   | 'this' <this_tail>
+                                   | '(' <expr> ')'
+                                   | <identifier> <primary_tail>
+
+<this_tail>                       ::= '.' <identifier> <method_tail> | ε
+<primary_tail>                    ::= '(' <arg_list> ')'                (* fn_call *)
+                                    | '[' <expr> ']'                     (* index_expr *)
+                                    | '.' <identifier> <method_tail>     (* member_access | method_call *)
+                                    | ε                                  (* bare identifier *)
+<method_tail>                     ::= '(' <arg_list> ')' | ε
+
+<fn_call>                          ::= <identifier> '(' <arg_list> ')'
+<method_call>                      ::= <identifier> '.' <identifier> '(' <arg_list> ')'
+                                    | 'this' '.' <identifier> '(' <arg_list> ')'
+
+<arg_list>                          ::= <args> | ε
+<args>                               ::= <expr> <args_tail>
+<args_tail>                         ::= ',' <expr> <args_tail> | ε
+
+<index_expr>                        ::= <identifier> '[' <expr> ']'
+<member_access>                     ::= <identifier> '.' <identifier>
+
+# ---- Statements -------------------------------------------------------------
+
+<assign_stmt>                        ::= <identifier> '=' <expr> ';'
+                                      | <identifier> '[' <expr> ']' '=' <expr> ';'
+                                      | <identifier> '.' <identifier> '=' <expr> ';'
+                                      | 'this' '.' <identifier> '=' <expr> ';'
+
+<if_stmt>                             ::= 'if' <bool_expr> <block>
+                                       | 'if' <bool_expr> <block> 'else' <block>
+                                       | 'if' <bool_expr> <block> 'else' <if_stmt>
+
+<for_iter_stmt>                       ::= 'for' <identifier> 'in' <expr> <block>
+<for_while_stmt>                      ::= 'for' <bool_expr> <block>
+<for_repeat_stmt>                     ::= 'for' <block> <bool_expr>
+
+<io_stmt>                             ::= 'print' '(' <expr> <print_args_tail> ')' ';'
+                                       | <identifier> '=' 'input' '(' <expr> ')' ';'
+<print_args_tail>                     ::= ',' <expr> <print_args_tail> | ε
+
+<return_stmt>                         ::= 'return' <expr> ';'
+                                       | 'return' ';'
+
+# ---- Lexical --------------------------------------
+
+<identifier>                          ::= <letter> <alphanumeric>*
+                                       | '_' <alphanumeric>+
+<letter>                              ::= 'a'..'z' | 'A'..'Z'
+<digit>                               ::= '0'..'9'
+<alphanumeric>                        ::= <letter> | <digit> | '_'

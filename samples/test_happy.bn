@@ -18,12 +18,12 @@ const distance : fn = (a : Point, b : Point) : float {
     let dx : float = a.x - b.x;
     let dy : float = a.y - b.y;
     return dx * dx + dy * dy;
-}
+};
 
 const greet : fn = (name : string) {
     print("Hello, ");
     print(name);
-}
+};
 
 # --- variable declarations ---
 let count : int = 0;
@@ -38,7 +38,7 @@ count = MAX_SIZE - 1;
 let scores : int[5] = [10, 20, 30, 40, 50];
 let total : int = 0;
 for score in scores {
-    total += score;
+    total = total + score;
 }
 
 # --- for while loop ---
