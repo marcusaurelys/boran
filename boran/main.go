@@ -34,9 +34,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	start := time.Now()
 	tokens, _ := TokenizeAll(string(data))
 	parser := NewParser(tokens)
 	program := parser.ParseProgram()
+	elapsed := time.Since(start)
 
 	// 1. Open the file in APPEND mode.
 	// O_APPEND: adds to the end. O_CREATE: makes it if missing. O_WRONLY: write only.
@@ -51,7 +53,7 @@ func main() {
 	timestamp := time.Now().Format("2006-01-02 15:04:05")
 	separator := strings.Repeat("=", 80)
 	fmt.Fprintf(outFile, "\n\n%s\n", separator)
-	fmt.Fprintf(outFile, " NEW RUN: %s | Source: %s\n", timestamp, os.Args[1])
+	fmt.Fprintf(outFile, " NEW RUN: %s | Elapsed: %s | Source: %s\n", timestamp, elapsed, os.Args[1])
 	fmt.Fprintf(outFile, "%s\n", separator)
 
 	// 3. Print the Tree

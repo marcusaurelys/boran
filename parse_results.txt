@@ -1,7 +1,328 @@
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:43:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_happy.bn
+ NEW RUN: 2026-07-02 16:48:19 | Elapsed: 584.1µs | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\math_formulas.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [EPSILON : float]
+    │   └── VALUE_EXPR
+    │       └── LITERAL (0.00001)
+    ├── CONST_DECL [E : float]
+    │   └── VALUE_EXPR
+    │       └── LITERAL (2.71828)
+    ├── CONST_DECL [LinearOutputs : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [prediction : float]
+    │       ├── FIELD_DEF [loss : float]
+    │       └── FIELD_DEF [is_above_threshold : bool]
+    ├── CONST_DECL [evaluate_linear_step : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [pred : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── BINARY_OP (*)
+    │           │           │   ├── IDENTIFIER (w)
+    │           │           │   └── IDENTIFIER (x)
+    │           │           └── IDENTIFIER (b)
+    │           ├── LET_DECL [error : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (-)
+    │           │           ├── IDENTIFIER (y)
+    │           │           └── IDENTIFIER (pred)
+    │           ├── LET_DECL [step_loss : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (/)
+    │           │           ├── BINARY_OP (*)
+    │           │           │   ├── IDENTIFIER (error)
+    │           │           │   └── IDENTIFIER (error)
+    │           │           └── LITERAL (2.0)
+    │           ├── LET_DECL [flag : bool]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (&&)
+    │           │           ├── BINARY_OP (>)
+    │           │           │   ├── IDENTIFIER (pred)
+    │           │           │   └── LITERAL (0.5)
+    │           │           └── BINARY_OP (<)
+    │           │               ├── IDENTIFIER (step_loss)
+    │           │               └── LITERAL (1.0)
+    │           ├── LET_DECL [result : LinearOutputs]
+    │           │   └── STRUCT_INSTANCE
+    │           │       ├── FIELD_INIT [prediction]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── IDENTIFIER (pred)
+    │           │       ├── FIELD_INIT [loss]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── IDENTIFIER (step_loss)
+    │           │       └── FIELD_INIT [is_above_threshold]
+    │           │           └── VALUE_EXPR
+    │           │               └── IDENTIFIER (flag)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [approximation_sigmoid : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [denominator : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── BINARY_OP (+)
+    │           │           │   ├── BINARY_OP (+)
+    │           │           │   │   ├── LITERAL (1.0)
+    │           │           │   │   └── LITERAL (1.0)
+    │           │           │   └── IDENTIFIER (x)
+    │           │           └── BINARY_OP (*)
+    │           │               ├── BINARY_OP (*)
+    │           │               │   ├── LITERAL (0.5)
+    │           │               │   └── IDENTIFIER (x)
+    │           │               └── IDENTIFIER (x)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [compute_softmax_denominator : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [sum : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── BINARY_OP (+)
+    │           │           │   ├── BINARY_OP (+)
+    │           │           │   │   ├── BINARY_OP (+)
+    │           │           │   │   │   ├── BINARY_OP (+)
+    │           │           │   │   │   │   ├── LITERAL (1.0)
+    │           │           │   │   │   │   └── INDEX_ACCESS
+    │           │           │   │   │   │       ├── IDENTIFIER (logits)
+    │           │           │   │   │   │       └── LITERAL (0)
+    │           │           │   │   │   └── LITERAL (1.0)
+    │           │           │   │   └── INDEX_ACCESS
+    │           │           │   │       ├── IDENTIFIER (logits)
+    │           │           │   │       └── LITERAL (1)
+    │           │           │   └── LITERAL (1.0)
+    │           │           └── INDEX_ACCESS
+    │           │               ├── IDENTIFIER (logits)
+    │           │               └── LITERAL (2)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [evaluate_pseudo_bce : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [loss_component : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (-)
+    │           │           ├── BINARY_OP (-)
+    │           │           │   ├── BINARY_OP (*)
+    │           │           │   │   ├── UNARY_OP (-)
+    │           │           │   │   │   └── IDENTIFIER (y)
+    │           │           │   │   └── IDENTIFIER (p)
+    │           │           │   └── LITERAL (1.0)
+    │           │           └── BINARY_OP (*)
+    │           │               ├── IDENTIFIER (y)
+    │           │               └── IDENTIFIER (p)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("Executing Operator Precedence Validation Matrix...")
+    │           │   └── LITERAL ('\n')
+    │           ├── LET_DECL [x_vector : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (2.5)
+    │           ├── LET_DECL [y_true : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (1.0)
+    │           ├── LET_DECL [weight : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0.4)
+    │           ├── LET_DECL [bias : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0.1)
+    │           ├── LET_DECL [lin_metrics : LinearOutputs]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (evaluate_linear_step)
+    │           │           ├── IDENTIFIER (x_vector)
+    │           │           ├── IDENTIFIER (y_true)
+    │           │           ├── IDENTIFIER (weight)
+    │           │           └── IDENTIFIER (bias)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("Linear Prediction Output: ")
+    │           │   ├── MEMBER_ACCESS [.prediction]
+    │           │   │   └── IDENTIFIER (lin_metrics)
+    │           │   └── LITERAL ('\n')
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("Evaluated Loss Step Value: ")
+    │           │   ├── MEMBER_ACCESS [.loss]
+    │           │   │   └── IDENTIFIER (lin_metrics)
+    │           │   └── LITERAL ('\n')
+    │           ├── LET_DECL [activation : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (approximation_sigmoid)
+    │           │           └── MEMBER_ACCESS [.prediction]
+    │           │               └── IDENTIFIER (lin_metrics)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("Sigmoid Compute Layer Value: ")
+    │           │   ├── IDENTIFIER (activation)
+    │           │   └── LITERAL ('\n')
+    │           ├── LET_DECL [sample_logits : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0.1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1.2)
+    │           │       └── VALUE_EXPR
+    │           │           └── LITERAL (2.3)
+    │           ├── LET_DECL [density_sum : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (compute_softmax_denominator)
+    │           │           └── IDENTIFIER (sample_logits)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("Softmax Denominator Cumulative Sum: ")
+    │           │   ├── IDENTIFIER (density_sum)
+    │           │   └── LITERAL ('\n')
+    │           ├── LET_DECL [bce_cost : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (evaluate_pseudo_bce)
+    │           │           ├── IDENTIFIER (y_true)
+    │           │           └── IDENTIFIER (activation)
+    │           └── PRINT_STMT
+    │               ├── LITERAL ("Resulting Cross-Entropy Evaluation Value: ")
+    │               ├── IDENTIFIER (bce_cost)
+    │               └── LITERAL ('\n')
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | LINE:COL  
+  -------------------------------------------------------
+  evaluate_pseudo_bce | fn         | fn         | 66:7
+  main            | fn         | fn         | 77:7
+  EPSILON         | const      | float      | 7:7
+  E               | const      | float      | 8:7
+  LinearOutputs   | struct     | struct     | 11:7
+  evaluate_linear_step | fn         | fn         | 21:7
+  approximation_sigmoid | fn         | fn         | 43:7
+  compute_softmax_denominator | fn         | fn         | 54:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    error           | let        | float      | 28:9
+    flag            | let        | bool       | 33:9
+    w               | param      | float      | 21:58
+    b               | param      | float      | 21:69
+    pred            | let        | float      | 23:9
+    step_loss       | let        | float      | 29:9
+    result          | let        | LinearOutputs | 35:9
+    x               | param      | float      | 21:36
+    y               | param      | float      | 21:47
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    x               | param      | float      | 43:37
+    denominator     | let        | float      | 47:9
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    logits          | param      | array      | 54:43
+    sum             | let        | float      | 58:9
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    y               | param      | float      | 66:35
+    p               | param      | float      | 66:46
+    loss_component  | let        | float      | 72:9
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | LINE:COL  
+    -------------------------------------------------------
+    lin_metrics     | let        | LinearOutputs | 86:9
+    sample_logits   | let        | array      | 96:9
+    density_sum     | let        | float      | 97:9
+    x_vector        | let        | float      | 80:9
+    y_true          | let        | float      | 81:9
+    weight          | let        | float      | 82:9
+    bias            | let        | float      | 83:9
+    activation      | let        | float      | 92:9
+    bce_cost        | let        | float      | 101:9
+
+
+
+================================================================================
+ NEW RUN: 2026-07-02 16:48:19 | Elapsed: 602.6µs | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_chaining.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [Point : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [x : float]
+    │       └── FIELD_DEF [y : float]
+    ├── CONST_DECL [Line : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [start : Point]
+    │       └── FIELD_DEF [end : Point]
+    ├── LET_DECL [a : Line]
+    │   └── STRUCT_INSTANCE
+    │       ├── FIELD_INIT [start]
+    │       │   └── STRUCT_INSTANCE
+    │       │       ├── FIELD_INIT [x]
+    │       │       │   └── VALUE_EXPR
+    │       │       │       └── LITERAL (0.0)
+    │       │       └── FIELD_INIT [y]
+    │       │           └── VALUE_EXPR
+    │       │               └── LITERAL (0.0)
+    │       └── FIELD_INIT [end]
+    │           └── STRUCT_INSTANCE
+    │               ├── FIELD_INIT [x]
+    │               │   └── VALUE_EXPR
+    │               │       └── LITERAL (1.0)
+    │               └── FIELD_INIT [y]
+    │                   └── VALUE_EXPR
+    │                       └── LITERAL (1.0)
+    ├── LET_DECL [px : float]
+    │   └── VALUE_EXPR
+    │       └── MEMBER_ACCESS [.x]
+    │           └── MEMBER_ACCESS [.start]
+    │               └── IDENTIFIER (a)
+    ├── LET_DECL [matrix : array]
+    │   └── ARRAY_LITERAL
+    │       ├── VALUE_EXPR
+    │       │   └── LITERAL (1)
+    │       └── VALUE_EXPR
+    │           └── LITERAL (2)
+    ├── LET_DECL [cell : int]
+    │   └── VALUE_EXPR
+    │       └── INDEX_ACCESS
+    │           ├── INDEX_ACCESS
+    │           │   ├── IDENTIFIER (matrix)
+    │           │   └── LITERAL (0)
+    │           └── LITERAL (1)
+    ├── LET_DECL [qx : float]
+    │   └── VALUE_EXPR
+    │       └── MEMBER_ACCESS [.x]
+    │           └── FN_CALL (makePoint)
+    └── EXPR_STMT
+        └── METHOD_CALL [.normalize]
+            └── MEMBER_ACCESS [.start]
+                └── IDENTIFIER (a)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | LINE:COL  
+  -------------------------------------------------------
+  Line            | struct     | struct     | 4:7
+  a               | let        | Line       | 6:5
+  px              | let        | float      | 9:5
+  matrix          | let        | array      | 12:5
+  cell            | let        | int        | 13:5
+  qx              | let        | float      | 16:5
+  Point           | struct     | struct     | 3:7
+
+
+
+================================================================================
+ NEW RUN: 2026-07-02 16:48:19 | Elapsed: 0s | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_happy.bn
 ================================================================================
 
 --- PARSE TREE ---
@@ -33,13 +354,17 @@
     │           ├── LET_DECL [dx : float]
     │           │   └── VALUE_EXPR
     │           │       └── BINARY_OP (-)
-    │           │           ├── MEMBER_ACCESS [a.x]
-    │           │           └── MEMBER_ACCESS [b.x]
+    │           │           ├── MEMBER_ACCESS [.x]
+    │           │           │   └── IDENTIFIER (a)
+    │           │           └── MEMBER_ACCESS [.x]
+    │           │               └── IDENTIFIER (b)
     │           ├── LET_DECL [dy : float]
     │           │   └── VALUE_EXPR
     │           │       └── BINARY_OP (-)
-    │           │           ├── MEMBER_ACCESS [a.y]
-    │           │           └── MEMBER_ACCESS [b.y]
+    │           │           ├── MEMBER_ACCESS [.y]
+    │           │           │   └── IDENTIFIER (a)
+    │           │           └── MEMBER_ACCESS [.y]
+    │           │               └── IDENTIFIER (b)
     │           └── RETURN_STMT
     ├── CONST_DECL [greet : fn]
     │   └── FN_LITERAL
@@ -64,7 +389,8 @@
     │               └── LITERAL (0.0)
     ├── LET_DECL [heading : Direction]
     │   └── VALUE_EXPR
-    │       └── MEMBER_ACCESS [Direction.north]
+    │       └── MEMBER_ACCESS [.north]
+    │           └── IDENTIFIER (Direction)
     ├── ASSIGNMENT -> count
     │   └── BINARY_OP (-)
     │       ├── IDENTIFIER (MAX_SIZE)
@@ -158,33 +484,33 @@
 Scope Level 0:
   NAME            | KIND       | TYPE       | LINE:COL  
   -------------------------------------------------------
-  count           | let        | int        | 29:5
-  scores          | let        | array      | 38:5
-  MAX_SIZE        | const      | int        | 4:7
-  distance        | fn         | fn         | 17:7
-  i               | let        | int        | 45:5
   Point           | struct     | struct     | 11:7
-  label           | let        | string     | 30:5
-  greet           | fn         | fn         | 23:7
-  total           | let        | int        | 39:5
-  result          | let        | float      | 66:5
-  username        | let        | string     | 73:5
-  FLAG            | const      | bool       | 8:7
   Direction       | enum       | enum       | 14:7
-  NEWLINE         | const      | char       | 7:7
-  origin          | let        | Point      | 31:5
-  heading         | let        | Direction  | 32:5
+  greet           | fn         | fn         | 23:7
+  label           | let        | string     | 30:5
+  i               | let        | int        | 45:5
   j               | let        | int        | 51:5
+  count           | let        | int        | 29:5
+  heading         | let        | Direction  | 32:5
+  result          | let        | float      | 66:5
+  origin          | let        | Point      | 31:5
+  scores          | let        | array      | 38:5
+  total           | let        | int        | 39:5
+  MAX_SIZE        | const      | int        | 4:7
   PI              | const      | float      | 5:7
   GREETING        | const      | string     | 6:7
+  NEWLINE         | const      | char       | 7:7
+  FLAG            | const      | bool       | 8:7
+  distance        | fn         | fn         | 17:7
+  username        | let        | string     | 73:5
 
   Scope Level 1:
     NAME            | KIND       | TYPE       | LINE:COL  
     -------------------------------------------------------
+    a               | param      | Point      | 17:24
     b               | param      | Point      | 17:35
     dx              | let        | float      | 18:9
     dy              | let        | float      | 19:9
-    a               | param      | Point      | 17:24
 
   Scope Level 1:
     NAME            | KIND       | TYPE       | LINE:COL  
@@ -199,7 +525,7 @@ Scope Level 0:
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:43:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_invalid_float.bn
+ NEW RUN: 2026-07-02 16:48:19 | Elapsed: 528.5µs | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_invalid_float.bn
 ================================================================================
 
 --- PARSE TREE ---
@@ -218,9 +544,9 @@ Scope Level 0:
 Scope Level 0:
   NAME            | KIND       | TYPE       | LINE:COL  
   -------------------------------------------------------
-  c               | let        | float      | 5:5
   a               | let        | float      | 3:5
   b               | let        | float      | 4:5
+  c               | let        | float      | 5:5
 
 
 --- SYNTAX ERRORS (5) ---
@@ -232,7 +558,7 @@ Scope Level 0:
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:43:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_invalid_string.bn
+ NEW RUN: 2026-07-02 16:48:19 | Elapsed: 0s | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_invalid_string.bn
 ================================================================================
 
 --- PARSE TREE ---
@@ -265,7 +591,7 @@ Scope Level 0:
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:43:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_iris.bn
+ NEW RUN: 2026-07-02 16:48:19 | Elapsed: 535.1µs | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_iris.bn
 ================================================================================
 
 --- PARSE TREE ---
@@ -317,7 +643,8 @@ Scope Level 0:
     │           │       ├── ASSIGNMENT -> sum
     │           │       │   └── BINARY_OP (+)
     │           │       │       ├── IDENTIFIER (sum)
-    │           │       │       └── INDEX_ACCESS [arr]
+    │           │       │       └── INDEX_ACCESS
+    │           │       │           ├── IDENTIFIER (arr)
     │           │       │           └── IDENTIFIER (i)
     │           │       └── EXPR_STMT
     │           │           └── UNARY_OP (++) (postfix)
@@ -340,7 +667,8 @@ Scope Level 0:
     │           │       ├── LET_DECL [diff : float]
     │           │       │   └── VALUE_EXPR
     │           │       │       └── BINARY_OP (-)
-    │           │       │           ├── INDEX_ACCESS [arr]
+    │           │       │           ├── INDEX_ACCESS
+    │           │       │           │   ├── IDENTIFIER (arr)
     │           │       │           │   └── IDENTIFIER (i)
     │           │       │           └── IDENTIFIER (mean)
     │           │       ├── ASSIGNMENT -> variance_sum
@@ -375,12 +703,14 @@ Scope Level 0:
     │           │       │           └── BINARY_OP (*)
     │           │       │               ├── PAREN_EXPR
     │           │       │               │   └── BINARY_OP (-)
-    │           │       │               │       ├── INDEX_ACCESS [x]
+    │           │       │               │       ├── INDEX_ACCESS
+    │           │       │               │       │   ├── IDENTIFIER (x)
     │           │       │               │       │   └── IDENTIFIER (i)
     │           │       │               │       └── IDENTIFIER (x_mean)
     │           │       │               └── PAREN_EXPR
     │           │       │                   └── BINARY_OP (-)
-    │           │       │                       ├── INDEX_ACCESS [y]
+    │           │       │                       ├── INDEX_ACCESS
+    │           │       │                       │   ├── IDENTIFIER (y)
     │           │       │                       │   └── IDENTIFIER (i)
     │           │       │                       └── IDENTIFIER (y_mean)
     │           │       └── EXPR_STMT
@@ -480,14 +810,16 @@ Scope Level 0:
     │           │       │       │           ├── PAREN_EXPR
     │           │       │       │           │   └── BINARY_OP (*)
     │           │       │       │           │       ├── IDENTIFIER (m)
-    │           │       │       │           │       └── INDEX_ACCESS [x]
+    │           │       │       │           │       └── INDEX_ACCESS
+    │           │       │       │           │           ├── IDENTIFIER (x)
     │           │       │       │           │           └── IDENTIFIER (i)
     │           │       │       │           └── IDENTIFIER (c)
     │           │       │       ├── LET_DECL [error : float]
     │           │       │       │   └── VALUE_EXPR
     │           │       │       │       └── BINARY_OP (-)
     │           │       │       │           ├── IDENTIFIER (prediction)
-    │           │       │       │           └── INDEX_ACCESS [y]
+    │           │       │       │           └── INDEX_ACCESS
+    │           │       │       │               ├── IDENTIFIER (y)
     │           │       │       │               └── IDENTIFIER (i)
     │           │       │       ├── ASSIGNMENT -> m_gradient
     │           │       │       │   └── BINARY_OP (+)
@@ -495,7 +827,8 @@ Scope Level 0:
     │           │       │       │       └── PAREN_EXPR
     │           │       │       │           └── BINARY_OP (*)
     │           │       │       │               ├── IDENTIFIER (error)
-    │           │       │       │               └── INDEX_ACCESS [x]
+    │           │       │       │               └── INDEX_ACCESS
+    │           │       │       │                   ├── IDENTIFIER (x)
     │           │       │       │                   └── IDENTIFIER (i)
     │           │       │       ├── ASSIGNMENT -> c_gradient
     │           │       │       │   └── BINARY_OP (+)
@@ -574,14 +907,18 @@ Scope Level 0:
     │           │       │       └── BINARY_OP (+)
     │           │       │           ├── PAREN_EXPR
     │           │       │           │   └── BINARY_OP (*)
-    │           │       │           │       ├── MEMBER_ACCESS [model.slope]
-    │           │       │           │       └── INDEX_ACCESS [x]
+    │           │       │           │       ├── MEMBER_ACCESS [.slope]
+    │           │       │           │       │   └── IDENTIFIER (model)
+    │           │       │           │       └── INDEX_ACCESS
+    │           │       │           │           ├── IDENTIFIER (x)
     │           │       │           │           └── IDENTIFIER (i)
-    │           │       │           └── MEMBER_ACCESS [model.intercept]
+    │           │       │           └── MEMBER_ACCESS [.intercept]
+    │           │       │               └── IDENTIFIER (model)
     │           │       ├── LET_DECL [residual : float]
     │           │       │   └── VALUE_EXPR
     │           │       │       └── BINARY_OP (-)
-    │           │       │           ├── INDEX_ACCESS [y]
+    │           │       │           ├── INDEX_ACCESS
+    │           │       │           │   ├── IDENTIFIER (y)
     │           │       │           │   └── IDENTIFIER (i)
     │           │       │           └── IDENTIFIER (prediction)
     │           │       ├── ASSIGNMENT -> ss_res
@@ -594,7 +931,8 @@ Scope Level 0:
     │           │       ├── LET_DECL [total_deviation : float]
     │           │       │   └── VALUE_EXPR
     │           │       │       └── BINARY_OP (-)
-    │           │       │           ├── INDEX_ACCESS [y]
+    │           │       │           ├── INDEX_ACCESS
+    │           │       │           │   ├── IDENTIFIER (y)
     │           │       │           │   └── IDENTIFIER (i)
     │           │       │           └── IDENTIFIER (y_mean)
     │           │       ├── ASSIGNMENT -> ss_tot
@@ -1272,11 +1610,13 @@ Scope Level 0:
     │           │           └── LITERAL (150)
     │           ├── PRINT_STMT
     │           │   ├── LITERAL ("Analytical Slope: ")
-    │           │   ├── MEMBER_ACCESS [analytical_model.slope]
+    │           │   ├── MEMBER_ACCESS [.slope]
+    │           │   │   └── IDENTIFIER (analytical_model)
     │           │   └── LITERAL ('\n')
     │           ├── PRINT_STMT
     │           │   ├── LITERAL ("Analytical Intercept: ")
-    │           │   ├── MEMBER_ACCESS [analytical_model.intercept]
+    │           │   ├── MEMBER_ACCESS [.intercept]
+    │           │   │   └── IDENTIFIER (analytical_model)
     │           │   └── LITERAL ('\n')
     │           ├── LET_DECL [metrics_ols : PredictionMetrics]
     │           │   └── VALUE_EXPR
@@ -1287,11 +1627,13 @@ Scope Level 0:
     │           │           └── IDENTIFIER (analytical_model)
     │           ├── PRINT_STMT
     │           │   ├── LITERAL ("OLS Mean Squared Error: ")
-    │           │   ├── MEMBER_ACCESS [metrics_ols.mse]
+    │           │   ├── MEMBER_ACCESS [.mse]
+    │           │   │   └── IDENTIFIER (metrics_ols)
     │           │   └── LITERAL ('\n')
     │           ├── PRINT_STMT
     │           │   ├── LITERAL ("OLS Coeff of Determination (R2): ")
-    │           │   ├── MEMBER_ACCESS [metrics_ols.r_squared]
+    │           │   ├── MEMBER_ACCESS [.r_squared]
+    │           │   │   └── IDENTIFIER (metrics_ols)
     │           │   └── LITERAL ('\n')
     │           ├── PRINT_STMT
     │           │   ├── LITERAL ("--- Phase 2: Iterative Gradient Descent Optimization ---")
@@ -1306,11 +1648,13 @@ Scope Level 0:
     │           │           └── IDENTIFIER (LEARNING_RATE)
     │           ├── PRINT_STMT
     │           │   ├── LITERAL ("GD Model Slope: ")
-    │           │   ├── MEMBER_ACCESS [gd_model.slope]
+    │           │   ├── MEMBER_ACCESS [.slope]
+    │           │   │   └── IDENTIFIER (gd_model)
     │           │   └── LITERAL ('\n')
     │           ├── PRINT_STMT
     │           │   ├── LITERAL ("GD Model Intercept: ")
-    │           │   ├── MEMBER_ACCESS [gd_model.intercept]
+    │           │   ├── MEMBER_ACCESS [.intercept]
+    │           │   │   └── IDENTIFIER (gd_model)
     │           │   └── LITERAL ('\n')
     │           ├── LET_DECL [metrics_gd : PredictionMetrics]
     │           │   └── VALUE_EXPR
@@ -1321,11 +1665,13 @@ Scope Level 0:
     │           │           └── IDENTIFIER (gd_model)
     │           ├── PRINT_STMT
     │           │   ├── LITERAL ("GD Mean Squared Error: ")
-    │           │   ├── MEMBER_ACCESS [metrics_gd.mse]
+    │           │   ├── MEMBER_ACCESS [.mse]
+    │           │   │   └── IDENTIFIER (metrics_gd)
     │           │   └── LITERAL ('\n')
     │           ├── PRINT_STMT
     │           │   ├── LITERAL ("GD Coeff of Determination (R2): ")
-    │           │   ├── MEMBER_ACCESS [metrics_gd.r_squared]
+    │           │   ├── MEMBER_ACCESS [.r_squared]
+    │           │   │   └── IDENTIFIER (metrics_gd)
     │           │   └── LITERAL ('\n')
     │           ├── PRINT_STMT
     │           │   ├── LITERAL ("--- Phase 3: Interactive Inference System ---")
@@ -1347,38 +1693,38 @@ Scope Level 0:
 Scope Level 0:
   NAME            | KIND       | TYPE       | LINE:COL  
   -------------------------------------------------------
-  PredictionMetrics | struct     | struct     | 26:7
   MAX_COLS        | const      | int        | 8:7
-  ModelWeights    | struct     | struct     | 21:7
-  train_gradient_descent | fn         | fn         | 82:7
-  MAX_ROWS        | const      | int        | 7:7
-  EPSILON         | const      | float      | 11:7
-  IrisRecord      | struct     | struct     | 14:7
-  compute_mean    | fn         | fn         | 33:7
-  compute_variance | fn         | fn         | 43:7
-  compute_covariance | fn         | fn         | 54:7
   LEARNING_RATE   | const      | float      | 9:7
-  TOTAL_EPOCHS    | const      | int        | 10:7
+  compute_mean    | fn         | fn         | 33:7
+  compute_covariance | fn         | fn         | 54:7
   train_analytical | fn         | fn         | 65:7
   evaluate_predictions | fn         | fn         | 114:7
   run_pipeline    | fn         | fn         | 148:7
+  MAX_ROWS        | const      | int        | 7:7
+  ModelWeights    | struct     | struct     | 21:7
+  compute_variance | fn         | fn         | 43:7
+  EPSILON         | const      | float      | 11:7
+  IrisRecord      | struct     | struct     | 14:7
+  PredictionMetrics | struct     | struct     | 26:7
+  train_gradient_descent | fn         | fn         | 82:7
+  TOTAL_EPOCHS    | const      | int        | 10:7
 
   Scope Level 1:
     NAME            | KIND       | TYPE       | LINE:COL  
     -------------------------------------------------------
-    sum             | let        | float      | 34:9
     i               | let        | int        | 35:9
     arr             | param      | array      | 33:28
     size            | param      | int        | 33:46
+    sum             | let        | float      | 34:9
 
   Scope Level 1:
     NAME            | KIND       | TYPE       | LINE:COL  
     -------------------------------------------------------
+    arr             | param      | array      | 43:32
+    mean            | param      | float      | 43:50
     size            | param      | int        | 43:64
     variance_sum    | let        | float      | 44:9
     i               | let        | int        | 45:9
-    arr             | param      | array      | 43:32
-    mean            | param      | float      | 43:50
 
     Scope Level 2:
       NAME            | KIND       | TYPE       | LINE:COL  
@@ -1388,39 +1734,39 @@ Scope Level 0:
   Scope Level 1:
     NAME            | KIND       | TYPE       | LINE:COL  
     -------------------------------------------------------
+    x_mean          | param      | float      | 54:50
+    y               | param      | array      | 54:66
+    y_mean          | param      | float      | 54:82
     size            | param      | int        | 54:98
     cov_sum         | let        | float      | 55:9
     i               | let        | int        | 56:9
     x               | param      | array      | 54:34
-    x_mean          | param      | float      | 54:50
-    y               | param      | array      | 54:66
-    y_mean          | param      | float      | 54:82
 
   Scope Level 1:
     NAME            | KIND       | TYPE       | LINE:COL  
     -------------------------------------------------------
-    y_mean          | let        | float      | 67:9
-    covariance_xy   | let        | float      | 70:9
-    x               | param      | array      | 65:32
-    x_mean          | let        | float      | 66:9
     variance_x      | let        | float      | 69:9
-    m               | let        | float      | 72:9
+    covariance_xy   | let        | float      | 70:9
     c               | let        | float      | 77:9
-    weights         | let        | ModelWeights | 78:9
-    y               | param      | array      | 65:48
     size            | param      | int        | 65:64
+    y_mean          | let        | float      | 67:9
+    x_mean          | let        | float      | 66:9
+    m               | let        | float      | 72:9
+    weights         | let        | ModelWeights | 78:9
+    x               | param      | array      | 65:32
+    y               | param      | array      | 65:48
 
   Scope Level 1:
     NAME            | KIND       | TYPE       | LINE:COL  
     -------------------------------------------------------
+    x               | param      | array      | 82:38
+    lr              | param      | float      | 82:96
+    epoch           | let        | int        | 86:9
     y               | param      | array      | 82:54
     size            | param      | int        | 82:70
     epochs          | param      | int        | 82:82
-    lr              | param      | float      | 82:96
     m               | let        | float      | 83:9
-    x               | param      | array      | 82:38
     c               | let        | float      | 84:9
-    epoch           | let        | int        | 86:9
     final_weights   | let        | ModelWeights | 110:9
 
     Scope Level 2:
@@ -1439,19 +1785,19 @@ Scope Level 0:
   Scope Level 1:
     NAME            | KIND       | TYPE       | LINE:COL  
     -------------------------------------------------------
-    absolute_error_sum | let        | float      | 118:9
-    calculated_mse  | let        | float      | 139:9
-    calculated_r2   | let        | float      | 141:9
-    stats           | let        | PredictionMetrics | 143:9
+    y               | param      | array      | 114:52
+    size            | param      | int        | 114:68
     ss_tot          | let        | float      | 116:9
     ss_res          | let        | float      | 117:9
     i               | let        | int        | 120:9
-    x               | param      | array      | 114:36
-    y               | param      | array      | 114:52
-    size            | param      | int        | 114:68
-    model           | param      | ModelWeights | 114:80
-    y_mean          | let        | float      | 115:9
     calculated_mae  | let        | float      | 140:9
+    stats           | let        | PredictionMetrics | 143:9
+    x               | param      | array      | 114:36
+    y_mean          | let        | float      | 115:9
+    absolute_error_sum | let        | float      | 118:9
+    calculated_mse  | let        | float      | 139:9
+    calculated_r2   | let        | float      | 141:9
+    model           | param      | ModelWeights | 114:80
 
     Scope Level 2:
       NAME            | KIND       | TYPE       | LINE:COL  
@@ -1463,18 +1809,18 @@ Scope Level 0:
   Scope Level 1:
     NAME            | KIND       | TYPE       | LINE:COL  
     -------------------------------------------------------
-    metrics_ols     | let        | PredictionMetrics | 184:9
-    gd_model        | let        | ModelWeights | 189:9
     metrics_gd      | let        | PredictionMetrics | 193:9
     user_query      | let        | string     | 199:9
     x_data          | let        | array      | 153:9
     y_data          | let        | array      | 166:9
     analytical_model | let        | ModelWeights | 180:9
+    metrics_ols     | let        | PredictionMetrics | 184:9
+    gd_model        | let        | ModelWeights | 189:9
 
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:43:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_multichar_char.bn
+ NEW RUN: 2026-07-02 16:48:19 | Elapsed: 0s | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_multichar_char.bn
 ================================================================================
 
 --- PARSE TREE ---
@@ -1493,9 +1839,9 @@ Scope Level 0:
 Scope Level 0:
   NAME            | KIND       | TYPE       | LINE:COL  
   -------------------------------------------------------
+  b               | let        | char       | 4:5
   c               | let        | char       | 5:5
   a               | let        | char       | 3:5
-  b               | let        | char       | 4:5
 
 
 --- SYNTAX ERRORS (5) ---
@@ -1507,7 +1853,7 @@ Scope Level 0:
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:43:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_unclosed_string.bn
+ NEW RUN: 2026-07-02 16:48:19 | Elapsed: 0s | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_unclosed_string.bn
 ================================================================================
 
 --- PARSE TREE ---
@@ -1523,8 +1869,8 @@ Scope Level 0:
 Scope Level 0:
   NAME            | KIND       | TYPE       | LINE:COL  
   -------------------------------------------------------
-  d               | let        | string     | 9:5
   a               | let        | string     | 3:5
+  d               | let        | string     | 9:5
 
 
 --- SYNTAX ERRORS (2) ---
