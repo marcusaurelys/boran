@@ -3,30 +3,31 @@ package main
 import (
 	"fmt"
 	"io"
+	"reflect"
 	"strings"
 )
 
 // DrawTree starts the recursive ASCII drawing process
 func DrawTree(n Node, w io.Writer) {
+	if isActuallyNil(n) {
+		return
+	}
 	drawNode(n, "", true, w)
 }
 
 func drawNode(n Node, prefix string, isLast bool, w io.Writer) {
-	if n == nil {
+	if isActuallyNil(n) {
 		return
 	}
 
-	// Determine the marker for this level
 	marker := "├── "
 	if isLast {
 		marker = "└── "
 	}
 
-	// Get a descriptive label for the node
 	label := getNodeLabel(n)
 	fmt.Fprintf(w, "%s%s%s\n", prefix, marker, label)
 
-	// Prepare the prefix for children
 	newPrefix := prefix
 	if isLast {
 		newPrefix += "    "
@@ -34,12 +35,22 @@ func drawNode(n Node, prefix string, isLast bool, w io.Writer) {
 		newPrefix += "│   "
 	}
 
-	// Get all children of this node
 	children := getChildren(n)
 	for i, child := range children {
-		lastChild := (i == len(children)-1)
-		drawNode(child, newPrefix, lastChild, w)
+		drawNode(child, newPrefix, i == len(children)-1, w)
 	}
+}
+
+// isActuallyNil handles "Typed Nils" (interfaces that aren't nil but point to nil)
+func isActuallyNil(n Node) bool {
+	if n == nil {
+		return true
+	}
+	v := reflect.ValueOf(n)
+	if v.Kind() == reflect.Ptr && v.IsNil() {
+		return true
+	}
+	return false
 }
 
 func getNodeLabel(n Node) string {
@@ -57,7 +68,7 @@ func getNodeLabel(n Node) string {
 	case *IfStmt:
 		return "IF_STMT"
 	case *ForIterStmt:
-		return fmt.Sprintf("FOR_ITER [in %s]", node.VarName)
+		return fmt.Sprintf("FOR_ITER [var: %s]", node.VarName)
 	case *ForWhileStmt:
 		return "FOR_WHILE"
 	case *ForRepeatStmt:
@@ -71,7 +82,11 @@ func getNodeLabel(n Node) string {
 	case *BinaryExpr:
 		return fmt.Sprintf("BINARY_OP (%s)", node.Op)
 	case *UnaryExpr:
-		return fmt.Sprintf("UNARY_OP (%s)", node.Op)
+		var post string
+		if node.Postfix {
+			post = " (postfix)"
+		}
+		return fmt.Sprintf("UNARY_OP (%s)%s", node.Op, post)
 	case *Literal:
 		return fmt.Sprintf("LITERAL (%s)", node.Value)
 	case *Identifier:
@@ -81,75 +96,129 @@ func getNodeLabel(n Node) string {
 	case *FnCall:
 		return fmt.Sprintf("FN_CALL (%s)", node.Callee)
 	case *MethodCall:
-		return fmt.Sprintf("METHOD_CALL (%s)", node.MethodName)
-	case *FnLiteral:
-		return "FN_LITERAL"
+		return fmt.Sprintf("METHOD_CALL [%s.%s]", node.Receiver, node.MethodName)
+	case *MemberAccess:
+		return fmt.Sprintf("MEMBER_ACCESS [%s.%s]", node.Base, node.Field)
+	case *IndexExpr:
+		return fmt.Sprintf("INDEX_ACCESS [%s]", node.Array)
+	case *ThisExpr:
+		return "THIS"
+	case *GroupExpr:
+		return "PAREN_EXPR"
+	case *ExprValue:
+		return "VALUE_EXPR"
 	case *ArrLiteral:
 		return "ARRAY_LITERAL"
+	case *StructLiteral:
+		return "STRUCT_DEFINITION"
+	case *StructInstance:
+		return "STRUCT_INSTANCE"
+	case *EnumBody:
+		return "ENUM_DEFINITION"
+	case *FnLiteral:
+		return "FN_LITERAL"
+	case structFieldNode:
+		return fmt.Sprintf("FIELD_DEF [%s : %s]", node.name, node.typeName)
+	case instanceFieldNode:
+		return fmt.Sprintf("FIELD_INIT [%s]", node.name)
 	default:
-		return fmt.Sprintf("%T", n)
+		return fmt.Sprintf("NODE (%T)", n)
 	}
+}
+
+// Wrapper nodes for clearer struct/instance printing
+type structFieldNode struct {
+	pos
+	name, typeName string
+	val            Node
+}
+type instanceFieldNode struct {
+	pos
+	name string
+	val  Node
 }
 
 func getChildren(n Node) []Node {
 	var children []Node
+
+	// Helper to only add non-nil children
+	add := func(nodes ...Node) {
+		for _, node := range nodes {
+			if !isActuallyNil(node) {
+				children = append(children, node)
+			}
+		}
+	}
+
 	switch node := n.(type) {
 	case *Program:
 		for _, s := range node.Statements {
-			children = append(children, s)
+			add(s)
 		}
 	case *Block:
 		for _, s := range node.Statements {
-			children = append(children, s)
+			add(s)
 		}
 	case *ConstDecl:
-		if ev, ok := node.Value.(*ExprValue); ok {
-			children = append(children, ev.Expr)
-		}
-		if fl, ok := node.Value.(*FnLiteral); ok {
-			children = append(children, fl)
-		}
+		add(node.Value)
 	case *LetDecl:
-		if ev, ok := node.Value.(*ExprValue); ok {
-			children = append(children, ev.Expr)
-		}
+		add(node.Value)
 	case *AssignStmt:
-		if node.Target.IndexExpr != nil {
-			children = append(children, node.Target.IndexExpr)
-		}
-		children = append(children, node.Value)
+		add(node.Target.IndexExpr, node.Value)
 	case *IfStmt:
-		children = append(children, node.Cond, node.Then)
-		if node.ElseIf != nil {
-			children = append(children, node.ElseIf)
-		}
-		if node.Else != nil {
-			children = append(children, node.Else)
-		}
+		add(node.Cond, node.Then, node.ElseIf, node.Else)
 	case *ForIterStmt:
-		children = append(children, node.Iter, node.Body)
+		add(node.Iter, node.Body)
 	case *ForWhileStmt:
-		children = append(children, node.Cond, node.Body)
+		add(node.Cond, node.Body)
 	case *ForRepeatStmt:
-		children = append(children, node.Body, node.Cond)
+		add(node.Body, node.Cond)
 	case *ExprStmt:
-		children = append(children, node.Call)
+		add(node.Call)
 	case *BinaryExpr:
-		children = append(children, node.Left, node.Right)
+		add(node.Left, node.Right)
 	case *UnaryExpr:
-		children = append(children, node.Operand)
+		add(node.Operand)
+	case *GroupExpr:
+		add(node.Inner)
 	case *FnCall:
 		for _, a := range node.Args {
-			children = append(children, a)
+			add(a)
 		}
-	case *FnLiteral:
-		children = append(children, node.Body)
+	case *MethodCall:
+		for _, a := range node.Args {
+			add(a)
+		}
+	case *MemberAccess:
+		// Bare member access has no children nodes, it's a leaf
+	case *IndexExpr:
+		add(node.Index)
 	case *InputExpr:
-		children = append(children, node.Prompt)
+		add(node.Prompt)
 	case *PrintStmt:
 		for _, a := range node.Args {
-			children = append(children, a)
+			add(a)
 		}
+	case *ExprValue:
+		add(node.Expr)
+	case *ArrLiteral:
+		for _, el := range node.Elements {
+			add(el)
+		}
+	case *FnLiteral:
+		add(node.Body)
+	case *StructLiteral:
+		for _, f := range node.Fields {
+			add(structFieldNode{name: f.Name, typeName: f.TypeName, val: f.FnValue})
+		}
+	case *StructInstance:
+		for _, f := range node.Fields {
+			add(instanceFieldNode{name: f.Name, val: f.Value})
+		}
+	case structFieldNode:
+		add(node.val)
+	case instanceFieldNode:
+		add(node.val)
 	}
 	return children
 }

@@ -1,34 +1,45 @@
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:19:23 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_happy.bn
+ NEW RUN: 2026-07-02 15:32:48 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_happy.bn
 ================================================================================
 
 --- PARSE TREE ---
 └── PROGRAM
     ├── CONST_DECL [MAX_SIZE : int]
-    │   └── LITERAL (100)
+    │   └── VALUE_EXPR
+    │       └── LITERAL (100)
     ├── CONST_DECL [PI : float]
-    │   └── LITERAL (3.14159)
+    │   └── VALUE_EXPR
+    │       └── LITERAL (3.14159)
     ├── CONST_DECL [GREETING : string]
-    │   └── LITERAL ("Hello, Boran!")
+    │   └── VALUE_EXPR
+    │       └── LITERAL ("Hello, Boran!")
     ├── CONST_DECL [NEWLINE : char]
-    │   └── LITERAL ('\n')
+    │   └── VALUE_EXPR
+    │       └── LITERAL ('\n')
     ├── CONST_DECL [FLAG : bool]
-    │   └── LITERAL (true)
+    │   └── VALUE_EXPR
+    │       └── LITERAL (true)
     ├── CONST_DECL [Point : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [x : float]
+    │       └── FIELD_DEF [y : float]
     ├── CONST_DECL [Direction : enum]
+    │   └── ENUM_DEFINITION
     ├── CONST_DECL [distance : fn]
     │   └── FN_LITERAL
     │       └── BLOCK
     │           ├── LET_DECL [dx : float]
-    │           │   └── BINARY_OP (-)
-    │           │       ├── *main.MemberAccess
-    │           │       └── *main.MemberAccess
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (-)
+    │           │           ├── MEMBER_ACCESS [a.x]
+    │           │           └── MEMBER_ACCESS [b.x]
     │           ├── LET_DECL [dy : float]
-    │           │   └── BINARY_OP (-)
-    │           │       ├── *main.MemberAccess
-    │           │       └── *main.MemberAccess
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (-)
+    │           │           ├── MEMBER_ACCESS [a.y]
+    │           │           └── MEMBER_ACCESS [b.y]
     │           └── RETURN_STMT
     ├── CONST_DECL [greet : fn]
     │   └── FN_LITERAL
@@ -38,20 +49,42 @@
     │           └── PRINT_STMT
     │               └── IDENTIFIER (name)
     ├── LET_DECL [count : int]
-    │   └── LITERAL (0)
+    │   └── VALUE_EXPR
+    │       └── LITERAL (0)
     ├── LET_DECL [label : string]
-    │   └── LITERAL ("items")
+    │   └── VALUE_EXPR
+    │       └── LITERAL ("items")
     ├── LET_DECL [origin : Point]
+    │   └── STRUCT_INSTANCE
+    │       ├── FIELD_INIT [x]
+    │       │   └── VALUE_EXPR
+    │       │       └── LITERAL (0.0)
+    │       └── FIELD_INIT [y]
+    │           └── VALUE_EXPR
+    │               └── LITERAL (0.0)
     ├── LET_DECL [heading : Direction]
-    │   └── *main.MemberAccess
+    │   └── VALUE_EXPR
+    │       └── MEMBER_ACCESS [Direction.north]
     ├── ASSIGNMENT -> count
     │   └── BINARY_OP (-)
     │       ├── IDENTIFIER (MAX_SIZE)
     │       └── LITERAL (1)
     ├── LET_DECL [scores : array]
+    │   └── ARRAY_LITERAL
+    │       ├── VALUE_EXPR
+    │       │   └── LITERAL (10)
+    │       ├── VALUE_EXPR
+    │       │   └── LITERAL (20)
+    │       ├── VALUE_EXPR
+    │       │   └── LITERAL (30)
+    │       ├── VALUE_EXPR
+    │       │   └── LITERAL (40)
+    │       └── VALUE_EXPR
+    │           └── LITERAL (50)
     ├── LET_DECL [total : int]
-    │   └── LITERAL (0)
-    ├── FOR_ITER [in score]
+    │   └── VALUE_EXPR
+    │       └── LITERAL (0)
+    ├── FOR_ITER [var: score]
     │   ├── IDENTIFIER (scores)
     │   └── BLOCK
     │       └── ASSIGNMENT -> total
@@ -59,17 +92,19 @@
     │               ├── IDENTIFIER (total)
     │               └── IDENTIFIER (score)
     ├── LET_DECL [i : int]
-    │   └── LITERAL (0)
+    │   └── VALUE_EXPR
+    │       └── LITERAL (0)
     ├── FOR_WHILE
     │   ├── BINARY_OP (<)
     │   │   ├── IDENTIFIER (i)
     │   │   └── LITERAL (10)
     │   └── BLOCK
     │       └── EXPR_STMT
-    │           └── UNARY_OP (++)
+    │           └── UNARY_OP (++) (postfix)
     │               └── IDENTIFIER (i)
     ├── LET_DECL [j : int]
-    │   └── LITERAL (0)
+    │   └── VALUE_EXPR
+    │       └── LITERAL (0)
     ├── FOR_REPEAT_UNTIL
     │   ├── BLOCK
     │   │   └── ASSIGNMENT -> j
@@ -97,21 +132,24 @@
     │           └── PRINT_STMT
     │               └── LITERAL ("low")
     ├── LET_DECL [result : float]
-    │   └── FN_CALL (distance)
-    │       ├── IDENTIFIER (origin)
-    │       └── IDENTIFIER (origin)
+    │   └── VALUE_EXPR
+    │       └── FN_CALL (distance)
+    │           ├── IDENTIFIER (origin)
+    │           └── IDENTIFIER (origin)
     ├── IF_STMT
     │   ├── BINARY_OP (==)
     │   │   ├── IDENTIFIER (result)
     │   │   └── LITERAL (0.0)
     │   └── BLOCK
     │       ├── LET_DECL [msg : string]
-    │       │   └── LITERAL ("same point")
+    │       │   └── VALUE_EXPR
+    │       │       └── LITERAL ("same point")
     │       └── PRINT_STMT
     │           └── IDENTIFIER (msg)
     ├── LET_DECL [username : string]
-    │   └── INPUT_EXPR
-    │       └── LITERAL ("Enter name: ")
+    │   └── VALUE_EXPR
+    │       └── INPUT_EXPR
+    │           └── LITERAL ("Enter name: ")
     └── EXPR_STMT
         └── FN_CALL (greet)
             └── IDENTIFIER (username)
@@ -120,33 +158,33 @@
 Scope Level 0:
   NAME            | KIND       | TYPE       | LINE:COL  
   -------------------------------------------------------
+  i               | let        | int        | 45:5
+  j               | let        | int        | 51:5
   PI              | const      | float      | 5:7
-  NEWLINE         | const      | char       | 7:7
-  distance        | fn         | fn         | 17:7
-  MAX_SIZE        | const      | int        | 4:7
-  Point           | struct     | struct     | 11:7
-  greet           | fn         | fn         | 23:7
-  heading         | let        | Direction  | 32:5
+  GREETING        | const      | string     | 6:7
+  label           | let        | string     | 30:5
   scores          | let        | array      | 38:5
   total           | let        | int        | 39:5
   result          | let        | float      | 66:5
-  username        | let        | string     | 73:5
-  GREETING        | const      | string     | 6:7
-  origin          | let        | Point      | 31:5
-  i               | let        | int        | 45:5
-  Direction       | enum       | enum       | 14:7
-  count           | let        | int        | 29:5
-  label           | let        | string     | 30:5
-  j               | let        | int        | 51:5
   FLAG            | const      | bool       | 8:7
+  Point           | struct     | struct     | 11:7
+  Direction       | enum       | enum       | 14:7
+  distance        | fn         | fn         | 17:7
+  origin          | let        | Point      | 31:5
+  NEWLINE         | const      | char       | 7:7
+  count           | let        | int        | 29:5
+  username        | let        | string     | 73:5
+  MAX_SIZE        | const      | int        | 4:7
+  greet           | fn         | fn         | 23:7
+  heading         | let        | Direction  | 32:5
 
   Scope Level 1:
     NAME            | KIND       | TYPE       | LINE:COL  
     -------------------------------------------------------
-    dy              | let        | float      | 19:9
     a               | param      | Point      | 17:24
     b               | param      | Point      | 17:35
     dx              | let        | float      | 18:9
+    dy              | let        | float      | 19:9
 
   Scope Level 1:
     NAME            | KIND       | TYPE       | LINE:COL  
@@ -161,25 +199,28 @@ Scope Level 0:
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:19:23 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_invalid_float.bn
+ NEW RUN: 2026-07-02 15:32:48 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_invalid_float.bn
 ================================================================================
 
 --- PARSE TREE ---
 └── PROGRAM
     ├── LET_DECL [a : float]
-    │   └── LITERAL (3.14)
+    │   └── VALUE_EXPR
+    │       └── LITERAL (3.14)
     ├── LET_DECL [b : float]
-    │   └── LITERAL (.75)
+    │   └── VALUE_EXPR
+    │       └── LITERAL (.75)
     └── LET_DECL [c : float]
-        └── LITERAL (0.0)
+        └── VALUE_EXPR
+            └── LITERAL (0.0)
 
 --- SYMBOL TABLE ---
 Scope Level 0:
   NAME            | KIND       | TYPE       | LINE:COL  
   -------------------------------------------------------
+  a               | let        | float      | 3:5
   b               | let        | float      | 4:5
   c               | let        | float      | 5:5
-  a               | let        | float      | 3:5
 
 
 --- SYNTAX ERRORS (5) ---
@@ -191,19 +232,23 @@ Scope Level 0:
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:19:23 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_invalid_string.bn
+ NEW RUN: 2026-07-02 15:32:48 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_invalid_string.bn
 ================================================================================
 
 --- PARSE TREE ---
 └── PROGRAM
     ├── LET_DECL [a : string]
-    │   └── LITERAL ("Hello\nWorld")
+    │   └── VALUE_EXPR
+    │       └── LITERAL ("Hello\nWorld")
     ├── LET_DECL [b : string]
-    │   └── LITERAL ("tab\there")
+    │   └── VALUE_EXPR
+    │       └── LITERAL ("tab\there")
     ├── LET_DECL [c : string]
-    │   └── LITERAL ("backslash\\end")
+    │   └── VALUE_EXPR
+    │       └── LITERAL ("backslash\\end")
     └── LET_DECL [d : string]
-        └── LITERAL ("quote\"inside")
+        └── VALUE_EXPR
+            └── LITERAL ("quote\"inside")
 
 --- SYMBOL TABLE ---
 Scope Level 0:
@@ -220,17 +265,20 @@ Scope Level 0:
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:19:23 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_multichar_char.bn
+ NEW RUN: 2026-07-02 15:32:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_multichar_char.bn
 ================================================================================
 
 --- PARSE TREE ---
 └── PROGRAM
     ├── LET_DECL [a : char]
-    │   └── LITERAL ('x')
+    │   └── VALUE_EXPR
+    │       └── LITERAL ('x')
     ├── LET_DECL [b : char]
-    │   └── LITERAL ('\n')
+    │   └── VALUE_EXPR
+    │       └── LITERAL ('\n')
     └── LET_DECL [c : char]
-        └── LITERAL ('\\')
+        └── VALUE_EXPR
+            └── LITERAL ('\\')
 
 --- SYMBOL TABLE ---
 Scope Level 0:
@@ -250,22 +298,24 @@ Scope Level 0:
 
 
 ================================================================================
- NEW RUN: 2026-07-02 15:19:23 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_unclosed_string.bn
+ NEW RUN: 2026-07-02 15:32:49 | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_unclosed_string.bn
 ================================================================================
 
 --- PARSE TREE ---
 └── PROGRAM
     ├── LET_DECL [a : string]
-    │   └── LITERAL ("this is fine")
+    │   └── VALUE_EXPR
+    │       └── LITERAL ("this is fine")
     └── LET_DECL [d : string]
-        └── LITERAL ("closed")
+        └── VALUE_EXPR
+            └── LITERAL ("closed")
 
 --- SYMBOL TABLE ---
 Scope Level 0:
   NAME            | KIND       | TYPE       | LINE:COL  
   -------------------------------------------------------
-  d               | let        | string     | 9:5
   a               | let        | string     | 3:5
+  d               | let        | string     | 9:5
 
 
 --- SYNTAX ERRORS (2) ---
