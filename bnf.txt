@@ -118,11 +118,18 @@
                                    | 'input' '(' <expr> ')'             # FIXED: input as expression
                                    | <identifier> <primary_tail>
 
-<this_tail>                       ::= '.' <identifier> <method_tail> | ε
-<primary_tail>                    ::= '(' <arg_list> ')'                
-                                    | '[' <expr> ']'                     
-                                    | '.' <identifier> <method_tail>     
-                                    | ε                                  
+# Chaining
+
+<primary_tail>                    ::= '(' <arg_list> ')' <chain_tail>
+                                    | <chain_tail>
+
+<this_tail>                       ::= '.' <identifier> <method_tail> <chain_tail>
+                                    | ε
+
+<chain_tail>                      ::= '[' <expr> ']' <chain_tail>
+                                    | '.' <identifier> <method_tail> <chain_tail>
+                                    | ε
+
 <method_tail>                     ::= '(' <arg_list> ')' | ε
 
 <arg_list>                          ::= <args> | ε
