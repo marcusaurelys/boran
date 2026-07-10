@@ -64,7 +64,7 @@ func getNodeLabel(n Node) string {
 	case *LetDecl:
 		return fmt.Sprintf("LET_DECL [%s : %s]", node.Name, node.TypeName)
 	case *AssignStmt:
-		return fmt.Sprintf("ASSIGNMENT -> %s", node.Target.Name)
+		return fmt.Sprintf("ASSIGNMENT -> %s", node.Target.String())
 	case *IfStmt:
 		return "IF_STMT"
 	case *ForIterStmt:
@@ -79,6 +79,10 @@ func getNodeLabel(n Node) string {
 		return "RETURN_STMT"
 	case *ExprStmt:
 		return "EXPR_STMT"
+	case *BreakStmt:
+		return "BREAK_STMT"
+	case *ContinueStmt:
+		return "CONTINUE_STMT"
 	case *BinaryExpr:
 		return fmt.Sprintf("BINARY_OP (%s)", node.Op)
 	case *UnaryExpr:
@@ -118,7 +122,11 @@ func getNodeLabel(n Node) string {
 	case *FnLiteral:
 		return "FN_LITERAL"
 	case structFieldNode:
-		return fmt.Sprintf("FIELD_DEF [%s : %s]", node.name, node.typeName)
+		kind := "const"
+		if node.mutable {
+			kind = "let"
+		}
+		return fmt.Sprintf("FIELD_DEF [%s %s : %s]", kind, node.name, node.typeName)
 	case instanceFieldNode:
 		return fmt.Sprintf("FIELD_INIT [%s]", node.name)
 	default:
@@ -130,6 +138,7 @@ func getNodeLabel(n Node) string {
 type structFieldNode struct {
 	pos
 	name, typeName string
+	mutable        bool
 	val            Node
 }
 type instanceFieldNode struct {
@@ -164,7 +173,12 @@ func getChildren(n Node) []Node {
 	case *LetDecl:
 		add(node.Value)
 	case *AssignStmt:
-		add(node.Target.IndexExpr, node.Value)
+		for _, suf := range node.Target.Suffixes {
+			if suf.Kind == SuffixIndex {
+				add(suf.Index)
+			}
+		}
+		add(node.Value)
 	case *IfStmt:
 		add(node.Cond, node.Then, node.ElseIf, node.Else)
 	case *ForIterStmt:
@@ -210,7 +224,7 @@ func getChildren(n Node) []Node {
 		add(node.Body)
 	case *StructLiteral:
 		for _, f := range node.Fields {
-			add(structFieldNode{name: f.Name, typeName: f.TypeName, val: f.FnValue})
+			add(structFieldNode{name: f.Name, typeName: f.TypeName, mutable: f.Mutable, val: f.Default})
 		}
 	case *StructInstance:
 		for _, f := range node.Fields {
@@ -224,24 +238,58 @@ func getChildren(n Node) []Node {
 	return children
 }
 
-// PrintSymbolTable prints the symbol table in a clean, aligned format
 func PrintSymbolTable(scope *Scope, depth int, w io.Writer) {
 	indent := strings.Repeat("  ", depth)
 
-	// Print headers for this scope level if it has symbols
 	if len(scope.Symbols) > 0 {
 		fmt.Fprintf(w, "%sScope Level %d:\n", indent, depth)
-		fmt.Fprintf(w, "%s  %-15s | %-10s | %-10s | %-10s\n", indent, "NAME", "KIND", "TYPE", "LINE:COL")
-		fmt.Fprintf(w, "%s  %s\n", indent, strings.Repeat("-", 55))
+		fmt.Fprintf(w, "%s  %-15s | %-10s | %-10s | %-24s | %-10s\n",
+			indent, "NAME", "KIND", "TYPE", "DETAILS", "LINE:COL")
+		fmt.Fprintf(w, "%s  %s\n", indent, strings.Repeat("-", 80))
 
 		for name, sym := range scope.Symbols {
-			fmt.Fprintf(w, "%s  %-15s | %-10s | %-10s | %d:%d\n",
-				indent, name, sym.Kind, sym.TypeName, sym.Line, sym.Col)
+			fmt.Fprintf(w, "%s  %-15s | %-10s | %-10s | %-24s | %d:%d\n",
+				indent, name, sym.Kind, sym.TypeName, symbolDetails(sym), sym.Line, sym.Col)
 		}
 		fmt.Fprintln(w)
 	}
 
 	for _, child := range scope.Children {
 		PrintSymbolTable(child, depth+1, w)
+	}
+}
+
+// symbolDetails surfaces info that TypeName's flat tag loses: an array's
+// length and element type, or a pointer's pointee type.
+func symbolDetails(sym *Symbol) string {
+	if sym.Type == nil {
+		return ""
+	}
+	switch sym.Type.Kind {
+	case "array":
+		return fmt.Sprintf("length=%d, elem=%s", sym.Type.ArrLen, describeType(sym.Type.Elem))
+	case "ptr":
+		return fmt.Sprintf("points to %s", describeType(sym.Type.Elem))
+	default:
+		return ""
+	}
+}
+
+// describeType renders a DatatypeNode recursively, e.g. "int[5]", "float*",
+// "int*[3]". Used for DETAILS, so nested array-of-pointer / pointer-to-array
+// combinations stay readable instead of just showing the outermost tag.
+func describeType(t *DatatypeNode) string {
+	if t == nil {
+		return "?"
+	}
+	switch t.Kind {
+	case "array":
+		return fmt.Sprintf("%s[%d]", describeType(t.Elem), t.ArrLen)
+	case "ptr":
+		return fmt.Sprintf("%s*", describeType(t.Elem))
+	case "named":
+		return t.Name
+	default:
+		return t.Kind
 	}
 }

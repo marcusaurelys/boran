@@ -37,7 +37,8 @@ func (k SymbolKind) String() string {
 type Symbol struct {
 	Name     string
 	Kind     SymbolKind
-	TypeName string // resolved datatype / user-defined type name
+	TypeName string        // tag form, e.g. "array", "ptr", "int", or a named type
+	Type     *DatatypeNode // full structured type — used to recover array length / pointer element type
 	Line     int
 	Col      int
 }
@@ -109,8 +110,8 @@ func (t *SymbolTable) ExitScope() {
 
 // Declare registers a symbol in the current scope, recording (rather than
 // panicking on) any redeclaration error so parsing can continue.
-func (t *SymbolTable) Declare(name string, kind SymbolKind, typeName string, line, col int) {
-	err := t.Current.Declare(&Symbol{Name: name, Kind: kind, TypeName: typeName, Line: line, Col: col})
+func (t *SymbolTable) Declare(name string, kind SymbolKind, typeName string, dtype *DatatypeNode, line, col int) {
+	err := t.Current.Declare(&Symbol{Name: name, Kind: kind, TypeName: typeName, Type: dtype, Line: line, Col: col})
 	if err != nil {
 		t.Errors = append(t.Errors, err.Error())
 	}

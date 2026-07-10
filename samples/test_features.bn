@@ -1,0 +1,129 @@
+# ==========================================
+# BORAN — ESOTERIC FEATURES DEMONSTRATION
+# structs composed of functions, higher-order
+# functions, pointers, and chained lvalues
+# (function chaining, e.g. f()(), is NOT used
+#  here — intentionally unimplemented for now)
+# ==========================================
+
+# 1. Enum used as a tag for branching later on.
+const Direction : enum = { north, east, south, west };
+
+# 2. A struct made almost entirely of functions —
+#    fields hold behavior, not just data.
+const Vector2 : struct = {
+    let x : float = 0.0,
+    let y : float = 0.0,
+
+    # 'const' method: reads fields, never reassigns them.
+    const magnitude : fn = () : float => {
+        return this.x * this.x + this.y * this.y;
+    },
+
+    # 'let' method: rebinds the whole instance via 'this = {...}'
+    # instead of mutating fields one at a time.
+    let scale : fn = (factor : float) => {
+        this = { x : this.x * factor, y : this.y * factor };
+    },
+
+    # A method composed out of other methods on 'this' — struct
+    # fields calling struct fields.
+    let normalize : fn = () => {
+        let m : float = this.magnitude();
+        if m > 0.0 {
+            this.scale(1.0 / m);
+        }
+    }
+};
+
+# 3. Nested struct composition: a field whose type is itself
+#    a struct, plus chained member-access assignment.
+const Body : struct = {
+    let position : Vector2 = { x : 0.0, y : 0.0 },
+    let velocity : Vector2 = { x : 1.0, y : 1.0 },
+
+    let step : fn = () => {
+        this.position.x = this.position.x + this.velocity.x;
+        this.position.y = this.position.y + this.velocity.y;
+    }
+};
+
+# 4. Higher-order functions: a 'fn'-typed parameter, invoked by
+#    the function that owns it. This is the same idea that makes
+#    'print' feel native — just lifted to user-defined functions.
+const apply_twice : fn = (op : fn, seed : int) : int => {
+    let once : int = op(seed);
+    let twice : int = op(once);
+    return twice;
+};
+
+const doubleIt : fn = (n : int) : int => {
+    return n * 2;
+};
+
+# 5. Main entry point.
+const main : fn = () : int => {
+
+    # Array of struct instances, walked with the unified 'for'.
+    let bodies : Body[2] = [
+        { position : { x : 0.0, y : 0.0 }, velocity : { x : 1.0, y : 0.0 } },
+        { position : { x : 5.0, y : 5.0 }, velocity : { x : 0.0, y : -1.0 } }
+    ];
+
+    for b in bodies {
+        b.step();
+    }
+
+    # Chained index access + chained index assignment.
+    let grid : int[4] = [1, 2, 3, 4];
+    grid[0] = grid[0] + grid[1];
+
+    # Struct methods calling struct methods (composition, not chaining).
+    let v : Vector2 = { x : 3.0, y : 4.0 };
+    v.normalize();
+    print("Normalized magnitude: ", v.magnitude());
+
+    # Higher-order function usage: passing a function as an argument.
+    let result : int = apply_twice(doubleIt, 5);
+    print("apply_twice(doubleIt, 5) = ", result);
+
+    # Function values stored and called later — NOT chained, since
+    # f()() is intentionally out of scope for now.
+    let op : fn = doubleIt;
+    let ten : int = op(5);
+    print("op(5) = ", ten);
+
+    # Pointers: address-of and dereference (read-only for now —
+    # writing through a dereferenced pointer, *p = x, isn't
+    # supported by the current lvalue grammar).
+    let health : int = 10;
+    let hp_ptr : int* = &health;
+    print("Health via pointer: ", *hp_ptr);
+
+    # Enum-driven branching.
+    let facing : Direction = Direction.north;
+    if facing == Direction.north {
+        print("Facing north.");
+    } else if facing == Direction.east {
+        print("Facing east.");
+    } else {
+        print("Facing elsewhere.");
+    }
+
+    # break / continue inside the unified 'for' (while-form).
+    let i : int = 0;
+    for i < 10 {
+        i = i + 1;
+        if i == 3 {
+            continue;
+        }
+        if i == 7 {
+            break;
+        }
+        print("i = ", i);
+    }
+
+    return 0;
+};
+
+main();

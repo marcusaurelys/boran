@@ -38,18 +38,7 @@ func printNode(n Node, depth int) string {
 		res += fmt.Sprintf("%sLET %s : %s =\n%s", indent, node.Name, node.TypeName, printValue(node.Value, depth+1))
 
 	case *AssignStmt:
-		target := ""
-		switch node.Target.Kind {
-		case TargetIdent:
-			target = node.Target.Name
-		case TargetIndex:
-			target = fmt.Sprintf("%s[%s]", node.Target.Name, printNode(node.Target.IndexExpr, 0))
-		case TargetMember:
-			target = fmt.Sprintf("%s.%s", node.Target.Name, node.Target.Field)
-		case TargetThisMember:
-			target = fmt.Sprintf("this.%s", node.Target.Field)
-		}
-		res += fmt.Sprintf("%sASSIGN %s =\n%s", indent, target, printNode(node.Value, depth+1))
+		res += fmt.Sprintf("%sASSIGN %s =\n%s", indent, node.Target.String(), printValue(node.Value, depth+1))
 
 	case *ExprStmt:
 		res += indent + "EXPR_STMT:\n" + printNode(node.Call, depth+1)
@@ -83,6 +72,12 @@ func printNode(n Node, depth int) string {
 		} else {
 			res += indent + "RETURN\n" + printNode(node.Value, depth+1)
 		}
+
+	case *BreakStmt:
+		res += indent + "BREAK\n"
+
+	case *ContinueStmt:
+		res += indent + "CONTINUE\n"
 
 	// ---- Expressions ----
 

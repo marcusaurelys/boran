@@ -1,5 +1,7 @@
 package main
 
+import "strings"
+
 type Node interface {
 	Pos() (line, col int)
 }
@@ -54,10 +56,19 @@ func (d *LetDecl) stmtNode() {}
 //	ident[expr] = expr;
 //	ident.ident = expr;
 //	this.ident = expr;
+//
+// AssignStmt covers assignment to any lvalue reachable via <lvalue_tail>:
+//
+//	ident = value;
+//	this = value;
+//	ident.field1.field2 = value;
+//	ident[expr].field = value;
+//	this.field[expr] = value;
+//	... any chain of '.' ident and '[' expr ']' suffixes, in any order.
 type AssignStmt struct {
 	pos
 	Target AssignTarget
-	Value  Expr
+	Value  Value
 }
 
 func (s *AssignStmt) stmtNode() {}
@@ -65,18 +76,54 @@ func (s *AssignStmt) stmtNode() {}
 type AssignTargetKind int
 
 const (
-	TargetIdent AssignTargetKind = iota
-	TargetIndex
-	TargetMember
-	TargetThisMember
+	TargetIdent AssignTargetKind = iota // ident <suffixes>
+	TargetThis                          // this <suffixes>
 )
+
+type LvalueSuffixKind int
+
+const (
+	SuffixField LvalueSuffixKind = iota // '.' identifier
+	SuffixIndex                         // '[' expr ']'
+)
+
+// LvalueSuffix is one segment of a chained assignment target, applied in
+// source order (leftmost suffix first).
+type LvalueSuffix struct {
+	pos
+	Kind  LvalueSuffixKind
+	Field string // populated when Kind == SuffixField
+	Index Expr   // populated when Kind == SuffixIndex
+}
 
 type AssignTarget struct {
 	pos
-	Kind      AssignTargetKind
-	Name      string // identifier name (TargetIdent, TargetIndex, TargetMember)
-	IndexExpr Expr   // populated when Kind == TargetIndex
-	Field     string // populated when Kind == TargetMember / TargetThisMember
+	Kind     AssignTargetKind
+	Name     string // identifier name, populated when Kind == TargetIdent
+	Suffixes []LvalueSuffix
+}
+
+// String renders a target like "a[i].b.c" for diagnostics and printing.
+func (t AssignTarget) String() string {
+	var sb strings.Builder
+	switch t.Kind {
+	case TargetIdent:
+		sb.WriteString(t.Name)
+	case TargetThis:
+		sb.WriteString("this")
+	}
+	for _, suf := range t.Suffixes {
+		switch suf.Kind {
+		case SuffixField:
+			sb.WriteString(".")
+			sb.WriteString(suf.Field)
+		case SuffixIndex:
+			sb.WriteString("[")
+			sb.WriteString(strings.TrimSpace(printNode(suf.Index, 0)))
+			sb.WriteString("]")
+		}
+	}
+	return sb.String()
 }
 
 type IfStmt struct {
@@ -128,6 +175,18 @@ type ReturnStmt struct {
 }
 
 func (s *ReturnStmt) stmtNode() {}
+
+type BreakStmt struct {
+	pos
+}
+
+func (s *BreakStmt) stmtNode() {}
+
+type ContinueStmt struct {
+	pos
+}
+
+func (s *ContinueStmt) stmtNode() {}
 
 // ExprStmt wraps a bare function/method call used as a statement.
 type ExprStmt struct {
@@ -187,8 +246,9 @@ func (v *StructLiteral) valueNode() {}
 type StructFieldInit struct {
 	pos
 	Name     string
-	TypeName string     // datatype keyword, or "fn" literal signature rendered as "fn"
-	FnValue  *FnLiteral // populated when the field's value is a fn_literal
+	Mutable  bool   // true for 'let' fields, false for 'const' fields
+	TypeName string // datatype keyword ("int", "fn", ...) or user-defined type name
+	Default  Value  // nil only for a 'let' field with no '=' initializer
 }
 
 // StructInstance is a value of a previously declared struct type:

@@ -73,4 +73,11 @@ func main() {
 	}
 
 	fmt.Printf("Analysis appended to 'parse_results.txt' (Run: %s)\n", timestamp)
+
+
+	for i:=0;i<5;i++{
+fmt.Printf("%d"  ,i)
+	}
+
+
 }
