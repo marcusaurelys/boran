@@ -88,16 +88,14 @@ const main : fn = () : int => {
     print("apply_twice(doubleIt, 5) = ", result);
 
     # Function values stored and called later — NOT chained, since
-    # f()() is intentionally out of scope for now.
     let op : fn = doubleIt;
     let ten : int = op(5);
     print("op(5) = ", ten);
 
-    # Pointers: address-of and dereference (read-only for now —
-    # writing through a dereferenced pointer, *p = x, isn't
-    # supported by the current lvalue grammar).
+    # Pointers: address-of and dereference
     let health : int = 10;
     let hp_ptr : int* = &health;
+    *hp_ptr = health + 5;
     print("Health via pointer: ", *hp_ptr);
 
     # Enum-driven branching.

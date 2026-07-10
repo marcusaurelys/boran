@@ -101,11 +101,15 @@ type AssignTarget struct {
 	Kind     AssignTargetKind
 	Name     string // identifier name, populated when Kind == TargetIdent
 	Suffixes []LvalueSuffix
+	Deref    int
 }
 
 // String renders a target like "a[i].b.c" for diagnostics and printing.
 func (t AssignTarget) String() string {
 	var sb strings.Builder
+	for i := 0; i < t.Deref; i++ {
+		sb.WriteString("*")
+	}
 	switch t.Kind {
 	case TargetIdent:
 		sb.WriteString(t.Name)

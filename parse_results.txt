@@ -1,7 +1,7 @@
 
 
 ================================================================================
- NEW RUN: 2026-07-10 18:53:59 | Elapsed: 0s | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\new_samples\test_chaining.bn
+ NEW RUN: 2026-07-10 19:07:02 | Elapsed: 0s | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_chaining.bn
 ================================================================================
 
 --- PARSE TREE ---
@@ -70,18 +70,18 @@
 Scope Level 0:
   NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
   --------------------------------------------------------------------------------
+  qx              | let        | float      |                          | 16:5
   Point           | struct     | struct     |                          | 3:7
   Line            | struct     | struct     |                          | 4:7
   a               | let        | Line       |                          | 6:5
   px              | let        | float      |                          | 9:5
   matrix          | let        | array      | length=2, elem=int       | 12:5
   cell            | let        | int        |                          | 13:5
-  qx              | let        | float      |                          | 16:5
 
 
 
 ================================================================================
- NEW RUN: 2026-07-10 18:54:00 | Elapsed: 521.8µs | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\new_samples\test_features.bn
+ NEW RUN: 2026-07-10 19:07:03 | Elapsed: 578.2µs | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_features.bn
 ================================================================================
 
 --- PARSE TREE ---
@@ -296,6 +296,11 @@ Scope Level 0:
     │           │   └── VALUE_EXPR
     │           │       └── UNARY_OP (&)
     │           │           └── IDENTIFIER (health)
+    │           ├── ASSIGNMENT -> *hp_ptr
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── IDENTIFIER (health)
+    │           │           └── LITERAL (5)
     │           ├── PRINT_STMT
     │           │   ├── LITERAL ("Health via pointer: ")
     │           │   └── UNARY_OP (*)
@@ -379,10 +384,10 @@ Scope Level 0:
   Scope Level 1:
     NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
     --------------------------------------------------------------------------------
-    op              | param      | fn         |                          | 54:27
     seed            | param      | int        |                          | 54:36
     once            | let        | int        |                          | 55:9
     twice           | let        | int        |                          | 56:9
+    op              | param      | fn         |                          | 54:27
 
   Scope Level 1:
     NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
@@ -392,21 +397,21 @@ Scope Level 0:
   Scope Level 1:
     NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
     --------------------------------------------------------------------------------
-    v               | let        | Vector2    |                          | 82:9
-    op              | let        | fn         |                          | 92:9
-    health          | let        | int        |                          | 99:9
-    grid            | let        | array      | length=4, elem=int       | 78:9
+    op              | let        | fn         |                          | 91:9
+    ten             | let        | int        |                          | 92:9
+    health          | let        | int        |                          | 96:9
+    facing          | let        | Direction  |                          | 102:9
+    i               | let        | int        |                          | 112:9
     result          | let        | int        |                          | 87:9
-    ten             | let        | int        |                          | 93:9
-    hp_ptr          | let        | ptr        | points to int            | 100:9
-    facing          | let        | Direction  |                          | 104:9
-    i               | let        | int        |                          | 114:9
+    grid            | let        | array      | length=4, elem=int       | 78:9
+    v               | let        | Vector2    |                          | 82:9
+    hp_ptr          | let        | ptr        | points to int            | 97:9
     bodies          | let        | array      | length=2, elem=Body      | 68:9
 
 
 
 ================================================================================
- NEW RUN: 2026-07-10 18:54:00 | Elapsed: 575.1µs | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\new_samples\test_happy.bn
+ NEW RUN: 2026-07-10 19:07:03 | Elapsed: 0s | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_happy.bn
 ================================================================================
 
 --- PARSE TREE ---
@@ -557,10 +562,10 @@ Scope Level 0:
 Scope Level 0:
   NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
   --------------------------------------------------------------------------------
-  calculate_bonus | fn         | fn         |                          | 22:7
-  main            | fn         | fn         |                          | 27:7
   Status          | enum       | enum       |                          | 7:7
   Player          | struct     | struct     |                          | 9:7
+  calculate_bonus | fn         | fn         |                          | 22:7
+  main            | fn         | fn         |                          | 27:7
 
   Scope Level 1:
     NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
@@ -571,10 +576,10 @@ Scope Level 0:
   Scope Level 1:
     NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
     --------------------------------------------------------------------------------
-    name            | let        | string     |                          | 30:9
-    p1              | let        | Player     |                          | 34:9
     rewards         | let        | array      | length=3, elem=int       | 42:9
     counter         | let        | int        |                          | 48:9
+    name            | let        | string     |                          | 30:9
+    p1              | let        | Player     |                          | 34:9
 
     Scope Level 2:
       NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
@@ -584,20 +589,47 @@ Scope Level 0:
 
 
 ================================================================================
- NEW RUN: 2026-07-10 18:54:00 | Elapsed: 0s | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\new_samples\test_syntax_errors.bn
+ NEW RUN: 2026-07-10 19:07:03 | Elapsed: 588.5µs | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_syntax_errors.bn
 ================================================================================
 
 --- PARSE TREE ---
 └── PROGRAM
+    ├── CONST_DECL [Point : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [let x : float]
+    │       └── FIELD_DEF [let y : float]
+    ├── LET_DECL [y : int]
+    │   └── VALUE_EXPR
+    │       └── BINARY_OP (-)
+    │           ├── IDENTIFIER (x)
+    │           └── PAREN_EXPR
+    │               └── BINARY_OP (-)
+    │                   ├── LITERAL (4)
+    │                   └── LITERAL (0)
+    └── LET_DECL [p : Point]
+        └── STRUCT_INSTANCE
+            ├── FIELD_INIT [x]
+            │   └── VALUE_EXPR
+            │       └── IDENTIFIER (x)
+            └── FIELD_INIT [y]
+                └── VALUE_EXPR
+                    └── LITERAL (5)
 
 --- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  Point           | struct     | struct     |                          | 1:7
 
---- SYNTAX ERRORS (8) ---
-   1:26: expected 'const' or 'let' to start a struct field, found IDENTIFIER ("x")
-   1:48: unexpected token SEMICOLON (";") in expression
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    y               | let        | int        |                          | 7:9
+    p               | let        | Point      |                          | 9:9
+
+
+--- SYNTAX ERRORS (4) ---
    3:22: expected ARROW but found LBRACE ("{")
    5:11: invalid assignment target
-   7:29: expected RPAREN but found SEMICOLON (";")
-   9:34: expected RBRACE but found SEMICOLON (";")
    10:1: unexpected token RBRACE ("}") in expression
    10:2: unexpected token SEMICOLON (";") in expression

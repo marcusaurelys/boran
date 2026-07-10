@@ -171,6 +171,7 @@ Lexical Rules.
 
 <lvalue>                             ::= <identifier> <lvalue_tail>
                                        | 'this' <lvalue_tail>
+                                       | '*' <lvalue>
 
 <lvalue_tail>                        ::= '.' <identifier> <lvalue_tail>
                                        | '[' <expr> ']' <lvalue_tail>

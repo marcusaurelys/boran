@@ -185,7 +185,7 @@ func (p *Parser) parseStmt() Stmt {
 	//    A single token of lookahead can't tell these apart once chaining
 	//    is involved, so parse the full postfix expression first and then
 	//    decide based on what follows it.
-	if tok.Type == TOKEN_IDENTIFIER || (tok.Type == TOKEN_KEYWORD && tok.Literal == "this") {
+	if tok.Type == TOKEN_IDENTIFIER || (tok.Type == TOKEN_KEYWORD && tok.Literal == "this") || tok.Type == TOKEN_OP_MUL {
 		return p.parseIdentOrThisStmt()
 	}
 
@@ -231,16 +231,20 @@ func (p *Parser) parseIdentOrThisStmt() Stmt {
 	return &ExprStmt{pos: startPos, Call: expr}
 }
 
-// exprToAssignTarget converts an already-parsed expression into an
-// AssignTarget, per <lvalue> ::= (<identifier> | 'this') <lvalue_tail>.
-// It walks the parsed chain (MemberAccess / IndexExpr) from the outside in,
-// collecting suffixes, then reverses them into source order once it bottoms
-// out at an Identifier or ThisExpr base. Anything else at the base (e.g. a
-// call result) isn't a valid lvalue per the grammar and is a parse error.
 func (p *Parser) exprToAssignTarget(e Expr, at pos) AssignTarget {
-	var suffixes []LvalueSuffix
 	cur := e
+	derefCount := 0
 
+	for {
+		u, ok := cur.(*UnaryExpr)
+		if !ok || u.Op != "*" || u.Postfix {
+			break
+		}
+		derefCount++
+		cur = u.Operand
+	}
+
+	var suffixes []LvalueSuffix
 loop:
 	for {
 		switch v := cur.(type) {
@@ -263,9 +267,9 @@ loop:
 
 	switch base := cur.(type) {
 	case *Identifier:
-		return AssignTarget{pos: at, Kind: TargetIdent, Name: base.Name, Suffixes: suffixes}
+		return AssignTarget{pos: at, Kind: TargetIdent, Name: base.Name, Suffixes: suffixes, Deref: derefCount}
 	case *ThisExpr:
-		return AssignTarget{pos: at, Kind: TargetThis, Suffixes: suffixes}
+		return AssignTarget{pos: at, Kind: TargetThis, Suffixes: suffixes, Deref: derefCount}
 	}
 
 	p.fail(p.current(), "invalid assignment target")
