@@ -29,7 +29,7 @@ func runIRPipeline(prog *Program, w io.Writer, treeOutput string) {
 	stmts := prog.Statements
 	if fl, ok := findFunctionBody(prog, "main"); ok {
 		stmts = fl.Body.Statements
-		fmt.Fprintln(mirror, "(lowering the body of 'main' -- function calls have no TAC calling convention here, so nested helper-function calls are reported as unsupported)")
+		fmt.Fprintln(mirror, "(main() function found; note: function calls are unsupported currently so all functions should be inlined into main() :3 )")
 	}
 
 	gen := NewIRGen()
