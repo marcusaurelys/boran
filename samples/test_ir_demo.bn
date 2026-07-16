@@ -1,0 +1,61 @@
+# ================================================================
+# BORAN — IR / OPTIMIZATION DEMO
+# Everything lives directly inside main()'s body, on purpose: the
+# IR pipeline lowers main() specifically, and function *calls* have
+# no TAC calling convention here (see ir.go's header comment), so a
+# separate helper function called from main would just show up as
+# "unsupported" instead of being lowered. Keeping the logic inline
+# means the whole body lowers cleanly, with nothing skipped.
+#
+# Patterns below are deliberately written so each optimization pass
+# has something visible to do:
+#   - constant folding:      "2 + 3 * 4" is fully known at compile time
+#   - constant propagation:  reading back a var assigned a literal
+#   - common subexpr elim.:  recomputing "n * doubled" twice in a row
+#   - dead code elimination: an unreachable print after 'return',
+#                             and a temp that's computed but unused
+#
+# Run with:  ./boran test_ir_demo.bn --ir
+# ================================================================
+
+const main : fn = () : int => {
+    let n : int = 5;
+
+    # constant folding: this whole expression is foldable at compile time
+    let base : int = 2 + 3 * 4;
+
+    # constant propagation: 'base' is known-constant after the line above
+    let doubled : int = base + base;
+
+    # common subexpression: 'n * doubled' computed twice in a row
+    let area1 : int = n * doubled;
+    let area2 : int = n * doubled;
+    let total : int = area1 + area2;
+
+    # dead code: 'unused' is computed but never read afterward
+    let unused : int = total * 99;
+
+    if total > 50 {
+        print("total is large:", total);
+    } else {
+        print("total is small:", total);
+    }
+
+    let i : int = 0;
+    for i < 5 {
+        if i == 2 {
+            i = i + 1;
+            continue;
+        }
+        print("loop i =", i);
+        i = i + 1;
+    }
+
+    return total;
+
+    # unreachable: this can never execute, since the return above
+    # always fires first on every path through this function
+    print("this line can never run");
+};
+
+main();

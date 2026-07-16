@@ -27,16 +27,21 @@ func printBlockScopes(scope *Scope, depth int) {
 
 func main() {
 	if len(os.Args) < 2 || len(os.Args) > 3 {
-		fmt.Fprintln(os.Stderr, "usage: boran <source_file> [--step]")
+		fmt.Fprintln(os.Stderr, "usage: boran <source_file> [--step | --ir]")
 		os.Exit(1)
 	}
 	stepMode := false
+	irMode := false
 	if len(os.Args) == 3 {
-		if os.Args[2] != "--step" {
-			fmt.Fprintln(os.Stderr, "usage: boran <source_file> [--step]")
+		switch os.Args[2] {
+		case "--step":
+			stepMode = true
+		case "--ir":
+			irMode = true
+		default:
+			fmt.Fprintln(os.Stderr, "usage: boran <source_file> [--step | --ir]")
 			os.Exit(1)
 		}
-		stepMode = true
 	}
 
 	data, err := os.ReadFile(os.Args[1])
@@ -99,6 +104,7 @@ func main() {
 	//    Running a program full of unresolved names/type errors would just
 	//    produce a wall of cascading runtime errors on top of diagnostics
 	//    already reported above.
+	programOutputBuf := &bytes.Buffer{}
 	if len(parser.Errors) == 0 && len(semErrors) == 0 {
 		fmt.Fprintln(outFile, "\n--- PROGRAM OUTPUT ---")
 
@@ -108,18 +114,15 @@ func main() {
 		// input across two separate bufio.Readers on the same fd.
 		stdinReader := bufio.NewReader(os.Stdin)
 
-		var out io.Writer = outFile
-		var outputBuf *bytes.Buffer
+		out := io.MultiWriter(outFile, programOutputBuf)
 		if stepMode {
-			outputBuf = &bytes.Buffer{}
-			out = io.MultiWriter(outFile, outputBuf)
 			fmt.Println("\n--- LINE-BY-LINE EXECUTION ---")
 		}
 
 		interp := NewInterpreterWithReader(out, stdinReader)
 		var sc *stepController
 		if stepMode {
-			sc = newStepController(stdinReader, outputBuf)
+			sc = newStepController(stdinReader, programOutputBuf)
 			interp.OnStep = sc.hook
 		}
 
@@ -140,6 +143,16 @@ func main() {
 		}
 	} else {
 		fmt.Fprintln(outFile, "\n--- PROGRAM OUTPUT ---\n  (skipped: syntax/semantic errors present)")
+	}
+
+	// 8. IR / optimization pipeline -- entirely separate from normal
+	//    execution above. Lowers the arithmetic/control-flow subset to
+	//    TAC, prints it before and after optimization, then runs both
+	//    forms through the standalone TAC interpreter and diffs their
+	//    output against each other and against the tree-walking
+	//    interpreter's own output, as a correctness parity check.
+	if irMode && len(parser.Errors) == 0 && len(semErrors) == 0 {
+		runIRPipeline(program, outFile, programOutputBuf.String())
 	}
 
 	fmt.Printf("Analysis appended to 'parse_results.txt' (Run: %s)\n", timestamp)

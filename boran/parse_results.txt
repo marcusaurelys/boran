@@ -1,0 +1,571 @@
+
+
+================================================================================
+ NEW RUN: 2026-07-16 10:08:37 | Elapsed: 0s | Source: ../samples/test_rubric_showcase.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [Direction : enum]
+    │   └── ENUM_DEFINITION
+    ├── CONST_DECL [Vector2 : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [let x : float]
+    │       │   └── VALUE_EXPR
+    │       │       └── LITERAL (0.0)
+    │       ├── FIELD_DEF [let y : float]
+    │       │   └── VALUE_EXPR
+    │       │       └── LITERAL (0.0)
+    │       ├── FIELD_DEF [const magnitude : fn]
+    │       │   └── FN_LITERAL
+    │       │       └── BLOCK
+    │       │           └── RETURN_STMT
+    │       └── FIELD_DEF [let scale : fn]
+    │           └── FN_LITERAL
+    │               └── BLOCK
+    │                   └── ASSIGNMENT -> this
+    │                       └── STRUCT_INSTANCE
+    │                           ├── FIELD_INIT [x]
+    │                           │   └── VALUE_EXPR
+    │                           │       └── BINARY_OP (*)
+    │                           │           ├── MEMBER_ACCESS [.x]
+    │                           │           │   └── THIS
+    │                           │           └── IDENTIFIER (factor)
+    │                           └── FIELD_INIT [y]
+    │                               └── VALUE_EXPR
+    │                                   └── BINARY_OP (*)
+    │                                       ├── MEMBER_ACCESS [.y]
+    │                                       │   └── THIS
+    │                                       └── IDENTIFIER (factor)
+    ├── CONST_DECL [Body : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [let position : Vector2]
+    │       │   └── STRUCT_INSTANCE
+    │       │       ├── FIELD_INIT [x]
+    │       │       │   └── VALUE_EXPR
+    │       │       │       └── LITERAL (0.0)
+    │       │       └── FIELD_INIT [y]
+    │       │           └── VALUE_EXPR
+    │       │               └── LITERAL (0.0)
+    │       ├── FIELD_DEF [let velocity : Vector2]
+    │       │   └── STRUCT_INSTANCE
+    │       │       ├── FIELD_INIT [x]
+    │       │       │   └── VALUE_EXPR
+    │       │       │       └── LITERAL (1.0)
+    │       │       └── FIELD_INIT [y]
+    │       │           └── VALUE_EXPR
+    │       │               └── LITERAL (1.0)
+    │       └── FIELD_DEF [let step : fn]
+    │           └── FN_LITERAL
+    │               └── BLOCK
+    │                   ├── ASSIGNMENT -> this.position.x
+    │                   │   └── VALUE_EXPR
+    │                   │       └── BINARY_OP (+)
+    │                   │           ├── MEMBER_ACCESS [.x]
+    │                   │           │   └── MEMBER_ACCESS [.position]
+    │                   │           │       └── THIS
+    │                   │           └── MEMBER_ACCESS [.x]
+    │                   │               └── MEMBER_ACCESS [.velocity]
+    │                   │                   └── THIS
+    │                   └── ASSIGNMENT -> this.position.y
+    │                       └── VALUE_EXPR
+    │                           └── BINARY_OP (+)
+    │                               ├── MEMBER_ACCESS [.y]
+    │                               │   └── MEMBER_ACCESS [.position]
+    │                               │       └── THIS
+    │                               └── MEMBER_ACCESS [.y]
+    │                                   └── MEMBER_ACCESS [.velocity]
+    │                                       └── THIS
+    ├── CONST_DECL [factorial : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── IF_STMT
+    │           │   ├── BINARY_OP (<=)
+    │           │   │   ├── IDENTIFIER (n)
+    │           │   │   └── LITERAL (1)
+    │           │   └── BLOCK
+    │           │       └── RETURN_STMT
+    │           └── RETURN_STMT
+    ├── CONST_DECL [doubleIt : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           └── RETURN_STMT
+    ├── CONST_DECL [applyTwice : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [once : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (op)
+    │           │           └── IDENTIFIER (seed)
+    │           ├── LET_DECL [twice : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (op)
+    │           │           └── IDENTIFIER (once)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [a : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (10)
+    │           ├── LET_DECL [b : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (3)
+    │           ├── LET_DECL [c : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (2)
+    │           ├── LET_DECL [simple_math : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── IDENTIFIER (a)
+    │           │           └── IDENTIFIER (b)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("simple_math (a + b):")
+    │           │   └── IDENTIFIER (simple_math)
+    │           ├── LET_DECL [complex_math : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (-)
+    │           │           ├── BINARY_OP (*)
+    │           │           │   ├── PAREN_EXPR
+    │           │           │   │   └── BINARY_OP (+)
+    │           │           │   │       ├── IDENTIFIER (a)
+    │           │           │   │       └── IDENTIFIER (b)
+    │           │           │   └── IDENTIFIER (c)
+    │           │           └── BINARY_OP (%)
+    │           │               ├── BINARY_OP (/)
+    │           │               │   ├── IDENTIFIER (a)
+    │           │               │   └── IDENTIFIER (c)
+    │           │               └── IDENTIFIER (b)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("complex_math ((a+b)*c - a/c%b):")
+    │           │   └── IDENTIFIER (complex_math)
+    │           ├── LET_DECL [simple_boolean : bool]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (>)
+    │           │           ├── IDENTIFIER (a)
+    │           │           └── IDENTIFIER (b)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("simple_boolean (a > b):")
+    │           │   └── IDENTIFIER (simple_boolean)
+    │           ├── LET_DECL [complex_boolean : bool]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (&&)
+    │           │           ├── BINARY_OP (>)
+    │           │           │   ├── IDENTIFIER (a)
+    │           │           │   └── IDENTIFIER (b)
+    │           │           └── BINARY_OP (<=)
+    │           │               ├── IDENTIFIER (c)
+    │           │               └── IDENTIFIER (b)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("complex_boolean (a > b && c <= b):")
+    │           │   └── IDENTIFIER (complex_boolean)
+    │           ├── LET_DECL [complex_logical : bool]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (||)
+    │           │           ├── PAREN_EXPR
+    │           │           │   └── BINARY_OP (&&)
+    │           │           │       ├── BINARY_OP (>)
+    │           │           │       │   ├── IDENTIFIER (a)
+    │           │           │       │   └── IDENTIFIER (b)
+    │           │           │       └── BINARY_OP (<=)
+    │           │           │           ├── IDENTIFIER (c)
+    │           │           │           └── IDENTIFIER (b)
+    │           │           └── BINARY_OP (&&)
+    │           │               ├── UNARY_OP (!)
+    │           │               │   └── PAREN_EXPR
+    │           │               │       └── BINARY_OP (==)
+    │           │               │           ├── IDENTIFIER (a)
+    │           │               │           └── IDENTIFIER (b)
+    │           │               └── PAREN_EXPR
+    │           │                   └── BINARY_OP (!=)
+    │           │                       ├── IDENTIFIER (c)
+    │           │                       └── IDENTIFIER (a)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("complex_logical:")
+    │           │   └── IDENTIFIER (complex_logical)
+    │           ├── LET_DECL [grid : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (3)
+    │           │       └── VALUE_EXPR
+    │           │           └── LITERAL (4)
+    │           ├── ASSIGNMENT -> grid[LITERAL(0)]
+    │           │   ├── LITERAL (0)
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── INDEX_ACCESS
+    │           │           │   ├── IDENTIFIER (grid)
+    │           │           │   └── LITERAL (0)
+    │           │           └── INDEX_ACCESS
+    │           │               ├── IDENTIFIER (grid)
+    │           │               └── LITERAL (1)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("grid[0] after grid[0]+grid[1]:")
+    │           │   └── INDEX_ACCESS
+    │           │       ├── IDENTIFIER (grid)
+    │           │       └── LITERAL (0)
+    │           ├── LET_DECL [total : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_ITER [var: v]
+    │           │   ├── IDENTIFIER (grid)
+    │           │   └── BLOCK
+    │           │       └── ASSIGNMENT -> total
+    │           │           └── VALUE_EXPR
+    │           │               └── BINARY_OP (+)
+    │           │                   ├── IDENTIFIER (total)
+    │           │                   └── IDENTIFIER (v)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("sum of grid:")
+    │           │   └── IDENTIFIER (total)
+    │           ├── LET_DECL [bodies : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── STRUCT_INSTANCE
+    │           │       │   ├── FIELD_INIT [position]
+    │           │       │   │   └── STRUCT_INSTANCE
+    │           │       │   │       ├── FIELD_INIT [x]
+    │           │       │   │       │   └── VALUE_EXPR
+    │           │       │   │       │       └── LITERAL (0.0)
+    │           │       │   │       └── FIELD_INIT [y]
+    │           │       │   │           └── VALUE_EXPR
+    │           │       │   │               └── LITERAL (0.0)
+    │           │       │   └── FIELD_INIT [velocity]
+    │           │       │       └── STRUCT_INSTANCE
+    │           │       │           ├── FIELD_INIT [x]
+    │           │       │           │   └── VALUE_EXPR
+    │           │       │           │       └── LITERAL (1.0)
+    │           │       │           └── FIELD_INIT [y]
+    │           │       │               └── VALUE_EXPR
+    │           │       │                   └── LITERAL (0.0)
+    │           │       └── STRUCT_INSTANCE
+    │           │           ├── FIELD_INIT [position]
+    │           │           │   └── STRUCT_INSTANCE
+    │           │           │       ├── FIELD_INIT [x]
+    │           │           │       │   └── VALUE_EXPR
+    │           │           │       │       └── LITERAL (5.0)
+    │           │           │       └── FIELD_INIT [y]
+    │           │           │           └── VALUE_EXPR
+    │           │           │               └── LITERAL (5.0)
+    │           │           └── FIELD_INIT [velocity]
+    │           │               └── STRUCT_INSTANCE
+    │           │                   ├── FIELD_INIT [x]
+    │           │                   │   └── VALUE_EXPR
+    │           │                   │       └── LITERAL (0.0)
+    │           │                   └── FIELD_INIT [y]
+    │           │                       └── VALUE_EXPR
+    │           │                           └── UNARY_OP (-)
+    │           │                               └── LITERAL (1.0)
+    │           ├── FOR_ITER [var: body]
+    │           │   ├── IDENTIFIER (bodies)
+    │           │   └── BLOCK
+    │           │       └── EXPR_STMT
+    │           │           └── METHOD_CALL [.step]
+    │           │               └── IDENTIFIER (body)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("body[0].position.x after step:")
+    │           │   └── MEMBER_ACCESS [.x]
+    │           │       └── MEMBER_ACCESS [.position]
+    │           │           └── INDEX_ACCESS
+    │           │               ├── IDENTIFIER (bodies)
+    │           │               └── LITERAL (0)
+    │           ├── LET_DECL [v : Vector2]
+    │           │   └── STRUCT_INSTANCE
+    │           │       ├── FIELD_INIT [x]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── LITERAL (3.0)
+    │           │       └── FIELD_INIT [y]
+    │           │           └── VALUE_EXPR
+    │           │               └── LITERAL (4.0)
+    │           ├── EXPR_STMT
+    │           │   └── METHOD_CALL [.scale]
+    │           │       ├── IDENTIFIER (v)
+    │           │       └── LITERAL (2.0)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("v scaled by 2 -> magnitude:")
+    │           │   └── METHOD_CALL [.magnitude]
+    │           │       └── IDENTIFIER (v)
+    │           ├── LET_DECL [facing : Direction]
+    │           │   └── VALUE_EXPR
+    │           │       └── MEMBER_ACCESS [.north]
+    │           │           └── IDENTIFIER (Direction)
+    │           ├── IF_STMT
+    │           │   ├── BINARY_OP (==)
+    │           │   │   ├── IDENTIFIER (facing)
+    │           │   │   └── MEMBER_ACCESS [.north]
+    │           │   │       └── IDENTIFIER (Direction)
+    │           │   ├── BLOCK
+    │           │   │   └── PRINT_STMT
+    │           │   │       └── LITERAL ("facing: north")
+    │           │   └── IF_STMT
+    │           │       ├── BINARY_OP (==)
+    │           │       │   ├── IDENTIFIER (facing)
+    │           │       │   └── MEMBER_ACCESS [.east]
+    │           │       │       └── IDENTIFIER (Direction)
+    │           │       ├── BLOCK
+    │           │       │   └── PRINT_STMT
+    │           │       │       └── LITERAL ("facing: east")
+    │           │       └── BLOCK
+    │           │           └── PRINT_STMT
+    │           │               └── LITERAL ("facing: elsewhere")
+    │           ├── LET_DECL [health : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (100)
+    │           ├── LET_DECL [hpPtr : ptr]
+    │           │   └── VALUE_EXPR
+    │           │       └── UNARY_OP (&)
+    │           │           └── IDENTIFIER (health)
+    │           ├── ASSIGNMENT -> *hpPtr
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (-)
+    │           │           ├── UNARY_OP (*)
+    │           │           │   └── IDENTIFIER (hpPtr)
+    │           │           └── LITERAL (25)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("health after damage via pointer:")
+    │           │   └── IDENTIFIER (health)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("factorial(5):")
+    │           │   └── FN_CALL (factorial)
+    │           │       └── LITERAL (5)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("applyTwice(doubleIt, 5):")
+    │           │   └── FN_CALL (applyTwice)
+    │           │       ├── IDENTIFIER (doubleIt)
+    │           │       └── LITERAL (5)
+    │           ├── LET_DECL [i : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_WHILE
+    │           │   ├── BINARY_OP (<)
+    │           │   │   ├── IDENTIFIER (i)
+    │           │   │   └── LITERAL (10)
+    │           │   └── BLOCK
+    │           │       ├── ASSIGNMENT -> i
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── BINARY_OP (+)
+    │           │       │           ├── IDENTIFIER (i)
+    │           │       │           └── LITERAL (1)
+    │           │       ├── IF_STMT
+    │           │       │   ├── BINARY_OP (==)
+    │           │       │   │   ├── IDENTIFIER (i)
+    │           │       │   │   └── LITERAL (3)
+    │           │       │   └── BLOCK
+    │           │       │       └── CONTINUE_STMT
+    │           │       ├── IF_STMT
+    │           │       │   ├── BINARY_OP (==)
+    │           │       │   │   ├── IDENTIFIER (i)
+    │           │       │   │   └── LITERAL (7)
+    │           │       │   └── BLOCK
+    │           │       │       └── BREAK_STMT
+    │           │       └── PRINT_STMT
+    │           │           ├── LITERAL ("while-loop i =")
+    │           │           └── IDENTIFIER (i)
+    │           ├── LET_DECL [counter : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (3)
+    │           ├── FOR_REPEAT_UNTIL
+    │           │   ├── BLOCK
+    │           │   │   ├── PRINT_STMT
+    │           │   │   │   ├── LITERAL ("repeat-until counter =")
+    │           │   │   │   └── IDENTIFIER (counter)
+    │           │   │   └── EXPR_STMT
+    │           │   │       └── UNARY_OP (--) (postfix)
+    │           │   │           └── IDENTIFIER (counter)
+    │           │   └── BINARY_OP (==)
+    │           │       ├── IDENTIFIER (counter)
+    │           │       └── LITERAL (0)
+    │           ├── LET_DECL [name : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── INPUT_EXPR
+    │           │           └── LITERAL ("Enter your name: ")
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("Hello,")
+    │           │   └── IDENTIFIER (name)
+    │           └── RETURN_STMT
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  factorial       | fn         | fn         |                          | 38:7
+  doubleIt        | fn         | fn         |                          | 45:7
+  applyTwice      | fn         | fn         |                          | 49:7
+  main            | fn         | fn         |                          | 57:7
+  Direction       | enum       | enum       |                          | 11:7
+  Vector2         | struct     | struct     |                          | 13:7
+  Body            | struct     | struct     |                          | 26:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    factor          | param      | float      |                          | 21:23
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    n               | param      | int        |                          | 38:25
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    n               | param      | int        |                          | 45:24
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    op              | param      | fn         |                          | 49:26
+    seed            | param      | int        |                          | 49:35
+    once            | let        | int        |                          | 50:9
+    twice           | let        | int        |                          | 51:9
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    facing          | let        | Direction  |                          | 110:9
+    name            | let        | string     |                          | 150:9
+    complex_boolean | let        | bool       |                          | 77:9
+    v               | let        | Vector2    |                          | 105:9
+    simple_boolean  | let        | bool       |                          | 73:9
+    complex_logical | let        | bool       |                          | 81:9
+    grid            | let        | array      | length=4, elem=int       | 85:9
+    health          | let        | int        |                          | 120:9
+    i               | let        | int        |                          | 130:9
+    counter         | let        | int        |                          | 143:9
+    a               | let        | int        |                          | 60:9
+    total           | let        | int        |                          | 89:9
+    bodies          | let        | array      | length=2, elem=Body      | 96:9
+    hpPtr           | let        | ptr        | points to int            | 121:9
+    b               | let        | int        |                          | 61:9
+    c               | let        | int        |                          | 62:9
+    simple_math     | let        | int        |                          | 65:9
+    complex_math    | let        | int        |                          | 69:9
+
+
+--- PROGRAM OUTPUT ---
+simple_math (a + b): 13
+complex_math ((a+b)*c - a/c%b): 24
+simple_boolean (a > b): true
+complex_boolean (a > b && c <= b): true
+complex_logical: true
+grid[0] after grid[0]+grid[1]: 3
+sum of grid: 12
+body[0].position.x after step: 1
+v scaled by 2 -> magnitude: 100
+facing: north
+health after damage via pointer: 75
+factorial(5): 120
+applyTwice(doubleIt, 5): 20
+while-loop i = 1
+while-loop i = 2
+while-loop i = 4
+while-loop i = 5
+while-loop i = 6
+repeat-until counter = 3
+repeat-until counter = 2
+repeat-until counter = 1
+Enter your name: Hello, Boris
+
+--- FINAL HEAP STATE ---
+  ADDR     | TYPE           | VALUE
+  ----------------------------------------------------------------------
+  0x0001   | typedef:enum   | <enum Direction>
+  0x0002   | typedef:struct | <struct Vector2>
+  0x0003   | typedef:struct | <struct Body>
+  0x0004   | fn             | fn <anonymous>
+  0x0005   | fn             | fn <anonymous>
+  0x0006   | fn             | fn <anonymous>
+  0x0007   | fn             | fn <anonymous>
+  0x0008   | int            | 10
+  0x0009   | int            | 3
+  0x000a   | int            | 2
+  0x000b   | int            | 13
+  0x000c   | int            | 24
+  0x000d   | bool           | true
+  0x000e   | bool           | true
+  0x000f   | bool           | true
+  0x0010   | int            | 3
+  0x0011   | int            | 2
+  0x0012   | int            | 3
+  0x0013   | int            | 4
+  0x0014   | array          | array[4]<int> @[16 17 18 19]
+  0x0015   | int            | 12
+  0x0016   | int            | 3
+  0x0017   | int            | 2
+  0x0018   | int            | 3
+  0x0019   | int            | 4
+  0x001a   | float          | 0
+  0x001b   | float          | 0
+  0x001c   | fn             | fn <anonymous>
+  0x001d   | fn             | fn <anonymous>
+  0x001e   | struct:Vector2 | Vector2{x=@37, y=@38, magnitude=@39, scale=@40}
+  0x001f   | float          | 1
+  0x0020   | float          | 1
+  0x0021   | fn             | fn <anonymous>
+  0x0022   | fn             | fn <anonymous>
+  0x0023   | struct:Vector2 | Vector2{x=@41, y=@42, magnitude=@43, scale=@44}
+  0x0024   | fn             | fn <anonymous>
+  0x0025   | float          | 1
+  0x0026   | float          | 0
+  0x0027   | fn             | fn <anonymous>
+  0x0028   | fn             | fn <anonymous>
+  0x0029   | float          | 1
+  0x002a   | float          | 0
+  0x002b   | fn             | fn <anonymous>
+  0x002c   | fn             | fn <anonymous>
+  0x002d   | struct:Body    | Body{position=@30, velocity=@35, step=@36}
+  0x002e   | float          | 0
+  0x002f   | float          | 0
+  0x0030   | fn             | fn <anonymous>
+  0x0031   | fn             | fn <anonymous>
+  0x0032   | struct:Vector2 | Vector2{x=@57, y=@58, magnitude=@59, scale=@60}
+  0x0033   | float          | 1
+  0x0034   | float          | 1
+  0x0035   | fn             | fn <anonymous>
+  0x0036   | fn             | fn <anonymous>
+  0x0037   | struct:Vector2 | Vector2{x=@61, y=@62, magnitude=@63, scale=@64}
+  0x0038   | fn             | fn <anonymous>
+  0x0039   | float          | 5
+  0x003a   | float          | 4
+  0x003b   | fn             | fn <anonymous>
+  0x003c   | fn             | fn <anonymous>
+  0x003d   | float          | 0
+  0x003e   | float          | -1
+  0x003f   | fn             | fn <anonymous>
+  0x0040   | fn             | fn <anonymous>
+  0x0041   | struct:Body    | Body{position=@50, velocity=@55, step=@56}
+  0x0042   | array          | array[2]<Body> @[45 65]
+  0x0043   | struct:Body    | Body{position=@30, velocity=@35, step=@36}
+  0x0044   | struct:Body    | Body{position=@50, velocity=@55, step=@56}
+  0x0045   | float          | 3
+  0x0046   | float          | 4
+  0x0047   | fn             | fn <anonymous>
+  0x0048   | fn             | fn <anonymous>
+  0x0049   | struct:Vector2 | Vector2{x=@75, y=@76, magnitude=@77, scale=@78}
+  0x004a   | float          | 2
+  0x004b   | float          | 6
+  0x004c   | float          | 8
+  0x004d   | fn             | fn <anonymous>
+  0x004e   | fn             | fn <anonymous>
+  0x004f   | enum:Direction | Direction.north
+  0x0050   | int            | 75
+  0x0051   | ptr            | *0x0050
+  0x0052   | int            | 5
+  0x0053   | int            | 4
+  0x0054   | int            | 3
+  0x0055   | int            | 2
+  0x0056   | int            | 1
+  0x0057   | fn             | fn <anonymous>
+  0x0058   | int            | 5
+  0x0059   | int            | 5
+  0x005a   | int            | 10
+  0x005b   | int            | 10
+  0x005c   | int            | 20
+  0x005d   | int            | 7
+  0x005e   | int            | 0
+  0x005f   | string         | Boris
