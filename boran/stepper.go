@@ -25,6 +25,16 @@ func (sc *stepController) hook(i *Interpreter, node Node, env *Environment, line
 	sc.count++
 	label := getNodeLabel(node) // reuses visualizer.go's node labeling
 
+	// input() is a natural point a user wants to stop and look around,
+	// even mid-continue -- re-arm pausing so 'c' doesn't silently carry
+	// straight through a user-supplied value to the end of the program.
+	i.AfterInput = func() {
+		if sc.auto {
+			sc.auto = false
+			fmt.Println("\n(paused again after input() -- 'c' doesn't skip past user input)")
+		}
+	}
+
 	if sc.auto {
 		fmt.Printf("[step %d] %d:%d  %s\n", sc.count, line, col, label)
 		return

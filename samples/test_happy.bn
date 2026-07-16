@@ -49,13 +49,13 @@ const main : fn = () : int => {
     for counter < 3 {
         print("Increasing counter: ", counter);
         # Assignment using standard arithmetic (see observation below)
-        counter = counter ++; 
+        counter ++; 
     }
 
     # Unified 'for' keyword (Part C: Repeat-Until)
     for {
         print("Decreasing counter: ", counter);
-        counter = counter --;
+        counter --;
     } counter == 0;
 
     # Conditionals (if / else if / else) and Logical Operators

@@ -78,8 +78,9 @@ type Interpreter struct {
 	Output io.Writer
 	Input  *bufio.Reader
 
-	OnStep StepHook
-	Errors []*RuntimeError
+	OnStep     StepHook
+	AfterInput func() // fired right after input() reads a line, if set
+	Errors     []*RuntimeError
 }
 
 func NewInterpreter(out io.Writer, in io.Reader) *Interpreter {
@@ -571,6 +572,9 @@ func (i *Interpreter) evalExpr(e Expr, env *Environment) RTValue {
 		promptVal := i.evalExpr(n.Prompt, env)
 		fmt.Fprint(i.Output, promptVal.String())
 		line, err := i.Input.ReadString('\n')
+		if i.AfterInput != nil {
+			i.AfterInput()
+		}
 		if err != nil && line == "" {
 			return &StringVal{Val: ""}
 		}
