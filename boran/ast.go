@@ -34,18 +34,20 @@ func (b *Block) stmtNode() {}
 
 type ConstDecl struct {
 	pos
-	Name     string
-	TypeName string // either a builtin datatype keyword or a user-defined type identifier
-	Value    Value
+	Name         string
+	TypeName     string // either a builtin datatype keyword or a user-defined type identifier
+	DeclaredType *DatatypeNode // full structured type, e.g. to recover array length / elem / ptr target
+	Value        Value
 }
 
 func (d *ConstDecl) stmtNode() {}
 
 type LetDecl struct {
 	pos
-	Name     string
-	TypeName string
-	Value    Value
+	Name         string
+	TypeName     string
+	DeclaredType *DatatypeNode
+	Value        Value
 }
 
 func (d *LetDecl) stmtNode() {}

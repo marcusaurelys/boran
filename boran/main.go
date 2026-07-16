@@ -72,6 +72,18 @@ func main() {
 		}
 	}
 
+	// 6. Static semantic analysis (only meaningful once the source parses
+	//    cleanly enough to produce a usable AST -- still run it regardless,
+	//    since parseStmtRecover keeps as much of the tree as it can).
+	checker := NewTypeChecker()
+	semErrors := checker.Check(program)
+	if len(semErrors) > 0 {
+		fmt.Fprintf(outFile, "\n--- SEMANTIC ERRORS (%d) ---\n", len(semErrors))
+		for _, e := range semErrors {
+			fmt.Fprintln(outFile, "  ", e.Error())
+		}
+	}
+
 	fmt.Printf("Analysis appended to 'parse_results.txt' (Run: %s)\n", timestamp)
 
 

@@ -331,7 +331,7 @@ func (p *Parser) parseConstDecl() *ConstDecl {
 	kind := symbolKindForType(typeName)
 	p.Symbols.Declare(name.Literal, kind, typeName, dtype, name.Line, name.Col)
 
-	return &ConstDecl{pos: pos{start.Line, start.Col}, Name: name.Literal, TypeName: typeName, Value: val}
+	return &ConstDecl{pos: pos{start.Line, start.Col}, Name: name.Literal, TypeName: typeName, DeclaredType: dtype, Value: val}
 }
 
 func (p *Parser) parseLetDecl() *LetDecl {
@@ -345,7 +345,7 @@ func (p *Parser) parseLetDecl() *LetDecl {
 
 	p.Symbols.Declare(name.Literal, SymLet, typeName, dtype, name.Line, name.Col)
 
-	return &LetDecl{pos: pos{start.Line, start.Col}, Name: name.Literal, TypeName: typeName, Value: val}
+	return &LetDecl{pos: pos{start.Line, start.Col}, Name: name.Literal, TypeName: typeName, DeclaredType: dtype, Value: val}
 }
 
 func symbolKindForType(typeName string) SymbolKind {
