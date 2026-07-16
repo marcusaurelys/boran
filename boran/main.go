@@ -84,6 +84,22 @@ func main() {
 		}
 	}
 
+	// 7. Execute -- only when the program parsed and type-checked clean.
+	//    Running a program full of unresolved names/type errors would just
+	//    produce a wall of cascading runtime errors on top of diagnostics
+	//    already reported above.
+	if len(parser.Errors) == 0 && len(semErrors) == 0 {
+		fmt.Fprintln(outFile, "\n--- PROGRAM OUTPUT ---")
+		interp := NewInterpreter(outFile, os.Stdin)
+		if err := interp.Run(program); err != nil {
+			fmt.Fprintf(outFile, "\n--- RUNTIME ERROR ---\n  %s\n", err.Error())
+		}
+		fmt.Fprintln(outFile, "\n--- FINAL HEAP STATE ---")
+		fmt.Fprint(outFile, interp.Heap.String())
+	} else {
+		fmt.Fprintln(outFile, "\n--- PROGRAM OUTPUT ---\n  (skipped: syntax/semantic errors present)")
+	}
+
 	fmt.Printf("Analysis appended to 'parse_results.txt' (Run: %s)\n", timestamp)
 
 

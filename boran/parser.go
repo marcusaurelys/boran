@@ -575,7 +575,7 @@ func (p *Parser) parseStructFieldInit() StructFieldInit {
 	p.consume(TOKEN_COLON)
 	dtype, tag := p.parseTypeAnnotation()
 
-	f := StructFieldInit{pos: pos{name.Line, name.Col}, Name: name.Literal, Mutable: mutable, TypeName: tag}
+	f := StructFieldInit{pos: pos{name.Line, name.Col}, Name: name.Literal, Mutable: mutable, TypeName: tag, DeclaredType: dtype}
 
 	if p.current().Type == TOKEN_OP_ASSIGN {
 		p.advance()

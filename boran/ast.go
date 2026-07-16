@@ -251,10 +251,11 @@ func (v *StructLiteral) valueNode() {}
 
 type StructFieldInit struct {
 	pos
-	Name     string
-	Mutable  bool   // true for 'let' fields, false for 'const' fields
-	TypeName string // datatype keyword ("int", "fn", ...) or user-defined type name
-	Default  Value  // nil only for a 'let' field with no '=' initializer
+	Name         string
+	Mutable      bool   // true for 'let' fields, false for 'const' fields
+	TypeName     string // datatype keyword ("int", "fn", ...) or user-defined type name
+	DeclaredType *DatatypeNode
+	Default      Value // nil only for a 'let' field with no '=' initializer
 }
 
 // StructInstance is a value of a previously declared struct type:
