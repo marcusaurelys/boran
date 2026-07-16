@@ -1,0 +1,42 @@
+# ================================================================
+# BORAN — SEMANTIC ERROR CATEGORY SHOWCASE
+# Each section below deliberately triggers exactly one of the
+# rubric's five semantic error categories. This file is NOT meant
+# to run -- the interpreter intentionally skips execution when
+# semantic errors are present (see main.go), so this is purely to
+# demonstrate that the type checker (typecheck.go) correctly
+# identifies and labels each category. Check the SEMANTIC ERRORS
+# section of parse_results.txt after running this file.
+# ================================================================
+
+# ---- 1. Undeclared variable ------------------------------------
+# 'mystery' was never declared anywhere in this scope.
+const undeclared_demo : fn = () : int => {
+    return mystery + 1;
+};
+
+# ---- 2. Type mismatch -------------------------------------------
+# 'label' is declared string but initialized with an int literal.
+let type_mismatch_demo : string = 42;
+
+# ---- 3. Multiply-defined variable --------------------------------
+# 'score' is declared twice in the same scope.
+let score : int = 0;
+let score : int = 10;
+
+# ---- 4. Constant reassignment -------------------------------------
+# 'MAX_PLAYERS' is const; reassigning the binding itself is illegal
+# (mutating *through* a const struct instance's own 'let' fields is
+# fine -- see test_rubric_showcase.bn -- but rebinding the constant
+# itself is not).
+const MAX_PLAYERS : int = 4;
+MAX_PLAYERS = 8;
+
+# ---- 5. Cardinality / ordinality: function parameters -------------
+# 'add' expects exactly 2 arguments; called here with 3.
+const add : fn = (x : int, y : int) : int => {
+    return x + y;
+};
+const bad_call_demo : fn = () : int => {
+    return add(1, 2, 3);
+};
