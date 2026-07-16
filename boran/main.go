@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"os"
@@ -108,14 +109,17 @@ func main() {
 		stdinReader := bufio.NewReader(os.Stdin)
 
 		var out io.Writer = outFile
+		var outputBuf *bytes.Buffer
 		if stepMode {
-			out = io.MultiWriter(outFile, os.Stdout)
+			outputBuf = &bytes.Buffer{}
+			out = io.MultiWriter(outFile, outputBuf)
 			fmt.Println("\n--- LINE-BY-LINE EXECUTION ---")
 		}
 
 		interp := NewInterpreterWithReader(out, stdinReader)
+		var sc *stepController
 		if stepMode {
-			sc := newStepController(stdinReader)
+			sc = newStepController(stdinReader, outputBuf)
 			interp.OnStep = sc.hook
 		}
 
@@ -124,6 +128,9 @@ func main() {
 			if stepMode {
 				fmt.Println("\n--- RUNTIME ERROR ---\n ", err.Error())
 			}
+		}
+		if stepMode {
+			sc.FlushOutput() // the last statement's output has no following hook() call to flush it
 		}
 		fmt.Fprintln(outFile, "\n--- FINAL HEAP STATE ---")
 		fmt.Fprint(outFile, interp.Heap.String())

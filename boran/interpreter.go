@@ -79,6 +79,7 @@ type Interpreter struct {
 	Input  *bufio.Reader
 
 	OnStep     StepHook
+	BeforeInput func(prompt string) // fired right before input() blocks on ReadString, if set
 	AfterInput func() // fired right after input() reads a line, if set
 	Errors     []*RuntimeError
 }
@@ -571,6 +572,9 @@ func (i *Interpreter) evalExpr(e Expr, env *Environment) RTValue {
 	case *InputExpr:
 		promptVal := i.evalExpr(n.Prompt, env)
 		fmt.Fprint(i.Output, promptVal.String())
+		if i.BeforeInput != nil {
+			i.BeforeInput(promptVal.String())
+		}
 		line, err := i.Input.ReadString('\n')
 		if i.AfterInput != nil {
 			i.AfterInput()
