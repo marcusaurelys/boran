@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"time"
@@ -23,9 +25,17 @@ func printBlockScopes(scope *Scope, depth int) {
 }
 
 func main() {
-	if len(os.Args) != 2 {
-		fmt.Fprintln(os.Stderr, "usage: boran <source_file>")
+	if len(os.Args) < 2 || len(os.Args) > 3 {
+		fmt.Fprintln(os.Stderr, "usage: boran <source_file> [--step]")
 		os.Exit(1)
+	}
+	stepMode := false
+	if len(os.Args) == 3 {
+		if os.Args[2] != "--step" {
+			fmt.Fprintln(os.Stderr, "usage: boran <source_file> [--step]")
+			os.Exit(1)
+		}
+		stepMode = true
 	}
 
 	data, err := os.ReadFile(os.Args[1])
@@ -90,12 +100,37 @@ func main() {
 	//    already reported above.
 	if len(parser.Errors) == 0 && len(semErrors) == 0 {
 		fmt.Fprintln(outFile, "\n--- PROGRAM OUTPUT ---")
-		interp := NewInterpreter(outFile, os.Stdin)
+
+		// One shared reader over stdin: the program's own input() calls
+		// and the step-controller's "press Enter to continue" prompts
+		// read from the same stream, so they can't fight over buffered
+		// input across two separate bufio.Readers on the same fd.
+		stdinReader := bufio.NewReader(os.Stdin)
+
+		var out io.Writer = outFile
+		if stepMode {
+			out = io.MultiWriter(outFile, os.Stdout)
+			fmt.Println("\n--- LINE-BY-LINE EXECUTION ---")
+		}
+
+		interp := NewInterpreterWithReader(out, stdinReader)
+		if stepMode {
+			sc := newStepController(stdinReader)
+			interp.OnStep = sc.hook
+		}
+
 		if err := interp.Run(program); err != nil {
 			fmt.Fprintf(outFile, "\n--- RUNTIME ERROR ---\n  %s\n", err.Error())
+			if stepMode {
+				fmt.Println("\n--- RUNTIME ERROR ---\n ", err.Error())
+			}
 		}
 		fmt.Fprintln(outFile, "\n--- FINAL HEAP STATE ---")
 		fmt.Fprint(outFile, interp.Heap.String())
+		if stepMode {
+			fmt.Println("\n--- FINAL HEAP STATE ---")
+			fmt.Print(interp.Heap.String())
+		}
 	} else {
 		fmt.Fprintln(outFile, "\n--- PROGRAM OUTPUT ---\n  (skipped: syntax/semantic errors present)")
 	}

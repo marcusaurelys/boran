@@ -65,7 +65,7 @@ var sigNone = ctrlSignal{kind: ctrlNone}
 // and blocks (e.g. on stdin) before returning. For all-at-once mode, leave
 // OnStep nil -- the same Run/execStmt path is used either way, so the two
 // execution modes can never silently diverge in behavior.
-type StepHook func(i *Interpreter, node Node, line, col int)
+type StepHook func(i *Interpreter, node Node, env *Environment, line, col int)
 
 type Interpreter struct {
 	Heap   *Heap
@@ -91,6 +91,25 @@ func NewInterpreter(out io.Writer, in io.Reader) *Interpreter {
 		enumDefs:   make(map[string]*EnumBody),
 		Output:     out,
 		Input:      bufio.NewReader(in),
+	}
+}
+
+// NewInterpreterWithReader is identical to NewInterpreter except it takes
+// an already-constructed *bufio.Reader and uses it as-is, rather than
+// wrapping a fresh io.Reader. Use this whenever the reader is shared with
+// something else reading the same underlying stream (e.g. a step
+// controller reading "press Enter" prompts from the same stdin) --
+// wrapping the same fd in two independent bufio.Readers risks one of them
+// silently swallowing bytes the other needed.
+func NewInterpreterWithReader(out io.Writer, in *bufio.Reader) *Interpreter {
+	return &Interpreter{
+		Heap:       NewHeap(),
+		Global:     NewEnvironment(nil),
+		Stack:      NewCallStack(),
+		structDefs: make(map[string]*StructLiteral),
+		enumDefs:   make(map[string]*EnumBody),
+		Output:     out,
+		Input:      in,
 	}
 }
 
@@ -123,7 +142,7 @@ func (i *Interpreter) Run(prog *Program) (err error) {
 func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 	line, col := s.Pos()
 	if i.OnStep != nil {
-		i.OnStep(i, s, line, col)
+		i.OnStep(i, s, env, line, col)
 	}
 
 	switch n := s.(type) {
