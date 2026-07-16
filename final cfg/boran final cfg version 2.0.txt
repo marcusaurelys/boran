@@ -1,0 +1,208 @@
+================================================================
+  Boran Language — Context-Free Grammar Specification
+  Version 2.0
+================================================================
+
+Authors:      Joel Ethan Batac
+              Boris Victoria
+
+Last Updated:   10 July 2026
+
+----------------------------------------------------------------
+Notation
+----------------------------------------------------------------
+This specification uses Backus-Naur Form (BNF):
+
+    <nonterminal>  ::=  production rule
+    'terminal'            literal token, single-quoted
+    A | B                 alternation (A or B)
+    ε                     empty string / no token
+    A*                    zero or more repetitions of A
+    A+                    one or more repetitions of A
+    UPPERCASE             lexical token supplied by the scanner
+                           (e.g. INT_LIT, STRING_LIT)
+
+Nonterminals are grouped below by category: Program Structure,
+Declarations, Values & Literals, Expressions, Statements, and
+Lexical Rules.
+================================================================
+
+
+
+<program> ::= <stmt_list>
+<stmt_list> ::= <stmt> <stmt_list> | ε
+<stmt> ::= <const_decl> ';'
+         | <let_decl> ';'
+         | <assign_stmt> ';'
+         | <if_stmt>
+         | <for_iter_stmt>
+         | <for_while_stmt>
+         | <for_repeat_stmt> ';'
+         | <return_stmt>
+         | <expr> ';'
+         | <block>
+         | <break_stmt> ';'
+         | <continue_stmt> ';'
+
+<block> ::= '{' <stmt_list> '}'
+
+<const_decl> ::= 'const' <identifier> ':' <datatype> '=' <value>
+               | 'const' <identifier> ':' <identifier> '=' <value>
+               
+<let_decl> ::= 'let' <identifier> ':' <datatype> '=' <value>
+            | 'let' <identifier> ':' <datatype>
+            | 'let' <identifier> ':' <identifier> '=' <value>
+            | 'let' <identifier> ':' <identifier>
+
+<datatype> ::= 'int' | 'float' | 'char' | 'string' | 'bool'
+                          | <arr_type> | <fn_type> | <ptr_type>
+                          | 'struct' | 'enum'
+
+<arr_type> ::= <datatype> '[' INT_LIT ']'
+<fn_type> ::= 'fn'
+<ptr_type> ::= <datatype>'*'
+
+# --- Values ---
+
+<value> ::= <expr>
+          | <arr_literal>
+          | <struct_literal>
+          | <struct_instance>
+          | <enum_body>
+          | <fn_literal>
+
+<literal> ::= INT_LIT | FLOAT_LIT | CHAR_LIT | STRING_LIT | BOOL_LIT | 'null'
+
+<arr_literal> ::= '[' <arr_elements> ']'
+                | '[' ']'
+<arr_elements> ::= <value> <arr_elements_tail>
+<arr_elements_tail> ::= ',' <value> <arr_elements_tail> | ε
+
+<struct_literal> ::= '{' <struct_field_inits> '}'
+<struct_field_inits>    ::= <struct_field_init> <struct_field_inits_tail>
+<struct_field_inits_tail> ::= ',' <struct_field_init> <struct_field_inits_tail> | ε
+<struct_field_init> ::= <const_decl> ## same and immutable values across all instances 
+                      | <let_decl> ## mutable values or state 
+
+<struct_instance> ::= '{' <instance_fields_inits> '}'
+<instance_fields_inits> ::= <instance_field_init> <instance_field_inits_tail> | ε
+<instance_fields_inits_tail> ::= ',' <instance_field_init> <instance_fields_inits_tail> | ε
+<instance_field_init> ::= <identifier> ':' <value>
+
+<enum_body> ::= '{' <enum_variants> '}'
+<enum_variants> ::= <enum_variant> <enum_variants_tail>
+<enum_variants_tail> ::= ',' <enum_variant> <enum_variants_tail> | ε
+<enum_variant> ::= <identifier>
+
+<fn_literal> ::= '(' <param_list> ')' ':' <datatype> '=>' <block> | 
+                 '(' <param_list> ')' '=>' <block> 
+
+<param_list> ::= <params> |  ε
+<params> ::= <param> <params_tail>
+<params_tail> ::= ',' <param> <params_tail> | ε
+<param> ::= <identifier> ':' <datatype>
+
+# ---- Expressions ----
+
+<expr>                   ::= <bool_expr>
+
+<bool_expr>               ::= <bool_term> <bool_expr_tail>
+<bool_expr_tail>          ::= '||' <bool_term> <bool_expr_tail> | ε
+
+<bool_term>                ::= <bool_factor> <bool_term_tail>
+<bool_term_tail>           ::= '&&' <bool_factor> <bool_term_tail> | ε
+
+<bool_factor>               ::= '!' <bool_factor>
+                              | <arith_expr> <rel_op_tail>
+<rel_op_tail>                ::= <rel_op> <arith_expr> | ε
+<rel_op>                     ::= '==' | '!=' | '<' | '>' | '<=' | '>='
+
+<arith_expr>                  ::= <arith_term> <arith_expr_tail>
+<arith_expr_tail>             ::= '+' <arith_term> <arith_expr_tail>
+                                | '-' <arith_term> <arith_expr_tail>
+                                | ε
+
+<arith_term>                   ::= <unary_expr> <arith_term_tail>
+<arith_term_tail>              ::= '*' <unary_expr> <arith_term_tail>
+                                 | '/' <unary_expr> <arith_term_tail>
+                                 | '%' <unary_expr> <arith_term_tail>
+                                 | ε
+
+<unary_expr>                    ::= '-' <unary_expr>
+                                  | '++' <unary_expr>
+                                  | '--' <unary_expr>
+                                  | '*' <unary_expr>
+                                  | '&' <unary_expr>
+                                  | <postfix_expr>
+
+<postfix_expr>                   ::= <primary> <postfix_tail>
+<postfix_tail>                   ::= '++' | '--' | ε
+
+<primary>                         ::= <literal>
+                                   | 'this' <this_tail>
+                                   | '(' <expr> ')'
+                                   | <io_stmt>
+                                   | <identifier> <primary_tail>
+
+# Chaining
+
+<primary_tail>                    ::= '(' <arg_list> ')' <chain_tail>
+                                    | <chain_tail>
+
+<this_tail>                       ::= '.' <identifier> <method_tail> <chain_tail>
+                                    | ε
+
+<chain_tail>                      ::= '[' <expr> ']' <chain_tail>
+                                    | '.' <identifier> <method_tail> <chain_tail>
+                                    | '(' <arg_list> ')' <chain_tail>
+                                    | ε
+
+
+<method_tail>                     ::= '(' <arg_list> ')' | ε
+
+<arg_list>                          ::= <args> | ε
+<args>                               ::= <expr> <args_tail>
+<args_tail>                         ::= ',' <expr> <args_tail> | ε
+
+
+# ---- Statements
+
+<assign_stmt>                        ::= <lvalue> '=' <value>
+
+<lvalue>                             ::= <identifier> <lvalue_tail>
+                                       | 'this' <lvalue_tail>
+                                       | '*' <lvalue>
+
+<lvalue_tail>                        ::= '.' <identifier> <lvalue_tail>
+                                       | '[' <expr> ']' <lvalue_tail>
+                                       | ε
+
+<if_stmt>                             ::= 'if' <bool_expr> <block>
+                                       | 'if' <bool_expr> <block> 'else' <block>
+                                       | 'if' <bool_expr> <block> 'else' <if_stmt>
+
+<for_iter_stmt>                       ::= 'for' <identifier> 'in' <expr> <block>
+<for_while_stmt>                      ::= 'for' <bool_expr> <block>
+<for_repeat_stmt>                     ::= 'for' <block> <bool_expr>
+
+<io_stmt>                             ::= 'print' '(' <expr> <print_args_tail> ')'
+                                        | 'input' '(' <expr> <print_args_tail> ')' 
+
+<print_args_tail>                     ::= ',' <expr> <print_args_tail> | ε
+
+<return_stmt>                         ::= 'return' <expr>
+                                       | 'return'
+
+<break_stmt> ::= 'break'
+<continue_stmt> ::= 'continue'
+
+# ---- Lexical -----
+
+<identifier>                          ::= <letter> <alphanumeric>*
+                                       | '_' <alphanumeric>+
+<letter>                              ::= 'a'..'z' | 'A'..'Z'
+<digit>                               ::= '0'..'9'
+<alphanumeric>                        ::= <letter> | <digit> | '_'
+
+WHITESPACE  ::=  [ \t\r\n]+            (ignored by scanner)
+LINE_COMMENT ::= '#' <any>* <newline>  (ignored by scanner)

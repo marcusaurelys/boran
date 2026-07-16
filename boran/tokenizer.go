@@ -20,24 +20,26 @@ const (
 	TOKEN_STRING_LIT TokenType = "STRING_LIT"
 	TOKEN_BOOL_LIT   TokenType = "BOOL_LIT"
 
-	TOKEN_OP_ASSIGN TokenType = "ASSIGN"
-	TOKEN_OP_EQUAL  TokenType = "EQUAL"
-	TOKEN_OP_NOT_EQ TokenType = "NOT_EQ"
-	TOKEN_OP_NOT    TokenType = "NOT"
-	TOKEN_OP_ADD    TokenType = "ADD"
-	TOKEN_OP_SUB    TokenType = "SUB"
-	TOKEN_OP_MUL    TokenType = "MUL"
-	TOKEN_OP_DIV    TokenType = "DIV"
-	TOKEN_OP_MOD    TokenType = "MOD"
-	TOKEN_OP_INC    TokenType = "INC"
-	TOKEN_OP_DEC    TokenType = "DEC"
-	TOKEN_OP_LT     TokenType = "LT"
-	TOKEN_OP_GT     TokenType = "GT"
-	TOKEN_OP_LE     TokenType = "LE"
-	TOKEN_OP_GE     TokenType = "GE"
-	TOKEN_OP_AND    TokenType = "AND"
-	TOKEN_OP_OR     TokenType = "OR"
-	TOKEN_OP_DOT    TokenType = "DOT"
+	TOKEN_OP_ASSIGN  TokenType = "ASSIGN"
+	TOKEN_OP_EQUAL   TokenType = "EQUAL"
+	TOKEN_OP_NOT_EQ  TokenType = "NOT_EQ"
+	TOKEN_OP_NOT     TokenType = "NOT"
+	TOKEN_OP_ADD     TokenType = "ADD"
+	TOKEN_OP_SUB     TokenType = "SUB"
+	TOKEN_OP_MUL     TokenType = "MUL"
+	TOKEN_OP_DIV     TokenType = "DIV"
+	TOKEN_OP_MOD     TokenType = "MOD"
+	TOKEN_OP_INC     TokenType = "INC"
+	TOKEN_OP_DEC     TokenType = "DEC"
+	TOKEN_OP_LT      TokenType = "LT"
+	TOKEN_OP_GT      TokenType = "GT"
+	TOKEN_OP_LE      TokenType = "LE"
+	TOKEN_OP_GE      TokenType = "GE"
+	TOKEN_OP_AND     TokenType = "AND"
+	TOKEN_OP_OR      TokenType = "OR"
+	TOKEN_OP_DOT     TokenType = "DOT"
+	TOKEN_OP_ARROW   TokenType = "ARROW"
+	TOKEN_OP_ADDRESS TokenType = "ADDRESS OF"
 
 	TOKEN_LBRACE    TokenType = "LBRACE"
 	TOKEN_RBRACE    TokenType = "RBRACE"
@@ -61,7 +63,7 @@ var keywords = map[string]TokenType{
 	"const": TOKEN_KEYWORD, "let": TOKEN_KEYWORD,
 	"int": TOKEN_KEYWORD, "float": TOKEN_KEYWORD, "char": TOKEN_KEYWORD,
 	"string": TOKEN_KEYWORD, "bool": TOKEN_KEYWORD, "fn": TOKEN_KEYWORD,
-	"struct": TOKEN_KEYWORD, "enum": TOKEN_KEYWORD, "ptr": TOKEN_KEYWORD,
+	"struct": TOKEN_KEYWORD, "enum": TOKEN_KEYWORD, "break": TOKEN_KEYWORD, "continue": TOKEN_KEYWORD,
 	"if": TOKEN_KEYWORD, "else": TOKEN_KEYWORD, "for": TOKEN_KEYWORD,
 	"in": TOKEN_KEYWORD, "return": TOKEN_KEYWORD,
 	"print": TOKEN_KEYWORD, "input": TOKEN_KEYWORD,
@@ -143,6 +145,11 @@ func (s *Scanner) NextToken() Token {
 			s.readChar()
 			return tok(TOKEN_OP_EQUAL, "==")
 		}
+		if s.peekChar() == '>' {
+			s.readChar()
+			s.readChar()
+			return tok(TOKEN_OP_ARROW, "=>")
+		}
 		s.readChar()
 		return tok(TOKEN_OP_ASSIGN, "=")
 
@@ -208,8 +215,7 @@ func (s *Scanner) NextToken() Token {
 			return tok(TOKEN_OP_AND, "&&")
 		}
 		s.readChar()
-		return err("unexpected character '&' (did you mean '&&'?)")
-
+		return tok(TOKEN_OP_ADDRESS, "&")
 	case '|':
 		if s.peekChar() == '|' {
 			s.readChar()

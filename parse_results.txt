@@ -1,0 +1,635 @@
+
+
+================================================================================
+ NEW RUN: 2026-07-10 19:07:02 | Elapsed: 0s | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_chaining.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [Point : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [let x : float]
+    │       └── FIELD_DEF [let y : float]
+    ├── CONST_DECL [Line : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [let start : Point]
+    │       └── FIELD_DEF [let end : Point]
+    ├── LET_DECL [a : Line]
+    │   └── STRUCT_INSTANCE
+    │       ├── FIELD_INIT [start]
+    │       │   └── STRUCT_INSTANCE
+    │       │       ├── FIELD_INIT [x]
+    │       │       │   └── VALUE_EXPR
+    │       │       │       └── LITERAL (0.0)
+    │       │       └── FIELD_INIT [y]
+    │       │           └── VALUE_EXPR
+    │       │               └── LITERAL (0.0)
+    │       └── FIELD_INIT [end]
+    │           └── STRUCT_INSTANCE
+    │               ├── FIELD_INIT [x]
+    │               │   └── VALUE_EXPR
+    │               │       └── LITERAL (1.0)
+    │               └── FIELD_INIT [y]
+    │                   └── VALUE_EXPR
+    │                       └── LITERAL (1.0)
+    ├── LET_DECL [px : float]
+    │   └── VALUE_EXPR
+    │       └── MEMBER_ACCESS [.x]
+    │           └── MEMBER_ACCESS [.start]
+    │               └── IDENTIFIER (a)
+    ├── LET_DECL [matrix : array]
+    │   └── ARRAY_LITERAL
+    │       ├── VALUE_EXPR
+    │       │   └── LITERAL (1)
+    │       └── VALUE_EXPR
+    │           └── LITERAL (2)
+    ├── LET_DECL [cell : int]
+    │   └── VALUE_EXPR
+    │       └── INDEX_ACCESS
+    │           ├── INDEX_ACCESS
+    │           │   ├── IDENTIFIER (matrix)
+    │           │   └── LITERAL (0)
+    │           └── LITERAL (1)
+    ├── LET_DECL [qx : float]
+    │   └── VALUE_EXPR
+    │       └── MEMBER_ACCESS [.x]
+    │           └── FN_CALL (makePoint)
+    ├── EXPR_STMT
+    │   └── METHOD_CALL [.normalize]
+    │       └── MEMBER_ACCESS [.start]
+    │           └── IDENTIFIER (a)
+    ├── ASSIGNMENT -> a.start.x
+    │   └── VALUE_EXPR
+    │       └── LITERAL (5.0)
+    └── ASSIGNMENT -> matrix[LITERAL(0)]
+        ├── LITERAL (0)
+        └── VALUE_EXPR
+            └── LITERAL (9)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  qx              | let        | float      |                          | 16:5
+  Point           | struct     | struct     |                          | 3:7
+  Line            | struct     | struct     |                          | 4:7
+  a               | let        | Line       |                          | 6:5
+  px              | let        | float      |                          | 9:5
+  matrix          | let        | array      | length=2, elem=int       | 12:5
+  cell            | let        | int        |                          | 13:5
+
+
+
+================================================================================
+ NEW RUN: 2026-07-10 19:07:03 | Elapsed: 578.2µs | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_features.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [Direction : enum]
+    │   └── ENUM_DEFINITION
+    ├── CONST_DECL [Vector2 : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [let x : float]
+    │       │   └── VALUE_EXPR
+    │       │       └── LITERAL (0.0)
+    │       ├── FIELD_DEF [let y : float]
+    │       │   └── VALUE_EXPR
+    │       │       └── LITERAL (0.0)
+    │       ├── FIELD_DEF [const magnitude : fn]
+    │       │   └── FN_LITERAL
+    │       │       └── BLOCK
+    │       │           └── RETURN_STMT
+    │       ├── FIELD_DEF [let scale : fn]
+    │       │   └── FN_LITERAL
+    │       │       └── BLOCK
+    │       │           └── ASSIGNMENT -> this
+    │       │               └── STRUCT_INSTANCE
+    │       │                   ├── FIELD_INIT [x]
+    │       │                   │   └── VALUE_EXPR
+    │       │                   │       └── BINARY_OP (*)
+    │       │                   │           ├── MEMBER_ACCESS [.x]
+    │       │                   │           │   └── THIS
+    │       │                   │           └── IDENTIFIER (factor)
+    │       │                   └── FIELD_INIT [y]
+    │       │                       └── VALUE_EXPR
+    │       │                           └── BINARY_OP (*)
+    │       │                               ├── MEMBER_ACCESS [.y]
+    │       │                               │   └── THIS
+    │       │                               └── IDENTIFIER (factor)
+    │       └── FIELD_DEF [let normalize : fn]
+    │           └── FN_LITERAL
+    │               └── BLOCK
+    │                   ├── LET_DECL [m : float]
+    │                   │   └── VALUE_EXPR
+    │                   │       └── METHOD_CALL [.magnitude]
+    │                   │           └── THIS
+    │                   └── IF_STMT
+    │                       ├── BINARY_OP (>)
+    │                       │   ├── IDENTIFIER (m)
+    │                       │   └── LITERAL (0.0)
+    │                       └── BLOCK
+    │                           └── EXPR_STMT
+    │                               └── METHOD_CALL [.scale]
+    │                                   ├── THIS
+    │                                   └── BINARY_OP (/)
+    │                                       ├── LITERAL (1.0)
+    │                                       └── IDENTIFIER (m)
+    ├── CONST_DECL [Body : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [let position : Vector2]
+    │       │   └── STRUCT_INSTANCE
+    │       │       ├── FIELD_INIT [x]
+    │       │       │   └── VALUE_EXPR
+    │       │       │       └── LITERAL (0.0)
+    │       │       └── FIELD_INIT [y]
+    │       │           └── VALUE_EXPR
+    │       │               └── LITERAL (0.0)
+    │       ├── FIELD_DEF [let velocity : Vector2]
+    │       │   └── STRUCT_INSTANCE
+    │       │       ├── FIELD_INIT [x]
+    │       │       │   └── VALUE_EXPR
+    │       │       │       └── LITERAL (1.0)
+    │       │       └── FIELD_INIT [y]
+    │       │           └── VALUE_EXPR
+    │       │               └── LITERAL (1.0)
+    │       └── FIELD_DEF [let step : fn]
+    │           └── FN_LITERAL
+    │               └── BLOCK
+    │                   ├── ASSIGNMENT -> this.position.x
+    │                   │   └── VALUE_EXPR
+    │                   │       └── BINARY_OP (+)
+    │                   │           ├── MEMBER_ACCESS [.x]
+    │                   │           │   └── MEMBER_ACCESS [.position]
+    │                   │           │       └── THIS
+    │                   │           └── MEMBER_ACCESS [.x]
+    │                   │               └── MEMBER_ACCESS [.velocity]
+    │                   │                   └── THIS
+    │                   └── ASSIGNMENT -> this.position.y
+    │                       └── VALUE_EXPR
+    │                           └── BINARY_OP (+)
+    │                               ├── MEMBER_ACCESS [.y]
+    │                               │   └── MEMBER_ACCESS [.position]
+    │                               │       └── THIS
+    │                               └── MEMBER_ACCESS [.y]
+    │                                   └── MEMBER_ACCESS [.velocity]
+    │                                       └── THIS
+    ├── CONST_DECL [apply_twice : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [once : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (op)
+    │           │           └── IDENTIFIER (seed)
+    │           ├── LET_DECL [twice : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (op)
+    │           │           └── IDENTIFIER (once)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [doubleIt : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           └── RETURN_STMT
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [bodies : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── STRUCT_INSTANCE
+    │           │       │   ├── FIELD_INIT [position]
+    │           │       │   │   └── STRUCT_INSTANCE
+    │           │       │   │       ├── FIELD_INIT [x]
+    │           │       │   │       │   └── VALUE_EXPR
+    │           │       │   │       │       └── LITERAL (0.0)
+    │           │       │   │       └── FIELD_INIT [y]
+    │           │       │   │           └── VALUE_EXPR
+    │           │       │   │               └── LITERAL (0.0)
+    │           │       │   └── FIELD_INIT [velocity]
+    │           │       │       └── STRUCT_INSTANCE
+    │           │       │           ├── FIELD_INIT [x]
+    │           │       │           │   └── VALUE_EXPR
+    │           │       │           │       └── LITERAL (1.0)
+    │           │       │           └── FIELD_INIT [y]
+    │           │       │               └── VALUE_EXPR
+    │           │       │                   └── LITERAL (0.0)
+    │           │       └── STRUCT_INSTANCE
+    │           │           ├── FIELD_INIT [position]
+    │           │           │   └── STRUCT_INSTANCE
+    │           │           │       ├── FIELD_INIT [x]
+    │           │           │       │   └── VALUE_EXPR
+    │           │           │       │       └── LITERAL (5.0)
+    │           │           │       └── FIELD_INIT [y]
+    │           │           │           └── VALUE_EXPR
+    │           │           │               └── LITERAL (5.0)
+    │           │           └── FIELD_INIT [velocity]
+    │           │               └── STRUCT_INSTANCE
+    │           │                   ├── FIELD_INIT [x]
+    │           │                   │   └── VALUE_EXPR
+    │           │                   │       └── LITERAL (0.0)
+    │           │                   └── FIELD_INIT [y]
+    │           │                       └── VALUE_EXPR
+    │           │                           └── UNARY_OP (-)
+    │           │                               └── LITERAL (1.0)
+    │           ├── FOR_ITER [var: b]
+    │           │   ├── IDENTIFIER (bodies)
+    │           │   └── BLOCK
+    │           │       └── EXPR_STMT
+    │           │           └── METHOD_CALL [.step]
+    │           │               └── IDENTIFIER (b)
+    │           ├── LET_DECL [grid : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (3)
+    │           │       └── VALUE_EXPR
+    │           │           └── LITERAL (4)
+    │           ├── ASSIGNMENT -> grid[LITERAL(0)]
+    │           │   ├── LITERAL (0)
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── INDEX_ACCESS
+    │           │           │   ├── IDENTIFIER (grid)
+    │           │           │   └── LITERAL (0)
+    │           │           └── INDEX_ACCESS
+    │           │               ├── IDENTIFIER (grid)
+    │           │               └── LITERAL (1)
+    │           ├── LET_DECL [v : Vector2]
+    │           │   └── STRUCT_INSTANCE
+    │           │       ├── FIELD_INIT [x]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── LITERAL (3.0)
+    │           │       └── FIELD_INIT [y]
+    │           │           └── VALUE_EXPR
+    │           │               └── LITERAL (4.0)
+    │           ├── EXPR_STMT
+    │           │   └── METHOD_CALL [.normalize]
+    │           │       └── IDENTIFIER (v)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("Normalized magnitude: ")
+    │           │   └── METHOD_CALL [.magnitude]
+    │           │       └── IDENTIFIER (v)
+    │           ├── LET_DECL [result : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (apply_twice)
+    │           │           ├── IDENTIFIER (doubleIt)
+    │           │           └── LITERAL (5)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("apply_twice(doubleIt, 5) = ")
+    │           │   └── IDENTIFIER (result)
+    │           ├── LET_DECL [op : fn]
+    │           │   └── VALUE_EXPR
+    │           │       └── IDENTIFIER (doubleIt)
+    │           ├── LET_DECL [ten : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (op)
+    │           │           └── LITERAL (5)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("op(5) = ")
+    │           │   └── IDENTIFIER (ten)
+    │           ├── LET_DECL [health : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (10)
+    │           ├── LET_DECL [hp_ptr : ptr]
+    │           │   └── VALUE_EXPR
+    │           │       └── UNARY_OP (&)
+    │           │           └── IDENTIFIER (health)
+    │           ├── ASSIGNMENT -> *hp_ptr
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── IDENTIFIER (health)
+    │           │           └── LITERAL (5)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("Health via pointer: ")
+    │           │   └── UNARY_OP (*)
+    │           │       └── IDENTIFIER (hp_ptr)
+    │           ├── LET_DECL [facing : Direction]
+    │           │   └── VALUE_EXPR
+    │           │       └── MEMBER_ACCESS [.north]
+    │           │           └── IDENTIFIER (Direction)
+    │           ├── IF_STMT
+    │           │   ├── BINARY_OP (==)
+    │           │   │   ├── IDENTIFIER (facing)
+    │           │   │   └── MEMBER_ACCESS [.north]
+    │           │   │       └── IDENTIFIER (Direction)
+    │           │   ├── BLOCK
+    │           │   │   └── PRINT_STMT
+    │           │   │       └── LITERAL ("Facing north.")
+    │           │   └── IF_STMT
+    │           │       ├── BINARY_OP (==)
+    │           │       │   ├── IDENTIFIER (facing)
+    │           │       │   └── MEMBER_ACCESS [.east]
+    │           │       │       └── IDENTIFIER (Direction)
+    │           │       ├── BLOCK
+    │           │       │   └── PRINT_STMT
+    │           │       │       └── LITERAL ("Facing east.")
+    │           │       └── BLOCK
+    │           │           └── PRINT_STMT
+    │           │               └── LITERAL ("Facing elsewhere.")
+    │           ├── LET_DECL [i : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_WHILE
+    │           │   ├── BINARY_OP (<)
+    │           │   │   ├── IDENTIFIER (i)
+    │           │   │   └── LITERAL (10)
+    │           │   └── BLOCK
+    │           │       ├── ASSIGNMENT -> i
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── BINARY_OP (+)
+    │           │       │           ├── IDENTIFIER (i)
+    │           │       │           └── LITERAL (1)
+    │           │       ├── IF_STMT
+    │           │       │   ├── BINARY_OP (==)
+    │           │       │   │   ├── IDENTIFIER (i)
+    │           │       │   │   └── LITERAL (3)
+    │           │       │   └── BLOCK
+    │           │       │       └── CONTINUE_STMT
+    │           │       ├── IF_STMT
+    │           │       │   ├── BINARY_OP (==)
+    │           │       │   │   ├── IDENTIFIER (i)
+    │           │       │   │   └── LITERAL (7)
+    │           │       │   └── BLOCK
+    │           │       │       └── BREAK_STMT
+    │           │       └── PRINT_STMT
+    │           │           ├── LITERAL ("i = ")
+    │           │           └── IDENTIFIER (i)
+    │           └── RETURN_STMT
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  doubleIt        | fn         | fn         |                          | 60:7
+  main            | fn         | fn         |                          | 65:7
+  Direction       | enum       | enum       |                          | 10:7
+  Vector2         | struct     | struct     |                          | 14:7
+  Body            | struct     | struct     |                          | 41:7
+  apply_twice     | fn         | fn         |                          | 54:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    factor          | param      | float      |                          | 25:23
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    m               | let        | float      |                          | 32:13
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    seed            | param      | int        |                          | 54:36
+    once            | let        | int        |                          | 55:9
+    twice           | let        | int        |                          | 56:9
+    op              | param      | fn         |                          | 54:27
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    n               | param      | int        |                          | 60:24
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    op              | let        | fn         |                          | 91:9
+    ten             | let        | int        |                          | 92:9
+    health          | let        | int        |                          | 96:9
+    facing          | let        | Direction  |                          | 102:9
+    i               | let        | int        |                          | 112:9
+    result          | let        | int        |                          | 87:9
+    grid            | let        | array      | length=4, elem=int       | 78:9
+    v               | let        | Vector2    |                          | 82:9
+    hp_ptr          | let        | ptr        | points to int            | 97:9
+    bodies          | let        | array      | length=2, elem=Body      | 68:9
+
+
+
+================================================================================
+ NEW RUN: 2026-07-10 19:07:03 | Elapsed: 0s | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_happy.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [Status : enum]
+    │   └── ENUM_DEFINITION
+    ├── CONST_DECL [Player : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [const username : string]
+    │       │   └── VALUE_EXPR
+    │       │       └── LITERAL ("Guest")
+    │       ├── FIELD_DEF [let score : int]
+    │       │   └── VALUE_EXPR
+    │       │       └── LITERAL (0)
+    │       ├── FIELD_DEF [let status : Status]
+    │       │   └── VALUE_EXPR
+    │       │       └── MEMBER_ACCESS [.active]
+    │       │           └── IDENTIFIER (Status)
+    │       └── FIELD_DEF [const levelUp : fn]
+    │           └── FN_LITERAL
+    │               └── BLOCK
+    │                   ├── ASSIGNMENT -> this.score
+    │                   │   └── VALUE_EXPR
+    │                   │       └── BINARY_OP (+)
+    │                   │           ├── MEMBER_ACCESS [.score]
+    │                   │           │   └── THIS
+    │                   │           └── LITERAL (100)
+    │                   └── PRINT_STMT
+    │                       └── LITERAL ("Level up achieved! Default behavior.")
+    ├── CONST_DECL [calculate_bonus : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           └── RETURN_STMT
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [name : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL ("")
+    │           ├── ASSIGNMENT -> name
+    │           │   └── VALUE_EXPR
+    │           │       └── INPUT_EXPR
+    │           │           └── LITERAL ("Enter your username: ")
+    │           ├── LET_DECL [p1 : Player]
+    │           │   └── STRUCT_INSTANCE
+    │           │       ├── FIELD_INIT [username]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── IDENTIFIER (name)
+    │           │       ├── FIELD_INIT [score]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── LITERAL (0)
+    │           │       └── FIELD_INIT [status]
+    │           │           └── VALUE_EXPR
+    │           │               └── MEMBER_ACCESS [.active]
+    │           │                   └── IDENTIFIER (Status)
+    │           ├── LET_DECL [rewards : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (10)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (20)
+    │           │       └── VALUE_EXPR
+    │           │           └── LITERAL (30)
+    │           ├── FOR_ITER [var: r]
+    │           │   ├── IDENTIFIER (rewards)
+    │           │   └── BLOCK
+    │           │       └── ASSIGNMENT -> p1.score
+    │           │           └── VALUE_EXPR
+    │           │               └── BINARY_OP (+)
+    │           │                   ├── MEMBER_ACCESS [.score]
+    │           │                   │   └── IDENTIFIER (p1)
+    │           │                   └── IDENTIFIER (r)
+    │           ├── LET_DECL [counter : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_WHILE
+    │           │   ├── BINARY_OP (<)
+    │           │   │   ├── IDENTIFIER (counter)
+    │           │   │   └── LITERAL (3)
+    │           │   └── BLOCK
+    │           │       ├── PRINT_STMT
+    │           │       │   ├── LITERAL ("Increasing counter: ")
+    │           │       │   └── IDENTIFIER (counter)
+    │           │       └── ASSIGNMENT -> counter
+    │           │           └── VALUE_EXPR
+    │           │               └── UNARY_OP (++) (postfix)
+    │           │                   └── IDENTIFIER (counter)
+    │           ├── FOR_REPEAT_UNTIL
+    │           │   ├── BLOCK
+    │           │   │   ├── PRINT_STMT
+    │           │   │   │   ├── LITERAL ("Decreasing counter: ")
+    │           │   │   │   └── IDENTIFIER (counter)
+    │           │   │   └── ASSIGNMENT -> counter
+    │           │   │       └── VALUE_EXPR
+    │           │   │           └── UNARY_OP (--) (postfix)
+    │           │   │               └── IDENTIFIER (counter)
+    │           │   └── BINARY_OP (==)
+    │           │       ├── IDENTIFIER (counter)
+    │           │       └── LITERAL (0)
+    │           ├── IF_STMT
+    │           │   ├── BINARY_OP (&&)
+    │           │   │   ├── BINARY_OP (==)
+    │           │   │   │   ├── MEMBER_ACCESS [.status]
+    │           │   │   │   │   └── IDENTIFIER (p1)
+    │           │   │   │   └── MEMBER_ACCESS [.active]
+    │           │   │   │       └── IDENTIFIER (Status)
+    │           │   │   └── BINARY_OP (>)
+    │           │   │       ├── MEMBER_ACCESS [.score]
+    │           │   │       │   └── IDENTIFIER (p1)
+    │           │   │       └── LITERAL (50)
+    │           │   ├── BLOCK
+    │           │   │   ├── LET_DECL [final_score : float]
+    │           │   │   │   └── VALUE_EXPR
+    │           │   │   │       └── LITERAL (0.0)
+    │           │   │   ├── ASSIGNMENT -> final_score
+    │           │   │   │   └── VALUE_EXPR
+    │           │   │   │       └── FN_CALL (calculate_bonus)
+    │           │   │   │           ├── MEMBER_ACCESS [.score]
+    │           │   │   │           │   └── IDENTIFIER (p1)
+    │           │   │   │           └── LITERAL (1.5)
+    │           │   │   └── PRINT_STMT
+    │           │   │       ├── LITERAL ("Great job! Final calculated score: ")
+    │           │   │       └── IDENTIFIER (final_score)
+    │           │   └── IF_STMT
+    │           │       ├── BINARY_OP (==)
+    │           │       │   ├── MEMBER_ACCESS [.status]
+    │           │       │   │   └── IDENTIFIER (p1)
+    │           │       │   └── MEMBER_ACCESS [.banned]
+    │           │       │       └── IDENTIFIER (Status)
+    │           │       ├── BLOCK
+    │           │       │   └── PRINT_STMT
+    │           │       │       └── LITERAL ("Player is currently banned.")
+    │           │       └── BLOCK
+    │           │           └── PRINT_STMT
+    │           │               └── LITERAL ("Keep trying!")
+    │           ├── EXPR_STMT
+    │           │   └── METHOD_CALL [.levelUp]
+    │           │       └── IDENTIFIER (p1)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("Score after level up: ")
+    │           │   └── MEMBER_ACCESS [.score]
+    │           │       └── IDENTIFIER (p1)
+    │           └── RETURN_STMT
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  Status          | enum       | enum       |                          | 7:7
+  Player          | struct     | struct     |                          | 9:7
+  calculate_bonus | fn         | fn         |                          | 22:7
+  main            | fn         | fn         |                          | 27:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    base_score      | param      | int        |                          | 22:31
+    multiplier      | param      | float      |                          | 22:49
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    rewards         | let        | array      | length=3, elem=int       | 42:9
+    counter         | let        | int        |                          | 48:9
+    name            | let        | string     |                          | 30:9
+    p1              | let        | Player     |                          | 34:9
+
+    Scope Level 2:
+      NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+      --------------------------------------------------------------------------------
+      final_score     | let        | float      |                          | 63:13
+
+
+
+================================================================================
+ NEW RUN: 2026-07-10 19:07:03 | Elapsed: 588.5µs | Source: C:\Users\Joel Ethan Batac\Documents\Y4T4\boran\samples\test_syntax_errors.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [Point : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [let x : float]
+    │       └── FIELD_DEF [let y : float]
+    ├── LET_DECL [y : int]
+    │   └── VALUE_EXPR
+    │       └── BINARY_OP (-)
+    │           ├── IDENTIFIER (x)
+    │           └── PAREN_EXPR
+    │               └── BINARY_OP (-)
+    │                   ├── LITERAL (4)
+    │                   └── LITERAL (0)
+    └── LET_DECL [p : Point]
+        └── STRUCT_INSTANCE
+            ├── FIELD_INIT [x]
+            │   └── VALUE_EXPR
+            │       └── IDENTIFIER (x)
+            └── FIELD_INIT [y]
+                └── VALUE_EXPR
+                    └── LITERAL (5)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  Point           | struct     | struct     |                          | 1:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    y               | let        | int        |                          | 7:9
+    p               | let        | Point      |                          | 9:9
+
+
+--- SYNTAX ERRORS (4) ---
+   3:22: expected ARROW but found LBRACE ("{")
+   5:11: invalid assignment target
+   10:1: unexpected token RBRACE ("}") in expression
+   10:2: unexpected token SEMICOLON (";") in expression

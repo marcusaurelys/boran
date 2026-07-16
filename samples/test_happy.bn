@@ -1,74 +1,79 @@
-# Happy path — exercises every major construct in Boran
+# ==========================================
+# BORAN PROGRAMMING LANGUAGE DEMONSTRATION
+# this contains all of Boran's main constructs
+# ==========================================
 
-# --- constants ---
-const MAX_SIZE : int = 100;
-const PI : float = 3.14159;
-const GREETING : string = "Hello, Boran!";
-const NEWLINE : char = '\n';
-const FLAG : bool = true;
+# 1. Enums and Structs declared as constants
+const Status : enum = { active, inactive, banned };
 
-# --- struct definition ---
-const Point : struct = { x : float, y : float };
-
-# --- enum definition ---
-const Direction : enum = { north, south, east, west };
-
-# --- function definition ---
-const distance : fn = (a : Point, b : Point) : float {
-    let dx : float = a.x - b.x;
-    let dy : float = a.y - b.y;
-    return dx * dx + dy * dy;
+const Player : struct = {
+    const username : string = "Guest", 
+    let score : int = 0,
+    let status : Status = Status.active,
+    
+    const levelUp : fn = () => {
+        this.score = this.score + 100;
+        print("Level up achieved! Default behavior.");
+    }
 };
 
-const greet : fn = (name : string) {
-    print("Hello, ");
-    print(name);
+
+# 2. Function declared as a constant
+const calculate_bonus : fn = (base_score : int, multiplier : float) : float => {
+    return base_score * multiplier;
 };
 
-# --- variable declarations ---
-let count : int = 0;
-let label : string = "items";
-let origin : Point = { 0.0, 0.0 };
-let heading : Direction = Direction.north;
+# 3. Main function definition
+const main : fn = () : int => {
+    
+    # Basic I/O: input assigns directly to an identifier
+    let name : string = "";
+    name = input("Enter your username: ");
 
-# --- assignment ---
-count = MAX_SIZE - 1;
+    # Struct Instance Initialization
+    let p1 : Player = {
+        username : name,
+        score : 0,
+        status : Status.active
+    };
 
-# --- for iteration (for-each) ---
-let scores : int[5] = [10, 20, 30, 40, 50];
-let total : int = 0;
-for score in scores {
-    total = total + score;
-}
+    # Unified 'for' keyword (Part A: For-Each / Iteration)
+    # Iterating over an array literal
+    let rewards : int[3] = [ 10, 20, 30 ];
+    for r in rewards {
+        p1.score = p1.score + r;
+    }
 
-# --- for while loop ---
-let i : int = 0;
-for i < 10 {
-    i++;
-}
+    # Unified 'for' keyword (Part B: While-Loop)
+    let counter : int = 0;
+    for counter < 3 {
+        print("Increasing counter: ", counter);
+        # Assignment using standard arithmetic (see observation below)
+        counter ++; 
+    }
 
-# --- for repeat-until ---
-let j : int = 0;
-for {
-    j = j + 1;
-} j >= 5;
+    # Unified 'for' keyword (Part C: Repeat-Until)
+    for {
+        print("Decreasing counter: ", counter);
+        counter --;
+    } counter == 0;
 
-# --- if / else if / else ---
-if total > 100 {
-    print("high");
-} else if total == 100 {
-    print("exact");
-} else {
-    print("low");
-}
+    # Conditionals (if / else if / else) and Logical Operators
+    if p1.status == Status.active && p1.score > 50 {
+        let final_score : float = 0.0;
+        final_score = calculate_bonus(p1.score, 1.5);
+        print("Great job! Final calculated score: ", final_score);
+    } else if p1.status == Status.banned {
+        print("Player is currently banned.");
+    } else {
+        print("Keep trying!");
+    }
 
-# --- nested statements ---
-let result : float = distance(origin, origin);
-if result == 0.0 {
-    let msg : string = "same point";
-    print(msg);
-}
+    # Method call via struct instance
+    p1.levelUp();
+    print("Score after level up: ", p1.score);
 
-# --- input ---
-let username : string = input("Enter name: ");
-greet(username);
+    return 0;
+};
+
+main();

@@ -109,7 +109,7 @@ func (p *Parser) synchronize() {
 // datatypes, as opposed to user-defined struct/enum type identifiers.
 var builtinTypeNames = map[string]bool{
 	"int": true, "float": true, "char": true, "string": true, "bool": true,
-	"fn": true, "struct": true, "enum": true, "ptr": true,
+	"fn": true, "struct": true, "enum": true,
 }
 
 // ============================================================================
@@ -151,30 +151,155 @@ func (p *Parser) parseStmtRecover() (stmt Stmt) {
 
 func (p *Parser) parseStmt() Stmt {
 	tok := p.current()
-	switch {
-	case tok.Type == TOKEN_KEYWORD && tok.Literal == "const":
-		return p.parseConstDecl()
-	case tok.Type == TOKEN_KEYWORD && tok.Literal == "let":
-		return p.parseLetDecl()
-	case tok.Type == TOKEN_KEYWORD && tok.Literal == "if":
-		return p.parseIfStmt()
-	case tok.Type == TOKEN_KEYWORD && tok.Literal == "for":
-		return p.parseForStmt()
-	case tok.Type == TOKEN_KEYWORD && tok.Literal == "print":
-		return p.parsePrintStmt()
-	case tok.Type == TOKEN_KEYWORD && tok.Literal == "return":
-		return p.parseReturnStmt()
-	case tok.Type == TOKEN_KEYWORD && tok.Literal == "this":
-		return p.parseThisStmt()
-	case tok.Type == TOKEN_LBRACE:
-		return p.parseBlock()
-	case tok.Type == TOKEN_IDENTIFIER:
-		return p.parseIdentifierStmt()
-	case tok.Type == TOKEN_ERROR:
-		p.fail(tok, "lexical error: %s", tok.Literal)
+
+	// 1. Handle Keywords that start specific statements
+	if tok.Type == TOKEN_KEYWORD {
+		switch tok.Literal {
+		case "const":
+			return p.parseConstDecl()
+		case "let":
+			return p.parseLetDecl()
+		case "if":
+			return p.parseIfStmt()
+		case "for":
+			return p.parseForStmt()
+		case "print":
+			return p.parsePrintStmt()
+		case "return":
+			return p.parseReturnStmt()
+		case "break":
+			return p.parseBreakStmt()
+		case "continue":
+			return p.parseContinueStmt()
+		}
 	}
-	p.fail(tok, "unexpected token %s (%q) at start of statement", tok.Type, tok.Literal)
-	return nil // unreachable
+
+	// 2. Blocks
+	if tok.Type == TOKEN_LBRACE {
+		return p.parseBlock()
+	}
+
+	// 3. Identifier / 'this' led statements: could be an assignment
+	//    (possibly through a chain: a.start.x = 1;) or an expression
+	//    statement (possibly through a chain: a.start.normalize();).
+	//    A single token of lookahead can't tell these apart once chaining
+	//    is involved, so parse the full postfix expression first and then
+	//    decide based on what follows it.
+	if tok.Type == TOKEN_IDENTIFIER || (tok.Type == TOKEN_KEYWORD && tok.Literal == "this") || tok.Type == TOKEN_OP_MUL {
+		return p.parseIdentOrThisStmt()
+	}
+
+	// 4. Expression Statements (e.g. ++i;, myFunc();)
+	// This covers the BNF: <stmt> ::= <expr> ';'
+	expr := p.parseExpr()
+	p.consume(TOKEN_SEMICOLON)
+	return &ExprStmt{pos: pos{tok.Line, tok.Col}, Call: expr}
+}
+
+func (p *Parser) parseBreakStmt() *BreakStmt {
+	start := p.consumeKeyword("break")
+	p.consume(TOKEN_SEMICOLON)
+	return &BreakStmt{pos: pos{start.Line, start.Col}}
+}
+
+func (p *Parser) parseContinueStmt() *ContinueStmt {
+	start := p.consumeKeyword("continue")
+	p.consume(TOKEN_SEMICOLON)
+	return &ContinueStmt{pos: pos{start.Line, start.Col}}
+}
+
+// parseIdentOrThisStmt parses a statement that begins with an identifier or
+// 'this'. It first parses the full chained expression (a, a.start,
+// a.start.x, matrix[0][1], a.start.normalize(), this.x, ...); if that is
+// immediately followed by '=' it's an assignment (and the parsed expression
+// must reduce to a valid lvalue per the grammar: ident, ident[expr],
+// ident.field, or this.field), otherwise it's a bare expression statement.
+func (p *Parser) parseIdentOrThisStmt() Stmt {
+	tok := p.current()
+	startPos := pos{tok.Line, tok.Col}
+	expr := p.parseExpr()
+
+	if p.current().Type == TOKEN_OP_ASSIGN {
+		target := p.exprToAssignTarget(expr, startPos)
+		p.advance() // consume '='
+		val := p.parseValue("", nil)
+		p.consume(TOKEN_SEMICOLON)
+		return &AssignStmt{pos: startPos, Target: target, Value: val}
+	}
+
+	p.consume(TOKEN_SEMICOLON)
+	return &ExprStmt{pos: startPos, Call: expr}
+}
+
+func (p *Parser) exprToAssignTarget(e Expr, at pos) AssignTarget {
+	cur := e
+	derefCount := 0
+
+	for {
+		u, ok := cur.(*UnaryExpr)
+		if !ok || u.Op != "*" || u.Postfix {
+			break
+		}
+		derefCount++
+		cur = u.Operand
+	}
+
+	var suffixes []LvalueSuffix
+loop:
+	for {
+		switch v := cur.(type) {
+		case *MemberAccess:
+			l, c := v.Pos()
+			suffixes = append(suffixes, LvalueSuffix{pos: pos{l, c}, Kind: SuffixField, Field: v.Field})
+			cur = v.Base
+		case *IndexExpr:
+			l, c := v.Pos()
+			suffixes = append(suffixes, LvalueSuffix{pos: pos{l, c}, Kind: SuffixIndex, Index: v.Index})
+			cur = v.Base
+		default:
+			break loop
+		}
+	}
+
+	for i, j := 0, len(suffixes)-1; i < j; i, j = i+1, j-1 {
+		suffixes[i], suffixes[j] = suffixes[j], suffixes[i]
+	}
+
+	switch base := cur.(type) {
+	case *Identifier:
+		return AssignTarget{pos: at, Kind: TargetIdent, Name: base.Name, Suffixes: suffixes, Deref: derefCount}
+	case *ThisExpr:
+		return AssignTarget{pos: at, Kind: TargetThis, Suffixes: suffixes, Deref: derefCount}
+	}
+
+	p.fail(p.current(), "invalid assignment target")
+	return AssignTarget{pos: at}
+}
+
+func (p *Parser) parseForStmt() Stmt {
+	start := p.consumeKeyword("for")
+
+	// 1. for <ident> in <expr> <block>
+	if p.current().Type == TOKEN_IDENTIFIER && p.peekIsKeyword("in") {
+		name := p.advance()
+		p.consumeKeyword("in")
+		iter := p.parseExpr()
+		body := p.parseBlock()
+		return &ForIterStmt{pos: pos{start.Line, start.Col}, VarName: name.Literal, Iter: iter, Body: body}
+	}
+
+	// 2. for { <block> } <bool_expr> ;
+	if p.current().Type == TOKEN_LBRACE {
+		body := p.parseBlock()
+		cond := p.parseExpr()
+		p.consume(TOKEN_SEMICOLON) // Added per new BNF
+		return &ForRepeatStmt{pos: pos{start.Line, start.Col}, Body: body, Cond: cond}
+	}
+
+	// 3. for <bool_expr> <block>
+	cond := p.parseExpr()
+	body := p.parseBlock()
+	return &ForWhileStmt{pos: pos{start.Line, start.Col}, Cond: cond, Body: body}
 }
 
 func (p *Parser) parseBlock() *Block {
@@ -204,9 +329,9 @@ func (p *Parser) parseConstDecl() *ConstDecl {
 	p.consume(TOKEN_SEMICOLON)
 
 	kind := symbolKindForType(typeName)
-	p.Symbols.Declare(name.Literal, kind, typeName, name.Line, name.Col)
+	p.Symbols.Declare(name.Literal, kind, typeName, dtype, name.Line, name.Col)
 
-	return &ConstDecl{pos: pos{start.Line, start.Col}, Name: name.Literal, TypeName: typeName, Value: val}
+	return &ConstDecl{pos: pos{start.Line, start.Col}, Name: name.Literal, TypeName: typeName, DeclaredType: dtype, Value: val}
 }
 
 func (p *Parser) parseLetDecl() *LetDecl {
@@ -218,9 +343,9 @@ func (p *Parser) parseLetDecl() *LetDecl {
 	val := p.parseValue(typeName, dtype)
 	p.consume(TOKEN_SEMICOLON)
 
-	p.Symbols.Declare(name.Literal, SymLet, typeName, name.Line, name.Col)
+	p.Symbols.Declare(name.Literal, SymLet, typeName, dtype, name.Line, name.Col)
 
-	return &LetDecl{pos: pos{start.Line, start.Col}, Name: name.Literal, TypeName: typeName, Value: val}
+	return &LetDecl{pos: pos{start.Line, start.Col}, Name: name.Literal, TypeName: typeName, DeclaredType: dtype, Value: val}
 }
 
 func symbolKindForType(typeName string) SymbolKind {
@@ -252,10 +377,6 @@ func (p *Parser) parseTypeAnnotation() (*DatatypeNode, string) {
 	case tok.Type == TOKEN_KEYWORD && builtinTypeNames[tok.Literal]:
 		p.advance()
 		switch tok.Literal {
-		case "ptr":
-			elem, _ := p.parseTypeAnnotation()
-			base = &DatatypeNode{pos: pos{tok.Line, tok.Col}, Kind: "ptr", Elem: elem}
-			tag = "ptr"
 		case "fn":
 			base = &DatatypeNode{pos: pos{tok.Line, tok.Col}, Kind: "fn"}
 			tag = "fn"
@@ -271,18 +392,27 @@ func (p *Parser) parseTypeAnnotation() (*DatatypeNode, string) {
 		p.fail(tok, "expected a type (builtin datatype or type name) but found %s (%q)", tok.Type, tok.Literal)
 	}
 
-	// <arr_type> → <datatype> '[' INT_LIT ']'  (may wrap any base type)
-	if p.current().Type == TOKEN_LBRACKET {
-		p.advance()
-		lenTok := p.consume(TOKEN_INT_LIT)
-		p.consume(TOKEN_RBRACKET)
-		n := 0
-		fmt.Sscanf(lenTok.Literal, "%d", &n)
-		base = &DatatypeNode{pos: base.pos, Kind: "array", Elem: base, ArrLen: n}
-		tag = "array"
+	// Postfix modifiers, may combine in either order:
+	//   <ptr_type> ::= <datatype> '*'
+	//   <arr_type> ::= <datatype> '[' INT_LIT ']'
+	for {
+		switch p.current().Type {
+		case TOKEN_OP_MUL:
+			p.advance()
+			base = &DatatypeNode{pos: base.pos, Kind: "ptr", Elem: base}
+			tag = "ptr"
+		case TOKEN_LBRACKET:
+			p.advance()
+			lenTok := p.consume(TOKEN_INT_LIT)
+			p.consume(TOKEN_RBRACKET)
+			n := 0
+			fmt.Sscanf(lenTok.Literal, "%d", &n)
+			base = &DatatypeNode{pos: base.pos, Kind: "array", Elem: base, ArrLen: n}
+			tag = "array"
+		default:
+			return base, tag
+		}
 	}
-
-	return base, tag
 }
 
 // ---- Values (<value>) ------------------------------------------------------
@@ -292,6 +422,70 @@ func (p *Parser) parseTypeAnnotation() (*DatatypeNode, string) {
 // struct instance field, since '{' and '(' are each shared by two
 // grammar alternatives that are not distinguishable by a single token of
 // lookahead alone.
+
+// looksLikeFnLiteral performs bounded lookahead from the current '(' to
+// decide whether this is a fn_literal signature — '(' <param_list> ')'
+// (':' <datatype>)? '=>' — versus a plain parenthesized expression. It only
+// reads tokens (via saved/restored p.pos); it never builds AST nodes or
+// reports errors, so it's safe to call speculatively.
+func (p *Parser) looksLikeFnLiteral() bool {
+	saved := p.pos
+
+	if p.current().Type != TOKEN_LPAREN {
+		p.pos = saved
+		return false
+	}
+	p.advance() // consume '('
+
+	depth := 1
+	for depth > 0 {
+		if p.atEOF() {
+			p.pos = saved
+			return false
+		}
+		switch p.current().Type {
+		case TOKEN_LPAREN:
+			depth++
+		case TOKEN_RPAREN:
+			depth--
+		}
+		p.advance()
+	}
+	// p is now positioned just past the matching ')'
+
+	if p.current().Type == TOKEN_COLON {
+		// skip an optional ': <datatype>' — datatype may itself contain
+		// '[' INT_LIT ']' for array types, so skip balanced brackets too.
+		p.advance()
+		if p.current().Type != TOKEN_KEYWORD && p.current().Type != TOKEN_IDENTIFIER {
+			p.pos = saved
+			return false
+		}
+		p.advance()
+		if p.current().Type == TOKEN_LBRACKET {
+			bdepth := 1
+			p.advance()
+			for bdepth > 0 {
+				if p.atEOF() {
+					p.pos = saved
+					return false
+				}
+				switch p.current().Type {
+				case TOKEN_LBRACKET:
+					bdepth++
+				case TOKEN_RBRACKET:
+					bdepth--
+				}
+				p.advance()
+			}
+		}
+	}
+
+	isFn := p.current().Type == TOKEN_OP_ARROW
+	p.pos = saved
+	return isFn
+}
+
 func (p *Parser) parseValue(typeTag string, dtype *DatatypeNode) Value {
 	tok := p.current()
 
@@ -312,7 +506,7 @@ func (p *Parser) parseValue(typeTag string, dtype *DatatypeNode) Value {
 		}
 
 	case TOKEN_LPAREN:
-		if typeTag == "fn" {
+		if typeTag == "fn" || p.looksLikeFnLiteral() {
 			return p.parseFnLiteral()
 		}
 		// Parenthesized expression used as a value.
@@ -366,16 +560,30 @@ func (p *Parser) parseStructLiteral() *StructLiteral {
 }
 
 func (p *Parser) parseStructFieldInit() StructFieldInit {
+	var mutable bool
+	switch {
+	case p.isKeyword("const"):
+		p.advance()
+	case p.isKeyword("let"):
+		p.advance()
+		mutable = true
+	default:
+		p.fail(p.current(), "expected 'const' or 'let' to start a struct field, found %s (%q)", p.current().Type, p.current().Literal)
+	}
+
 	name := p.consume(TOKEN_IDENTIFIER)
 	p.consume(TOKEN_COLON)
-	f := StructFieldInit{pos: pos{name.Line, name.Col}, Name: name.Literal}
-	if p.current().Type == TOKEN_LPAREN {
-		f.FnValue = p.parseFnLiteral()
-		f.TypeName = "fn"
-	} else {
-		_, tag := p.parseTypeAnnotation()
-		f.TypeName = tag
+	dtype, tag := p.parseTypeAnnotation()
+
+	f := StructFieldInit{pos: pos{name.Line, name.Col}, Name: name.Literal, Mutable: mutable, TypeName: tag, DeclaredType: dtype}
+
+	if p.current().Type == TOKEN_OP_ASSIGN {
+		p.advance()
+		f.Default = p.parseValue(tag, dtype)
+	} else if !mutable {
+		p.fail(p.current(), "const struct field %q requires a value", name.Literal)
 	}
+
 	return f
 }
 
@@ -435,10 +643,8 @@ func (p *Parser) parseFnLiteral() *FnLiteral {
 		fn.ReturnType = rt
 	}
 
-	// parseBlock manages its own scope for statements; params were already
-	// registered in the scope we just entered, so borrow that same scope
-	// for the body by inlining block parsing rather than calling
-	// parseBlock (which would open yet another nested scope).
+	p.consume(TOKEN_OP_ARROW)
+
 	braceTok := p.consume(TOKEN_LBRACE)
 	body := &Block{pos: pos{braceTok.Line, braceTok.Col}}
 	for !p.atEOF() && p.current().Type != TOKEN_RBRACE {
@@ -458,7 +664,7 @@ func (p *Parser) parseParam() Param {
 	name := p.consume(TOKEN_IDENTIFIER)
 	p.consume(TOKEN_COLON)
 	dtype, tag := p.parseTypeAnnotation()
-	p.Symbols.Declare(name.Literal, SymParam, tag, name.Line, name.Col)
+	p.Symbols.Declare(name.Literal, SymParam, tag, dtype, name.Line, name.Col)
 	return Param{pos: pos{name.Line, name.Col}, Name: name.Literal, Type: *dtype}
 }
 
@@ -466,107 +672,6 @@ func (p *Parser) parseParam() Param {
 // Identifier-led / this-led statements
 // (assign_stmt, fn_call-as-stmt, method_call-as-stmt, io_stmt's input form)
 // ============================================================================
-
-func (p *Parser) parseIdentifierStmt() Stmt {
-	name := p.consume(TOKEN_IDENTIFIER)
-
-	switch p.current().Type {
-	case TOKEN_OP_ASSIGN:
-		p.advance()
-		if p.isKeyword("input") {
-			return p.finishInputStmt(name)
-		}
-		val := p.parseExpr()
-		p.consume(TOKEN_SEMICOLON)
-		return &AssignStmt{
-			pos:    pos{name.Line, name.Col},
-			Target: AssignTarget{pos: pos{name.Line, name.Col}, Kind: TargetIdent, Name: name.Literal},
-			Value:  val,
-		}
-
-	case TOKEN_LBRACKET:
-		p.advance()
-		idx := p.parseExpr()
-		p.consume(TOKEN_RBRACKET)
-		p.consume(TOKEN_OP_ASSIGN)
-		val := p.parseExpr()
-		p.consume(TOKEN_SEMICOLON)
-		return &AssignStmt{
-			pos:    pos{name.Line, name.Col},
-			Target: AssignTarget{pos: pos{name.Line, name.Col}, Kind: TargetIndex, Name: name.Literal, IndexExpr: idx},
-			Value:  val,
-		}
-
-	case TOKEN_OP_DOT:
-		p.advance()
-		field := p.consume(TOKEN_IDENTIFIER)
-		if p.current().Type == TOKEN_LPAREN {
-			p.advance()
-			args := p.parseArgList()
-			p.consume(TOKEN_RPAREN)
-			p.consume(TOKEN_SEMICOLON)
-			return &ExprStmt{pos: pos{name.Line, name.Col}, Call: &MethodCall{
-				pos: pos{name.Line, name.Col}, Receiver: name.Literal, MethodName: field.Literal, Args: args,
-			}}
-		}
-		p.consume(TOKEN_OP_ASSIGN)
-		val := p.parseExpr()
-		p.consume(TOKEN_SEMICOLON)
-		return &AssignStmt{
-			pos:    pos{name.Line, name.Col},
-			Target: AssignTarget{pos: pos{name.Line, name.Col}, Kind: TargetMember, Name: name.Literal, Field: field.Literal},
-			Value:  val,
-		}
-
-	case TOKEN_LPAREN:
-		p.advance()
-		args := p.parseArgList()
-		p.consume(TOKEN_RPAREN)
-		p.consume(TOKEN_SEMICOLON)
-		return &ExprStmt{pos: pos{name.Line, name.Col}, Call: &FnCall{pos: pos{name.Line, name.Col}, Callee: name.Literal, Args: args}}
-
-	default:
-		tok := p.current()
-		p.fail(tok, "unexpected token %s (%q) after identifier %q in statement", tok.Type, tok.Literal, name.Literal)
-		return nil
-	}
-}
-
-func (p *Parser) finishInputStmt(nameTok Token) *InputStmt {
-	p.consumeKeyword("input")
-	p.consume(TOKEN_LPAREN)
-	prompt := p.parseExpr()
-	p.consume(TOKEN_RPAREN)
-	p.consume(TOKEN_SEMICOLON)
-	return &InputStmt{pos: pos{nameTok.Line, nameTok.Col}, VarName: nameTok.Literal, Prompt: prompt}
-}
-
-// this . identifier ( arg_list ) ;   -- method call statement
-// this . identifier = expr ;        -- field assignment
-func (p *Parser) parseThisStmt() Stmt {
-	start := p.consumeKeyword("this")
-	p.consume(TOKEN_OP_DOT)
-	field := p.consume(TOKEN_IDENTIFIER)
-
-	if p.current().Type == TOKEN_LPAREN {
-		p.advance()
-		args := p.parseArgList()
-		p.consume(TOKEN_RPAREN)
-		p.consume(TOKEN_SEMICOLON)
-		return &ExprStmt{pos: pos{start.Line, start.Col}, Call: &MethodCall{
-			pos: pos{start.Line, start.Col}, IsThis: true, MethodName: field.Literal, Args: args,
-		}}
-	}
-
-	p.consume(TOKEN_OP_ASSIGN)
-	val := p.parseExpr()
-	p.consume(TOKEN_SEMICOLON)
-	return &AssignStmt{
-		pos:    pos{start.Line, start.Col},
-		Target: AssignTarget{pos: pos{start.Line, start.Col}, Kind: TargetThisMember, Field: field.Literal},
-		Value:  val,
-	}
-}
 
 // ============================================================================
 // Control flow
@@ -595,27 +700,6 @@ func (p *Parser) parseIfStmt() *IfStmt {
 //	for <ident> in <expr> <block>   -- for_iter_stmt   (IDENT then "in")
 //	for { ... } <bool_expr>         -- for_repeat_stmt (block comes first)
 //	for <bool_expr> <block>         -- for_while_stmt  (default)
-func (p *Parser) parseForStmt() Stmt {
-	start := p.consumeKeyword("for")
-
-	if p.current().Type == TOKEN_IDENTIFIER && p.peekIsKeyword("in") {
-		name := p.advance()
-		p.consumeKeyword("in")
-		iter := p.parseExpr()
-		body := p.parseBlock()
-		return &ForIterStmt{pos: pos{start.Line, start.Col}, VarName: name.Literal, Iter: iter, Body: body}
-	}
-
-	if p.current().Type == TOKEN_LBRACE {
-		body := p.parseBlock()
-		cond := p.parseExpr()
-		return &ForRepeatStmt{pos: pos{start.Line, start.Col}, Body: body, Cond: cond}
-	}
-
-	cond := p.parseExpr()
-	body := p.parseBlock()
-	return &ForWhileStmt{pos: pos{start.Line, start.Col}, Cond: cond, Body: body}
-}
 
 func (p *Parser) parsePrintStmt() *PrintStmt {
 	start := p.consumeKeyword("print")
@@ -745,7 +829,7 @@ func (p *Parser) parseUnaryExpr() Expr {
 	case tok.Type == TOKEN_OP_MUL:
 		p.advance()
 		return &UnaryExpr{pos: pos{tok.Line, tok.Col}, Op: "*", Operand: p.parseUnaryExpr()}
-	case tok.Type == TOKEN_OP_AND && tok.Literal == "&":
+	case tok.Type == TOKEN_OP_ADDRESS:
 		p.advance()
 		return &UnaryExpr{pos: pos{tok.Line, tok.Col}, Op: "&", Operand: p.parseUnaryExpr()}
 	default:
@@ -781,6 +865,12 @@ func (p *Parser) parsePrimary() Expr {
 		case "this":
 			p.advance()
 			return p.parseThisTail(tok)
+		case "input": // NEW: handle input() as expression
+			p.advance()
+			p.consume(TOKEN_LPAREN)
+			prompt := p.parseExpr()
+			p.consume(TOKEN_RPAREN)
+			return &InputExpr{pos: pos{tok.Line, tok.Col}, Prompt: prompt}
 		}
 		p.fail(tok, "unexpected keyword %q in expression", tok.Literal)
 
@@ -796,63 +886,75 @@ func (p *Parser) parsePrimary() Expr {
 	}
 
 	p.fail(tok, "unexpected token %s (%q) in expression", tok.Type, tok.Literal)
-	return nil // unreachable
+	return nil
 }
 
-// <primary_tail> → '(' <arg_list> ')'            (fn_call)
+// <primary_tail> → '(' <arg_list> ')' <chain_tail>      (fn_call, then further chaining)
 //
-//	| '[' <expr> ']'                (index_expr)
-//	| '.' <identifier> <method_tail> (member_access | method_call)
-//	| ε                              (bare identifier)
+//	| <chain_tail>                                    (bare identifier, then further chaining)
 //
-// <method_tail> → '(' <arg_list> ')' | ε
+// <chain_tail> → ( '[' <expr> ']' | '.' <identifier> <method_tail> )*
+//
+// This loops so chained access like a.start.x, matrix[0][1], and
+// makePoint().x all parse as a single nested expression instead of
+// stopping after the first segment.
 func (p *Parser) parsePrimaryTail(nameTok Token) Expr {
-	switch p.current().Type {
-	case TOKEN_LPAREN:
-		p.advance()
-		args := p.parseArgList()
-		p.consume(TOKEN_RPAREN)
-		return &FnCall{pos: pos{nameTok.Line, nameTok.Col}, Callee: nameTok.Literal, Args: args}
-
-	case TOKEN_LBRACKET:
-		p.advance()
-		idx := p.parseExpr()
-		p.consume(TOKEN_RBRACKET)
-		return &IndexExpr{pos: pos{nameTok.Line, nameTok.Col}, Array: nameTok.Literal, Index: idx}
-
-	case TOKEN_OP_DOT:
-		p.advance()
-		field := p.consume(TOKEN_IDENTIFIER)
-		if p.current().Type == TOKEN_LPAREN {
-			p.advance()
-			args := p.parseArgList()
-			p.consume(TOKEN_RPAREN)
-			return &MethodCall{pos: pos{nameTok.Line, nameTok.Col}, Receiver: nameTok.Literal, MethodName: field.Literal, Args: args}
-		}
-		return &MemberAccess{pos: pos{nameTok.Line, nameTok.Col}, Base: nameTok.Literal, Field: field.Literal}
-
-	default:
-		return &Identifier{pos: pos{nameTok.Line, nameTok.Col}, Name: nameTok.Literal}
-	}
-}
-
-// <this_tail> → '.' <identifier> ('(' <arg_list> ')')?  | ε
-// (Grammar defines `this.ident(args)` as a method_call; reading a plain
-// `this.field` as a value is a natural, symmetric extension of the
-// assign_stmt form `this.ident = expr`, so it is supported here too.)
-func (p *Parser) parseThisTail(thisTok Token) Expr {
-	if p.current().Type != TOKEN_OP_DOT {
-		return &ThisExpr{pos: pos{thisTok.Line, thisTok.Col}}
-	}
-	p.advance()
-	field := p.consume(TOKEN_IDENTIFIER)
+	var expr Expr
 	if p.current().Type == TOKEN_LPAREN {
 		p.advance()
 		args := p.parseArgList()
 		p.consume(TOKEN_RPAREN)
-		return &MethodCall{pos: pos{thisTok.Line, thisTok.Col}, IsThis: true, MethodName: field.Literal, Args: args}
+		expr = &FnCall{pos: pos{nameTok.Line, nameTok.Col}, Callee: nameTok.Literal, Args: args}
+	} else {
+		expr = &Identifier{pos: pos{nameTok.Line, nameTok.Col}, Name: nameTok.Literal}
 	}
-	return &MemberAccess{pos: pos{thisTok.Line, thisTok.Col}, Base: "this", Field: field.Literal}
+	return p.parseChainTail(expr)
+}
+
+// <this_tail> → '.' <identifier> <method_tail> <chain_tail> | ε
+// (Grammar defines `this.ident(args)` as a method_call; reading a plain
+// `this.field` as a value is a natural, symmetric extension of the
+// assign_stmt form `this.ident = expr`, so it is supported here too.)
+func (p *Parser) parseThisTail(thisTok Token) Expr {
+	var expr Expr = &ThisExpr{pos: pos{thisTok.Line, thisTok.Col}}
+	if p.current().Type != TOKEN_OP_DOT {
+		return expr
+	}
+	return p.parseChainTail(expr)
+}
+
+// parseChainTail repeatedly consumes '[' <expr> ']' and '.' <identifier>
+// (optionally followed by a call) suffixes, building up a nested chain of
+// IndexExpr / MemberAccess / MethodCall around base. It stops as soon as
+// none of those tokens follow, leaving the parser positioned there.
+func (p *Parser) parseChainTail(base Expr) Expr {
+	expr := base
+	for {
+		switch p.current().Type {
+		case TOKEN_LBRACKET:
+			tok := p.current()
+			p.advance()
+			idx := p.parseExpr()
+			p.consume(TOKEN_RBRACKET)
+			expr = &IndexExpr{pos: pos{tok.Line, tok.Col}, Base: expr, Index: idx}
+
+		case TOKEN_OP_DOT:
+			tok := p.current()
+			p.advance()
+			field := p.consume(TOKEN_IDENTIFIER)
+			if p.current().Type == TOKEN_LPAREN {
+				p.advance()
+				args := p.parseArgList()
+				p.consume(TOKEN_RPAREN)
+				expr = &MethodCall{pos: pos{tok.Line, tok.Col}, Base: expr, MethodName: field.Literal, Args: args}
+			} else {
+				expr = &MemberAccess{pos: pos{tok.Line, tok.Col}, Base: expr, Field: field.Literal}
+			}
+
+		default:
+			return expr
+		}
+	}
 }
 
 // <arg_list> → <args> | ε
