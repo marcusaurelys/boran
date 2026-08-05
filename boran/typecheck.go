@@ -491,6 +491,16 @@ func (c *TypeChecker) checkExpr(e Expr) *TCType {
 		c.checkExpr(n.Prompt)
 		return tBuiltin("string")
 
+	case *RangeExpr:
+		for _, a := range n.Args {
+			t := c.checkExpr(a)
+			if t != nil && t.Kind != "unknown" && !isNumeric(t) {
+				line, col := a.Pos()
+				c.errorf(ErrTypeMismatch, line, col, "range() arguments must be int or float, got %s", t.String())
+			}
+		}
+		return &TCType{Kind: "array", Elem: tBuiltin("int"), ArrLen: -1} // length is only known at runtime
+
 	case *GroupExpr:
 		return c.checkExpr(n.Inner)
 

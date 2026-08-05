@@ -1,0 +1,45 @@
+# range() demonstration and edge cases
+
+const main : fn = () : int => {
+    # 1-arg form: range(end) -> 0..end-1
+    print("range(5):");
+    for x in range(5) {
+        print(" ", x);
+    }
+
+    # 2-arg form: range(start, end)
+    print("range(2, 6):");
+    for x in range(2, 6) {
+        print(" ", x);
+    }
+
+    # 3-arg form: range(start, end, step)
+    print("range(0, 10, 2):");
+    for x in range(0, 10, 2) {
+        print(" ", x);
+    }
+
+    # negative step counts down
+    print("range(5, 0, -1):");
+    for x in range(5, 0, -1) {
+        print(" ", x);
+    }
+
+    # empty range: start already past end for the given step direction
+    let empty : int[0] = range(5, 5);
+    print("range(5,5) length via sum (should print nothing below):");
+    for x in empty {
+        print(" unexpected:", x);
+    }
+
+    # range() with expressions as arguments, not just literals
+    let n : int = 3;
+    print("range(n, n*3):");
+    for x in range(n, n * 3) {
+        print(" ", x);
+    }
+
+    return 0;
+};
+
+main();

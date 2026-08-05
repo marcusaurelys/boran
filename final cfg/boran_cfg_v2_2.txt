@@ -1,12 +1,24 @@
 ================================================================
   Boran Language — Context-Free Grammar Specification
-  Version 2.1
+  Version 2.2
 ================================================================
 
 Authors:      Joel Ethan Batac
               Boris Victoria
 
 Last Updated:   05 August 2026
+
+Changelog (2.1 -> 2.2):
+  - Added 'range(...)' as a builtin, keyword-led primary expression (same
+    grouping as 'print'/'input'), with three arities:
+      range(end)               -- implicit start=0, step=1
+      range(start, end)        -- implicit step=1
+      range(start, end, step)
+    Always evaluates to an ordinary int[] array, so it composes directly
+    with the existing 'for x in <expr>' iteration form. Arguments must be
+    int or float (floats truncate toward zero); a step of 0 is a runtime
+    error. 'range' is now a reserved word and can no longer be used as an
+    identifier.
 
 Changelog (2.0 -> 2.1):
   - <for_repeat_stmt> no longer requires a trailing ';' in <stmt>. Every
@@ -162,7 +174,12 @@ Lexical Rules.
                                    | 'this' <this_tail>
                                    | '(' <expr> ')'
                                    | <io_stmt>
+                                   | <range_expr>
                                    | <identifier> <primary_tail>
+
+<range_expr>                      ::= 'range' '(' <expr> <range_args_tail> ')'
+<range_args_tail>                 ::= ',' <expr> <range_args_tail> | ε
+                                   (capped at 3 total arguments: start, end, step)
 
 # Chaining
 

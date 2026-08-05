@@ -584,6 +584,9 @@ func (i *Interpreter) evalExpr(e Expr, env *Environment) RTValue {
 		}
 		return &StringVal{Val: strings.TrimRight(line, "\r\n")}
 
+	case *RangeExpr:
+		return i.evalRange(n, env, line, col)
+
 	case *GroupExpr:
 		return i.evalExpr(n.Inner, env)
 
@@ -965,6 +968,53 @@ func valuesEqual(l, r RTValue) bool {
 }
 
 // ---- Type casting ----------------------------------------------------
+
+// evalRange implements range(...)'s three arities. Every arg is coerced to
+// an int64 (floats truncate, same rule as an explicit 'as int' cast) so
+// range(3.5) and friends behave predictably rather than erroring outright.
+// The result is a perfectly ordinary heap-backed ArrayVal -- range is pure
+// sugar for building one, so 'for x in range(5)' reuses the existing
+// for-in machinery unchanged.
+func (i *Interpreter) evalRange(n *RangeExpr, env *Environment, line, col int) RTValue {
+	toInt64 := func(e Expr) int64 {
+		v := i.evalExpr(e, env)
+		switch val := v.(type) {
+		case *IntVal:
+			return val.Val
+		case *FloatVal:
+			return int64(val.Val)
+		}
+		rtPanic(line, col, "range() arguments must be int or float, got %s", v.TypeTag())
+		return 0
+	}
+
+	var start, end, step int64
+	switch len(n.Args) {
+	case 1:
+		start, end, step = 0, toInt64(n.Args[0]), 1
+	case 2:
+		start, end, step = toInt64(n.Args[0]), toInt64(n.Args[1]), 1
+	case 3:
+		start, end, step = toInt64(n.Args[0]), toInt64(n.Args[1]), toInt64(n.Args[2])
+	default:
+		rtPanic(line, col, "range() takes 1 to 3 arguments, got %d", len(n.Args))
+	}
+	if step == 0 {
+		rtPanic(line, col, "range() step cannot be 0")
+	}
+
+	var elems []int
+	if step > 0 {
+		for v := start; v < end; v += step {
+			elems = append(elems, i.Heap.Alloc(&IntVal{Val: v}))
+		}
+	} else {
+		for v := start; v > end; v += step {
+			elems = append(elems, i.Heap.Alloc(&IntVal{Val: v}))
+		}
+	}
+	return &ArrayVal{Elems: elems, ElemType: "int"}
+}
 
 // castValue implements the 'as' operator's runtime behavior. The type
 // checker (isCastable in typecheck.go) already restricts this to the five

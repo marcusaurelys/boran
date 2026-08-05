@@ -100,6 +100,13 @@ func printNode(n Node, depth int) string {
 	case *InputExpr:
 		res += fmt.Sprintf("%sINPUT(%s)\n", indent, strings.TrimSpace(printNode(node.Prompt, 0)))
 
+	case *RangeExpr:
+		res += indent + "RANGE(\n"
+		for _, a := range node.Args {
+			res += printNode(a, depth+1)
+		}
+		res += indent + ")\n"
+
 	case *FnCall:
 		res += fmt.Sprintf("%sCALL %s(\n", indent, node.Callee)
 		for _, arg := range node.Args {

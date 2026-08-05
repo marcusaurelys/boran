@@ -901,6 +901,8 @@ func (p *Parser) parsePrimary() Expr {
 			prompt := p.parseExpr()
 			p.consume(TOKEN_RPAREN)
 			return &InputExpr{pos: pos{tok.Line, tok.Col}, Prompt: prompt}
+		case "range":
+			return p.parseRangeExpr(tok)
 		}
 		p.fail(tok, "unexpected keyword %q in expression", tok.Literal)
 
@@ -917,6 +919,27 @@ func (p *Parser) parsePrimary() Expr {
 
 	p.fail(tok, "unexpected token %s (%q) in expression", tok.Type, tok.Literal)
 	return nil
+}
+
+// <range_expr> → 'range' '(' <expr> <range_args_tail> ')'
+// <range_args_tail> → ',' <expr> <range_args_tail> | ε   (capped at 3 total args)
+//
+//	range(end)               -- implicit start=0, step=1
+//	range(start, end)        -- implicit step=1
+//	range(start, end, step)
+func (p *Parser) parseRangeExpr(start Token) Expr {
+	p.advance() // consume 'range'
+	p.consume(TOKEN_LPAREN)
+	args := []Expr{p.parseExpr()}
+	for p.current().Type == TOKEN_COMMA {
+		p.advance()
+		if len(args) >= 3 {
+			p.fail(p.current(), "range() takes at most 3 arguments (start, end, step)")
+		}
+		args = append(args, p.parseExpr())
+	}
+	p.consume(TOKEN_RPAREN)
+	return &RangeExpr{pos: pos{start.Line, start.Col}, Args: args}
 }
 
 // <primary_tail> → '(' <arg_list> ')' <chain_tail>      (fn_call, then further chaining)

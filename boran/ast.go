@@ -319,6 +319,22 @@ type UnaryExpr struct {
 	Postfix bool // true for `x++` / `x--`
 }
 
+// RangeExpr represents 'range(...)', with 1-3 arguments:
+//
+//	range(end)               -- Args == [end],               implicit start=0, step=1
+//	range(start, end)        -- Args == [start, end],         implicit step=1
+//	range(start, end, step)  -- Args == [start, end, step]
+//
+// Always evaluates to an array of int (the array machinery already in
+// place -- ArrayVal, for-in -- is reused as-is; range is just sugar for
+// building one).
+type RangeExpr struct {
+	pos
+	Args []Expr
+}
+
+func (e *RangeExpr) exprNode() {}
+
 type InputExpr struct {
 	pos
 	Prompt Expr
