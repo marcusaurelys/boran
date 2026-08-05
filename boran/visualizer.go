@@ -109,6 +109,8 @@ func getNodeLabel(n Node) string {
 		return "THIS"
 	case *GroupExpr:
 		return "PAREN_EXPR"
+	case *CastExpr:
+		return fmt.Sprintf("CAST_EXPR [as %s]", describeType(node.Target))
 	case *ExprValue:
 		return "VALUE_EXPR"
 	case *ArrLiteral:
@@ -195,6 +197,8 @@ func getChildren(n Node) []Node {
 		add(node.Operand)
 	case *GroupExpr:
 		add(node.Inner)
+	case *CastExpr:
+		add(node.Operand)
 	case *FnCall:
 		for _, a := range node.Args {
 			add(a)

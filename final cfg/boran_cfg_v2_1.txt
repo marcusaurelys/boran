@@ -1,12 +1,29 @@
 ================================================================
   Boran Language — Context-Free Grammar Specification
-  Version 2.0
+  Version 2.1
 ================================================================
 
 Authors:      Joel Ethan Batac
               Boris Victoria
 
-Last Updated:   10 July 2026
+Last Updated:   05 August 2026
+
+Changelog (2.0 -> 2.1):
+  - <for_repeat_stmt> no longer requires a trailing ';' in <stmt>. Every
+    other block-terminated statement form (if_stmt, for_iter_stmt,
+    for_while_stmt) needs no semicolon, since the closing block already
+    marks the statement boundary; requiring one only for the repeat-until
+    form was an unintentional inconsistency, not a parsing necessity. A
+    trailing ';' is still accepted (not an error) for backward
+    compatibility with existing source files.
+  - Added explicit type casting via a new 'as' operator: <cast_expr>,
+    sitting between <unary_expr> and <postfix_expr> in precedence (binds
+    tighter than arithmetic, looser than the prefix unary forms). Casts
+    chain left-associatively (`x as float as string`). Restricted to the
+    five scalar primitives (int, float, char, string, bool); casting to
+    or from struct/array/fn/enum/ptr types is a static type-mismatch
+    error. A handful of primitive pairings (e.g. string -> int) can still
+    fail at runtime if the value isn't actually convertible.
 
 ----------------------------------------------------------------
 Notation
@@ -37,7 +54,7 @@ Lexical Rules.
          | <if_stmt>
          | <for_iter_stmt>
          | <for_while_stmt>
-         | <for_repeat_stmt> ';'
+         | <for_repeat_stmt>
          | <return_stmt>
          | <expr> ';'
          | <block>
@@ -133,7 +150,10 @@ Lexical Rules.
                                   | '--' <unary_expr>
                                   | '*' <unary_expr>
                                   | '&' <unary_expr>
-                                  | <postfix_expr>
+                                  | <cast_expr>
+
+<cast_expr>                       ::= <postfix_expr> <cast_tail>
+<cast_tail>                       ::= 'as' <datatype> <cast_tail> | ε
 
 <postfix_expr>                   ::= <primary> <postfix_tail>
 <postfix_tail>                   ::= '++' | '--' | ε

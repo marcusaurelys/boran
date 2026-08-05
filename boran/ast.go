@@ -382,6 +382,17 @@ type MemberAccess struct {
 
 func (e *MemberAccess) exprNode() {}
 
+// CastExpr represents an explicit type conversion: <expr> 'as' <datatype>.
+// Chains left-associatively, e.g. `x as float as string` casts x to float
+// first, then that result to string.
+type CastExpr struct {
+	pos
+	Operand Expr
+	Target  *DatatypeNode
+}
+
+func (e *CastExpr) exprNode() {}
+
 // GroupExpr preserves an explicitly parenthesized expression, e.g. (a + b).
 type GroupExpr struct {
 	pos

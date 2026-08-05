@@ -587,6 +587,10 @@ func (i *Interpreter) evalExpr(e Expr, env *Environment) RTValue {
 	case *GroupExpr:
 		return i.evalExpr(n.Inner, env)
 
+	case *CastExpr:
+		v := i.evalExpr(n.Operand, env)
+		return castValue(v, n.Target, line, col)
+
 	case *UnaryExpr:
 		return i.evalUnary(n, env)
 
@@ -958,6 +962,128 @@ func valuesEqual(l, r RTValue) bool {
 		return ok
 	}
 	return false
+}
+
+// ---- Type casting ----------------------------------------------------
+
+// castValue implements the 'as' operator's runtime behavior. The type
+// checker (isCastable in typecheck.go) already restricts this to the five
+// scalar primitives, so target.Kind is always one of those here; any other
+// DatatypeNode reaching this point is a checker bug, not a user error, and
+// is treated as an unsupported cast rather than silently doing nothing.
+func castValue(v RTValue, target *DatatypeNode, line, col int) RTValue {
+	if target == nil {
+		rtPanic(line, col, "cast has no target type")
+	}
+	switch target.Kind {
+	case "int":
+		return castToInt(v, line, col)
+	case "float":
+		return castToFloat(v, line, col)
+	case "bool":
+		return castToBool(v, line, col)
+	case "char":
+		return castToChar(v, line, col)
+	case "string":
+		return &StringVal{Val: v.String()}
+	}
+	rtPanic(line, col, "unsupported cast target type %q", target.Kind)
+	return &NullVal{}
+}
+
+func castToInt(v RTValue, line, col int) RTValue {
+	switch val := v.(type) {
+	case *IntVal:
+		return &IntVal{Val: val.Val}
+	case *FloatVal:
+		return &IntVal{Val: int64(val.Val)} // truncates toward zero
+	case *BoolVal:
+		if val.Val {
+			return &IntVal{Val: 1}
+		}
+		return &IntVal{Val: 0}
+	case *CharVal:
+		return &IntVal{Val: int64(val.Val)}
+	case *StringVal:
+		n, err := strconv.ParseInt(strings.TrimSpace(val.Val), 10, 64)
+		if err != nil {
+			rtPanic(line, col, "cannot cast string %q to int: not a valid integer", val.Val)
+		}
+		return &IntVal{Val: n}
+	}
+	rtPanic(line, col, "cannot cast %s to int", v.TypeTag())
+	return &NullVal{}
+}
+
+func castToFloat(v RTValue, line, col int) RTValue {
+	switch val := v.(type) {
+	case *IntVal:
+		return &FloatVal{Val: float64(val.Val)}
+	case *FloatVal:
+		return &FloatVal{Val: val.Val}
+	case *BoolVal:
+		if val.Val {
+			return &FloatVal{Val: 1}
+		}
+		return &FloatVal{Val: 0}
+	case *CharVal:
+		return &FloatVal{Val: float64(val.Val)}
+	case *StringVal:
+		f, err := strconv.ParseFloat(strings.TrimSpace(val.Val), 64)
+		if err != nil {
+			rtPanic(line, col, "cannot cast string %q to float: not a valid number", val.Val)
+		}
+		return &FloatVal{Val: f}
+	}
+	rtPanic(line, col, "cannot cast %s to float", v.TypeTag())
+	return &NullVal{}
+}
+
+func castToBool(v RTValue, line, col int) RTValue {
+	switch val := v.(type) {
+	case *IntVal:
+		return &BoolVal{Val: val.Val != 0}
+	case *FloatVal:
+		return &BoolVal{Val: val.Val != 0}
+	case *BoolVal:
+		return &BoolVal{Val: val.Val}
+	case *CharVal:
+		return &BoolVal{Val: val.Val != 0}
+	case *StringVal:
+		switch strings.TrimSpace(val.Val) {
+		case "true":
+			return &BoolVal{Val: true}
+		case "false":
+			return &BoolVal{Val: false}
+		}
+		rtPanic(line, col, "cannot cast string %q to bool: expected \"true\" or \"false\"", val.Val)
+	}
+	rtPanic(line, col, "cannot cast %s to bool", v.TypeTag())
+	return &NullVal{}
+}
+
+func castToChar(v RTValue, line, col int) RTValue {
+	switch val := v.(type) {
+	case *IntVal:
+		return &CharVal{Val: rune(val.Val)}
+	case *FloatVal:
+		return &CharVal{Val: rune(int64(val.Val))}
+	case *BoolVal:
+		if val.Val {
+			return &CharVal{Val: '1'}
+		}
+		return &CharVal{Val: '0'}
+	case *CharVal:
+		return &CharVal{Val: val.Val}
+	case *StringVal:
+		runes := []rune(val.Val)
+		if len(runes) != 1 {
+			rtPanic(line, col, "cannot cast string %q to char: must be exactly one character", val.Val)
+		}
+		return &CharVal{Val: runes[0]}
+	}
+	rtPanic(line, col, "cannot cast %s to char", v.TypeTag())
+	return &NullVal{}
 }
 
 // ---- Literals ------------------------------------------------------------

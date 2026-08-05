@@ -1,0 +1,49 @@
+# Type casting demonstration and edge cases
+
+const main : fn = () : int => {
+    # numeric round-trip
+    let i : int = 7;
+    let f : float = i as float;
+    print("int -> float:", f);
+
+    let f2 : float = 3.9;
+    let i2 : int = f2 as int;
+    print("float -> int (truncates):", i2);
+
+    # bool conversions
+    let b : bool = i as bool;
+    print("int(7) -> bool:", b);
+    let zeroBool : bool = 0 as bool;
+    print("int(0) -> bool:", zeroBool);
+
+    let bi : int = true as int;
+    print("bool(true) -> int:", bi);
+
+    # char conversions
+    let c : char = 65 as char;
+    print("int(65) -> char:", c);
+    let ci : int = c as int;
+    print("char('A') -> int:", ci);
+
+    # string conversions (everything -> string via .String())
+    let s1 : string = i as string;
+    let s2 : string = f2 as string;
+    let s3 : string = b as string;
+    let s4 : string = c as string;
+    print("as string:", s1, s2, s3, s4);
+
+    # string -> numeric / bool / char (parsed)
+    let parsedInt : int = "42" as int;
+    let parsedFloat : float = "3.14" as float;
+    let parsedBool : bool = "true" as bool;
+    let parsedChar : char = "Q" as char;
+    print("parsed:", parsedInt, parsedFloat, parsedBool, parsedChar);
+
+    # chained casts
+    let chained : string = 9 as float as string;
+    print("chained int->float->string:", chained);
+
+    return 0;
+};
+
+main();

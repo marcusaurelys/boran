@@ -127,6 +127,9 @@ func printNode(n Node, depth int) string {
 	case *GroupExpr:
 		res += printNode(node.Inner, depth)
 
+	case *CastExpr:
+		res += fmt.Sprintf("%sCAST %s AS %s\n", indent, strings.TrimSpace(printNode(node.Operand, 0)), describeType(node.Target))
+
 	default:
 		res += fmt.Sprintf("%s<unknown node: %T>\n", indent, n)
 	}

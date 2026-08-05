@@ -68,7 +68,7 @@ var keywords = map[string]TokenType{
 	"in": TOKEN_KEYWORD, "return": TOKEN_KEYWORD,
 	"print": TOKEN_KEYWORD, "input": TOKEN_KEYWORD,
 	"true": TOKEN_BOOL_LIT, "false": TOKEN_BOOL_LIT,
-	"null": TOKEN_KEYWORD, "this": TOKEN_KEYWORD,
+	"null": TOKEN_KEYWORD, "this": TOKEN_KEYWORD, "as": TOKEN_KEYWORD,
 }
 
 type Scanner struct {

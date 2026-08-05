@@ -112,6 +112,31 @@ func isNumeric(t *TCType) bool {
 	return t != nil && (t.Kind == "int" || t.Kind == "float")
 }
 
+// isPrimitiveScalar reports whether t is one of the five scalar builtin
+// types 'as' can convert between. Structs, arrays, fn, enum, and pointer
+// types are intentionally excluded -- casting between them has no obvious
+// single meaning here (e.g. what would `myStruct as int` even mean), so
+// they're left unsupported rather than guessed at.
+func isPrimitiveScalar(t *TCType) bool {
+	if t == nil {
+		return false
+	}
+	switch t.Kind {
+	case "int", "float", "char", "string", "bool":
+		return true
+	}
+	return false
+}
+
+// isCastable reports whether an 'as' cast from 'from' to 'to' is allowed.
+// Every pair of primitive scalar types is castable -- the interpreter
+// (castValue in interpreter.go) defines exactly what each pairing computes,
+// including which ones can fail at runtime (e.g. a non-numeric string cast
+// to int/float).
+func isCastable(from, to *TCType) bool {
+	return isPrimitiveScalar(from) && isPrimitiveScalar(to)
+}
+
 // typesCompatible is deliberately permissive about "unknown" (propagated
 // after an earlier error, so it shouldn't cascade into new false positives)
 // and about int/float mixing in arithmetic, matching common scripting-
@@ -591,6 +616,15 @@ func (c *TypeChecker) checkExpr(e Expr) *TCType {
 		}
 		c.errorf(ErrOther, line, col, "%q is not a field of struct %q", n.Field, baseType.Name)
 		return tUnknown()
+
+	case *CastExpr:
+		operand := c.checkExpr(n.Operand)
+		target := fromDatatypeNode(n.Target)
+		line, col := n.Pos()
+		if operand != nil && operand.Kind != "unknown" && !isCastable(operand, target) {
+			c.errorf(ErrTypeMismatch, line, col, "cannot cast %s to %s", operand.String(), target.String())
+		}
+		return target
 
 	case *IndexExpr:
 		baseType := c.checkExpr(n.Base)

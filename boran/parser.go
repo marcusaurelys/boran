@@ -288,11 +288,22 @@ func (p *Parser) parseForStmt() Stmt {
 		return &ForIterStmt{pos: pos{start.Line, start.Col}, VarName: name.Literal, Iter: iter, Body: body}
 	}
 
-	// 2. for { <block> } <bool_expr> ;
+	// 2. for { <block> } <bool_expr> [';']
+	//
+	// The trailing ';' is accepted but no longer required. Every other
+	// block-terminated statement form (if, for-iter, for-while) needs no
+	// semicolon, since the closing '}' (or, here, the condition that
+	// follows it) already marks the statement's end unambiguously; making
+	// this one form demand a ';' while the rest don't was an inconsistency
+	// in the surface syntax, not a parsing necessity. Consuming it when
+	// present (rather than removing support outright) keeps existing
+	// source files with a trailing ';' here still parsing correctly.
 	if p.current().Type == TOKEN_LBRACE {
 		body := p.parseBlock()
 		cond := p.parseExpr()
-		p.consume(TOKEN_SEMICOLON) // Added per new BNF
+		if p.current().Type == TOKEN_SEMICOLON {
+			p.advance()
+		}
 		return &ForRepeatStmt{pos: pos{start.Line, start.Col}, Body: body, Cond: cond}
 	}
 
@@ -833,8 +844,27 @@ func (p *Parser) parseUnaryExpr() Expr {
 		p.advance()
 		return &UnaryExpr{pos: pos{tok.Line, tok.Col}, Op: "&", Operand: p.parseUnaryExpr()}
 	default:
-		return p.parsePostfixExpr()
+		return p.parseCastExpr()
 	}
+}
+
+// <cast_expr> → <postfix_expr> <cast_tail>
+// <cast_tail> → 'as' <datatype> <cast_tail> | ε
+//
+// Binds tighter than arithmetic/comparison but looser than the prefix unary
+// forms above, so `-x as float` casts first then negates is NOT how this
+// parses -- '-' recurses into parseUnaryExpr, which reaches parseCastExpr
+// for its operand, so `-x as float` actually parses as `-(x as float)`.
+// Chains left-associatively: `x as float as string` casts x to float, then
+// that result to string.
+func (p *Parser) parseCastExpr() Expr {
+	expr := p.parsePostfixExpr()
+	for p.isKeyword("as") {
+		tok := p.advance()
+		target, _ := p.parseTypeAnnotation()
+		expr = &CastExpr{pos: pos{tok.Line, tok.Col}, Operand: expr, Target: target}
+	}
+	return expr
 }
 
 // <postfix_expr> → <primary> <postfix_tail>
