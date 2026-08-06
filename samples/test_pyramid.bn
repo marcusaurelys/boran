@@ -1,0 +1,15 @@
+
+
+const main : fn = () : int => {
+    let max_input : string = input("Input an integer: \n");
+    let max : int = max_input as int;
+    print("printing pyramid of size ", max, "\n");
+    for i in range(max) {
+        for j in range(i){
+            print("*");
+        }
+        print("\n");
+    }
+};
+
+main();

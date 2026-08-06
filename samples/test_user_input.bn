@@ -1,0 +1,10 @@
+const max : int = 5;
+let name1 : string = input("input first name: \n");
+let name2 : string = input("input second name: \n");
+let names : string[2] = [name1, name2];
+names[0] = "banana";
+
+for name in names{
+    print(name, "\n");
+}
+

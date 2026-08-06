@@ -1,0 +1,10 @@
+const test : fn = () => {
+    print(x);
+};
+
+const main : fn = () : int => {
+    let x : int = 5;
+    return 0;
+};
+
+main();
