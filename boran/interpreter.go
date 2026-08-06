@@ -893,69 +893,68 @@ func (i *Interpreter) addressOfTarget(t AssignTarget, env *Environment) int {
 		return i.promote(ownerEnv, name)
 	}
 
-	cur := i.readSlot(slot, line, col, name)
-
+	// Resolve the '.field' / '[index]' suffix chain FIRST, starting from
+	// the base identifier/this binding. This mirrors the grammar:
+	//   <lvalue> ::= identifier <lvalue_tail> | 'this' <lvalue_tail> | '*' <lvalue>
+	// A leading '*' wraps the *entire* inner lvalue -- identifier plus
+	// its whole suffix chain -- not just the bare identifier. So for
+	// something like '*ptrs[0] = v' or '*n.self = v', the suffix chain
+	// ([0], .self) must be walked to find the pointer value first; only
+	// then do the leading dereferences follow it to the final address.
 	var addr int
-	haveAddr := false
-	for d := 0; d < t.Deref; d++ {
-		var ptr *PtrVal
-		if !haveAddr {
-			ptr, ok = cur.(*PtrVal)
-		} else {
-			box, gok := i.Heap.Get(addr)
-			if !gok {
-				rtThrow(line, col, "null pointer dereference")
+	if len(t.Suffixes) == 0 {
+		addr = i.promote(ownerEnv, name)
+	} else {
+		cur := i.readSlot(slot, line, col, name)
+		for idx, suf := range t.Suffixes {
+			if idx > 0 {
+				box, gok := i.Heap.Get(addr)
+				if !gok {
+					rtPanic(line, col, "invalid/freed reference in assignment target")
+				}
+				cur = box.Value
 			}
-			ptr, ok = box.Value.(*PtrVal)
+			switch suf.Kind {
+			case SuffixField:
+				sv, sok := cur.(*StructVal)
+				if !sok {
+					rtPanic(line, col, "'.%s' used on a non-struct value", suf.Field)
+				}
+				fieldAddr, fok := sv.Fields[suf.Field]
+				if !fok {
+					rtPanic(line, col, "%q is not a field of struct %q", suf.Field, sv.TypeName)
+				}
+				addr = fieldAddr
+			case SuffixIndex:
+				arr, aok := cur.(*ArrayVal)
+				if !aok {
+					rtPanic(line, col, "'[...]' used on a non-array value")
+				}
+				idxVal := i.evalExpr(suf.Index, env)
+				iv, iok := idxVal.(*IntVal)
+				if !iok {
+					rtPanic(line, col, "array index must be int, got %s", idxVal.TypeTag())
+				}
+				if iv.Val < 0 || int(iv.Val) >= len(arr.Elems) {
+					rtPanic(line, col, "array index %d out of bounds (length %d)", iv.Val, len(arr.Elems))
+				}
+				addr = arr.Elems[iv.Val]
+			}
 		}
-		if !ok {
+	}
+
+	// Now apply the leading dereferences (if any), following the pointer
+	// chain starting from the address the suffix walk landed on.
+	for d := 0; d < t.Deref; d++ {
+		box, gok := i.Heap.Get(addr)
+		if !gok {
+			rtThrow(line, col, "null pointer dereference")
+		}
+		ptr, pok := box.Value.(*PtrVal)
+		if !pok {
 			rtPanic(line, col, "cannot dereference non-pointer value")
 		}
 		addr = ptr.Addr
-		haveAddr = true
-	}
-	if haveAddr {
-		box, gok := i.Heap.Get(addr)
-		if !gok {
-			rtPanic(line, col, "invalid/freed reference in assignment target")
-		}
-		cur = box.Value
-	}
-
-	for idx, suf := range t.Suffixes {
-		if idx > 0 {
-			box, gok := i.Heap.Get(addr)
-			if !gok {
-				rtPanic(line, col, "invalid/freed reference in assignment target")
-			}
-			cur = box.Value
-		}
-		switch suf.Kind {
-		case SuffixField:
-			sv, sok := cur.(*StructVal)
-			if !sok {
-				rtPanic(line, col, "'.%s' used on a non-struct value", suf.Field)
-			}
-			fieldAddr, fok := sv.Fields[suf.Field]
-			if !fok {
-				rtPanic(line, col, "%q is not a field of struct %q", suf.Field, sv.TypeName)
-			}
-			addr = fieldAddr
-		case SuffixIndex:
-			arr, aok := cur.(*ArrayVal)
-			if !aok {
-				rtPanic(line, col, "'[...]' used on a non-array value")
-			}
-			idxVal := i.evalExpr(suf.Index, env)
-			iv, iok := idxVal.(*IntVal)
-			if !iok {
-				rtPanic(line, col, "array index must be int, got %s", idxVal.TypeTag())
-			}
-			if iv.Val < 0 || int(iv.Val) >= len(arr.Elems) {
-				rtPanic(line, col, "array index %d out of bounds (length %d)", iv.Val, len(arr.Elems))
-			}
-			addr = arr.Elems[iv.Val]
-		}
 	}
 
 	return addr
@@ -1043,18 +1042,67 @@ func typeTagOf(dtype *DatatypeNode) string {
 	return dtype.Kind
 }
 
-// zeroValueFor returns the default "empty" runtime value for a declared
-// type: 0 for int, 0.0 for float, "" for string, false for bool, the NUL
-// char for char. Arrays (including arrays-of-arrays) and any type we don't
-// have a concrete zero for just default to int 0, per spec -- a missing
-// slot in an array literal is filled with a plain scalar placeholder
-// rather than a recursively-built nested structure. Used to pad short
-// array literals up to their declared length and to seed struct fields
-// that have neither an instance value nor a declared default.
-func zeroValueFor(dtype *DatatypeNode) RTValue {
+// zeroValueFor builds the zero/default value for dtype: the scalar zero
+// (0 / 0.0 / "" / false / '\0' / null-ptr) for primitives, and a real,
+// properly-shaped, heap-backed zero container for array and named-struct
+// types (recursing into element/field types as needed) rather than a bare
+// placeholder. This matters anywhere a declared length/shape exceeds what
+// a literal actually supplies -- e.g. a short array literal being padded
+// out to its declared length, or a struct field with no '=' default --
+// since a container-typed slot filled with a scalar IntVal{0} instead of
+// a same-shaped zero array/struct is a real type mismatch that surfaces
+// later as a confusing runtime error far from its actual cause.
+func (i *Interpreter) zeroValueFor(dtype *DatatypeNode, env *Environment) RTValue {
 	if dtype == nil {
 		return &IntVal{Val: 0}
 	}
+
+	switch dtype.Kind {
+	case "array":
+		elems := make([]int, dtype.ArrLen)
+		for idx := range elems {
+			ev := i.zeroValueFor(dtype.Elem, env)
+			if cAddr, isContainer := containerAddr(ev); isContainer {
+				elems[idx] = cAddr
+				i.incref(cAddr)
+			} else if pAddr, isPtr := ownedPtrAddr(ev); isPtr {
+				elems[idx] = i.Heap.Alloc(ev)
+				i.incref(pAddr)
+			} else {
+				elems[idx] = i.Heap.Alloc(ev)
+			}
+		}
+		av := &ArrayVal{Elems: elems, ElemType: typeTagOf(dtype.Elem)}
+		av.HeapAddr = i.Heap.Alloc(av)
+		return av
+
+	case "named":
+		if def, ok := i.structDefs[dtype.Name]; ok {
+			sv := NewStructVal(dtype.Name)
+			for _, f := range def.Fields {
+				var fv RTValue
+				if f.Default != nil {
+					fv = i.evalValue(f.Default, env, f.DeclaredType)
+				} else {
+					fv = i.zeroValueFor(f.DeclaredType, env)
+				}
+				if cAddr, isContainer := containerAddr(fv); isContainer {
+					sv.SetField(f.Name, cAddr)
+					i.incref(cAddr)
+				} else if pAddr, isPtr := ownedPtrAddr(fv); isPtr {
+					sv.SetField(f.Name, i.Heap.Alloc(fv))
+					i.incref(pAddr)
+				} else {
+					sv.SetField(f.Name, i.Heap.Alloc(fv))
+				}
+			}
+			sv.HeapAddr = i.Heap.Alloc(sv)
+			return sv
+		}
+		// Not a known struct type (e.g. an enum, or otherwise unresolved)
+		// -- fall through to the scalar-zero table below.
+	}
+
 	switch typeTagOf(dtype) {
 	case "float":
 		return &FloatVal{Val: 0}
@@ -1066,7 +1114,7 @@ func zeroValueFor(dtype *DatatypeNode) RTValue {
 		return &CharVal{Val: 0}
 	case "ptr":
 		return &PtrVal{Addr: 0} // null pointer, not owning -- nothing to free
-	default: // int, array, struct, enum, fn, named/unknown
+	default: // int, enum, fn, unresolved named
 		return &IntVal{Val: 0}
 	}
 }
@@ -1074,20 +1122,11 @@ func zeroValueFor(dtype *DatatypeNode) RTValue {
 func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) RTValue {
 	typeTag := typeTagOf(dtype)
 	if v == nil {
-		// 'let x : T' with no '=' initializer at all. For an array-typed
-		// declaration this still has a fixed declared length, so build a
-		// full zero-filled array rather than a bare scalar placeholder;
-		// everything else just gets its scalar zero value.
-		if dtype != nil && dtype.Kind == "array" {
-			elems := make([]int, dtype.ArrLen)
-			for idx := range elems {
-				elems[idx] = i.Heap.Alloc(zeroValueFor(dtype.Elem))
-			}
-			av := &ArrayVal{Elems: elems, ElemType: typeTagOf(dtype.Elem)}
-			av.HeapAddr = i.Heap.Alloc(av)
-			return av
-		}
-		return zeroValueFor(dtype)
+		// 'let x : T' with no '=' initializer at all -- zeroValueFor
+		// already builds a full, properly-shaped zero value for T,
+		// including a fully zero-filled array/struct when T is a
+		// container, not just a bare scalar placeholder.
+		return i.zeroValueFor(dtype, env)
 	}
 	switch val := v.(type) {
 	case *ExprValue:
@@ -1130,7 +1169,7 @@ func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) 
 					elemType = ev.TypeTag()
 				}
 			} else {
-				ev = zeroValueFor(elemDtype)
+				ev = i.zeroValueFor(elemDtype, env)
 			}
 			if cAddr, isContainer := containerAddr(ev); isContainer {
 				// A container element is identified by its own HeapAddr --
@@ -1179,7 +1218,7 @@ func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) 
 					// definition: seed it with its type's zero value (0 /
 					// 0.0 / "" / false) instead of a bare null, matching
 					// how a short/empty array literal is padded.
-					fv = zeroValueFor(f.DeclaredType)
+					fv = i.zeroValueFor(f.DeclaredType, env)
 				}
 				if cAddr, isContainer := containerAddr(fv); isContainer {
 					sv.SetField(f.Name, cAddr)

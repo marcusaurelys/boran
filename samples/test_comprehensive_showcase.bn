@@ -1,0 +1,427 @@
+# ================================================================
+# BORAN — COMPREHENSIVE LANGUAGE SHOWCASE
+# ----------------------------------------------------------------
+# One clean, fully-correct program meant to exercise every
+# gradeable language feature *and* stress a handful of feature
+# combinations (pointers inside loops, recursion unwinding through
+# try/catch, structs holding arrays of structs, casts inside loop
+# conditions, etc.) so unintended interactions surface here rather
+# than in a smaller, less demanding test.
+#
+# Covered in this file:
+#   - headers / line comments               (this block)
+#   - variable declaration: scalars, arrays, structs, pointers
+#     (both static '&' and dynamic 'new(...)')
+#   - constant declaration
+#   - assignment (plain, compound-via-expr, prefix/postfix ++/--)
+#   - math expressions: simple and complex/parenthesized
+#   - boolean expressions: simple, complex, and multi-operator
+#   - if / else-if / else
+#   - loops: for-in, for-while, for-repeat-until (nested too)
+#   - input() / print()
+#   - functions: declaration, call, recursion, higher-order
+#   - nested statements (loops-in-loops, if-in-loop-in-function,
+#     try/catch-in-loop, recursion unwinding through try/catch)
+#   - error messaging & recovery: explicit throw/catch, the three
+#     native catchable runtime faults (division by zero, invalid
+#     numeric cast, null-pointer dereference), nested try/catch
+#     with rethrow, and catch-then-continue inside a loop
+#
+# Run with:  boran test_comprehensive_showcase.bn
+# (or --step / --ir / --log / --vs for the other execution modes)
+# ================================================================
+
+
+# ---- Type definitions: enum & structs (records) -----------------
+
+const Suit : enum = { clubs, diamonds, hearts, spades };
+
+const Point : struct = {
+    let x : int = 0,
+    let y : int = 0,
+
+    const magnitudeSquared : fn = () : int => {
+        return this.x * this.x + this.y * this.y;
+    },
+
+    let translate : fn = (dx : int, dy : int) => {
+        this = { x : this.x + dx, y : this.y + dy };
+    }
+};
+
+const Card : struct = {
+    let suit : Suit = Suit.clubs,
+    let rank : int = 1
+};
+
+const Player : struct = {
+    let name : string = "",
+    let hand : Card[2] = [
+        { suit : Suit.clubs, rank : 1 },
+        { suit : Suit.clubs, rank : 1 }
+    ],
+    let score : int = 0,
+
+    let addToScore : fn = (amount : int) => {
+        this.score = this.score + amount;
+    }
+};
+
+# ---- Functions: recursion, higher-order, and a function whose ---
+# ---- base case can fault (used later to test error recovery) ----
+
+const factorial : fn = (n : int) : int => {
+    if n <= 1 {
+        return 1;
+    }
+    return n * factorial(n - 1);
+};
+
+const gcd : fn = (a : int, b : int) : int => {
+    if b == 0 {
+        return a;
+    }
+    return gcd(b, a % b);
+};
+
+const tripleIt : fn = (n : int) : int => {
+    return n * 3;
+};
+
+const applyTwice : fn = (op : fn, seed : int) : int => {
+    let once : int = op(seed);
+    let twice : int = op(once);
+    return twice;
+};
+
+# Deliberately risky: divides by (n - 3) at every recursive level,
+# so calling it with n = 5 unwinds through THREE stack frames
+# before the division-by-zero fault fires at n == 3. Used to prove
+# a native fault propagates correctly out of recursive calls to
+# whichever try/catch is waiting for it.
+const riskyRecurse : fn = (n : int) : int => {
+    if n == 0 {
+        return 0;
+    }
+    return (100 / (n - 3)) + riskyRecurse(n - 1);
+};
+
+# Takes a pointer, mutates through it, and returns the new value --
+# exercises pointers crossing a function boundary.
+const applyDamage : fn = (hp : int*, amount : int) : int => {
+    *hp = *hp - amount;
+    return *hp;
+};
+
+
+# ================================================================
+# main
+# ================================================================
+
+const main : fn = () : int => {
+
+    # ============================================================
+    # 1) Variable & constant declarations
+    # ============================================================
+
+    # -- scalars --
+    let age : int = 21;
+    let pi : float = 3.14159;
+    let grade : char = 'A';
+    let label : string = "boran";
+    let isReady : bool = true;
+
+    # -- constants --
+    const MAX_PLAYERS : int = 4;
+    const GREETING : string = "hello, boran";
+    print(GREETING, "MAX_PLAYERS:", MAX_PLAYERS, "\n");
+
+    # -- arrays --
+    let scores : int[5] = [10, 20, 30, 40, 50];
+
+    # -- structs (records) --
+    let origin : Point = { x : 0, y : 0 };
+
+    # -- pointers: static (address-of a stack variable) --
+    let health : int = 100;
+    let hpPtr : int* = &health;
+
+    # -- pointers: dynamic (heap-allocated via new(...)) --
+    let heapCounter : int* = new(0);
+
+    print("age:", age, "pi:", pi, "grade:", grade, "label:", label, "isReady:", isReady, "\n");
+
+    # ============================================================
+    # 2) Assignment: plain, expression-derived, pre/post ++/--
+    # ============================================================
+
+    age = age + 1;
+    let bonus : int = scores[0] + scores[1];
+    scores[0] = bonus;
+
+    let counter : int = 0;
+    counter++;
+    ++counter;
+    let countdown : int = 5;
+    countdown--;
+    --countdown;
+    print("age:", age, "scores[0]:", scores[0], "counter:", counter, "countdown:", countdown, "\n");
+
+    # ============================================================
+    # 3) Math expressions: simple and complex
+    # ============================================================
+
+    let a : int = 10;
+    let b : int = 3;
+    let c : int = 2;
+
+    let simpleMath : int = a + b;
+    let complexMath : int = (a + b) * c - a / c % b;
+    print("simpleMath:", simpleMath, "complexMath:", complexMath, "\n");
+
+    # ============================================================
+    # 4) Boolean expressions: simple, complex, multi-operator
+    # ============================================================
+
+    let simpleBool : bool = a > b;
+    let complexBool : bool = a > b && c <= b;
+    let multiBool : bool = (a > b) && (c < a) || !(a == b) && (c != a);
+    print("simpleBool:", simpleBool, "complexBool:", complexBool, "multiBool:", multiBool, "\n");
+
+    # ============================================================
+    # 5) if / else-if / else, driven off an enum comparison
+    # ============================================================
+
+    let facing : Suit = Suit.hearts;
+    let facingLabel : string = "";
+    if facing == Suit.clubs {
+        facingLabel = "clubs";
+    } else if facing == Suit.hearts {
+        facingLabel = "hearts";
+    } else {
+        facingLabel = "other";
+    }
+    print("facing:", facingLabel, "\n");
+
+    # ============================================================
+    # 6) Loops: for-in, for-while, for-repeat-until, and nested
+    # ============================================================
+
+    # for-in over an array
+    let total : int = 0;
+    for v in scores {
+        total = total + v;
+    }
+    print("sum of scores:", total, "\n");
+
+    # for-in over range(), plus a static/dynamic pointer mutated
+    # from inside a loop body (mix-and-match: pointers + loop)
+    for i in range(5) {
+        *heapCounter = *heapCounter + i;
+    }
+    print("heapCounter after range loop:", *heapCounter, "\n");
+
+    # for-while form, with break/continue
+    let w : int = 0;
+    for w < 10 {
+        w = w + 1;
+        if w == 3 {
+            continue;
+        }
+        if w == 7 {
+            break;
+        }
+    }
+    print("for-while ended at w:", w, "\n");
+
+    # for-repeat-until form
+    let downCount : int = 3;
+    for {
+        downCount--;
+    } downCount == 0;
+    print("repeat-until ended at downCount:", downCount, "\n");
+
+    # nested loops: index-based 2D array sum (nested statements)
+    let grid : int[2][3] = [[1, 2, 3], [4, 5, 6]];
+    let gridTotal : int = 0;
+    for gi in range(2) {
+        for gj in range(3) {
+            gridTotal = gridTotal + grid[gi][gj];
+        }
+    }
+    print("2D grid total:", gridTotal, "\n");
+
+    # ============================================================
+    # 7) Structs / records: nesting, methods, 'this' rebinding
+    # ============================================================
+
+    let p1 : Point = { x : 3, y : 4 };
+    print("p1.magnitudeSquared():", p1.magnitudeSquared(), "\n");
+    p1.translate(1, 1);
+    print("p1 after translate: x =", p1.x, "y =", p1.y, "\n");
+
+    # array of structs, each holding an array of structs (Player.hand),
+    # iterated with nested for-in and mutated through a method call
+    let players : Player[2] = [
+        { name : "Ada", hand : [{ suit : Suit.spades, rank : 10 }, { suit : Suit.diamonds, rank : 4 }], score : 0 },
+        { name : "Lin", hand : [{ suit : Suit.clubs, rank : 7 }, { suit : Suit.hearts, rank : 9 }], score : 0 }
+    ];
+    for pl in players {
+        for c in pl.hand {
+            pl.addToScore(c.rank);
+        }
+    }
+    for pl in players {
+        print(pl.name, "score:", pl.score, "\n");
+    }
+
+    # ============================================================
+    # 8) Pointers, revisited: static vs dynamic, through functions,
+    #    through arrays-of-pointers, and inside a loop
+    # ============================================================
+
+    let remaining : int = applyDamage(hpPtr, 30);
+    print("health after applyDamage via static pointer:", remaining, "health var:", health, "\n");
+
+    # a struct field's address taken into a plain pointer variable,
+    # then mutated through that bare pointer (pointer + struct combo)
+    let px : int* = &origin.x;
+    *px = *px + 5;
+    print("origin.x mutated via pointer to a struct field:", origin.x, "\n");
+
+    # dynamic pointers stored in an array, mutated via for-in
+    # (mix-and-match: pointers *within* a loop)
+    let heapVals : int*[3] = [new(1), new(2), new(3)];
+    for hp in heapVals {
+        *hp = *hp * 10;
+    }
+    let heapSum : int = 0;
+    for hp in heapVals {
+        heapSum = heapSum + *hp;
+    }
+    print("sum of dynamic pointer array after in-loop mutation:", heapSum, "\n");
+
+    # array of static pointers into another array, walked by index,
+    # each dereferenced through a fresh bare pointer variable
+    let buckets : int[3] = [0, 0, 0];
+    let bucketPtrs : int*[3] = [&buckets[0], &buckets[1], &buckets[2]];
+    for i in range(3) {
+        let bp : int* = bucketPtrs[i];
+        *bp = *bp + (i * 100);
+    }
+    print("buckets after indexed pointer mutation:", buckets[0], buckets[1], buckets[2], "\n");
+
+    # ============================================================
+    # 9) Functions: recursion, higher-order calls
+    # ============================================================
+
+    print("factorial(5):", factorial(5), "\n");
+    print("gcd(48, 18):", gcd(48, 18), "\n");
+    print("applyTwice(tripleIt, 2):", applyTwice(tripleIt, 2), "\n");
+
+    # ============================================================
+    # 10) Casts, used inline within a loop condition and for output
+    # ============================================================
+
+    for k in range(3) {
+        let asFloat : float = k as float;
+        let asStr : string = asFloat as string;
+        print("k as float as string:", asStr, "\n");
+    }
+
+    # ============================================================
+    # 11) Error messaging & recovery
+    # ============================================================
+
+    # -- explicit throw / catch --
+    try {
+        if health < 0 {
+            throw "health should never go negative";
+        }
+        throw "manual diagnostic check";
+    } catch (e) {
+        print("caught explicit throw:", e, "\n");
+    }
+
+    # -- native fault #1: division by zero --
+    let zeroDivisor : int = 0;
+    try {
+        let bad : int = 10 / zeroDivisor;
+        print("unreachable:", bad, "\n");
+    } catch (e) {
+        print("caught native fault:", e, "\n");
+    }
+
+    # -- native fault #2: invalid numeric cast --
+    try {
+        let notANumber : string = "abc";
+        let bad : int = notANumber as int;
+        print("unreachable:", bad, "\n");
+    } catch (e) {
+        print("caught native fault:", e, "\n");
+    }
+
+    # -- native fault #3: null-pointer dereference --
+    let nullPtr : int* = null;
+    try {
+        let bad : int = *nullPtr;
+        print("unreachable:", bad, "\n");
+    } catch (e) {
+        print("caught native fault:", e, "\n");
+    }
+
+    # -- nested try/catch with rethrow: inner fault is caught,
+    #    logged, and re-raised with extra context for the outer
+    #    catch to handle --
+    try {
+        try {
+            let bad : int = 10 / zeroDivisor;
+            print("unreachable:", bad, "\n");
+        } catch (inner) {
+            print("inner catch saw:", inner, "\n");
+            throw "wrapped: " + inner;
+        }
+    } catch (outer) {
+        print("outer catch saw:", outer, "\n");
+    }
+
+    # -- a native fault unwinding through THREE recursive stack
+    #    frames before it is caught (recursion + error recovery) --
+    try {
+        let r : int = riskyRecurse(5);
+        print("unreachable:", r, "\n");
+    } catch (e) {
+        print("caught fault unwound through recursion:", e, "\n");
+    }
+    print("execution continues normally after recovery", "\n");
+
+    # -- try/catch inside a loop: a fault on one iteration is
+    #    caught and the loop recovers via 'continue'; a later
+    #    iteration still reaches 'break' normally (mix-and-match:
+    #    error recovery + loop control flow together) --
+    for i in range(4) {
+        try {
+            if i == 1 {
+                throw "skip iteration " + (i as string);
+            }
+            if i == 3 {
+                break;
+            }
+            print("loop iteration ok, i =", i, "\n");
+        } catch (e) {
+            print("recovered in loop:", e, "\n");
+            continue;
+        }
+    }
+
+    # ============================================================
+    # 12) Input / output
+    # ============================================================
+
+    let name : string = input("Enter your name: ");
+    print("Hello,", name, "-- comprehensive showcase complete.");
+
+    return 0;
+};
+
+main();

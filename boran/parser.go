@@ -379,8 +379,18 @@ func (p *Parser) parseLetDecl() *LetDecl {
 	name := p.consume(TOKEN_IDENTIFIER)
 	p.consume(TOKEN_COLON)
 	dtype, typeName := p.parseTypeAnnotation()
-	p.consume(TOKEN_OP_ASSIGN)
-	val := p.parseValue(typeName, dtype)
+
+	// <let_decl> ::= 'let' identifier ':' datatype '=' value
+	//              | 'let' identifier ':' datatype
+	//              | 'let' identifier ':' identifier '=' value
+	//              | 'let' identifier ':' identifier
+	// Unlike const_decl, a 'let' may omit the initializer entirely; the
+	// interpreter fills it with the declared type's zero value.
+	var val Value
+	if p.current().Type == TOKEN_OP_ASSIGN {
+		p.advance()
+		val = p.parseValue(typeName, dtype)
+	}
 	p.consume(TOKEN_SEMICOLON)
 
 	p.Symbols.Declare(name.Literal, SymLet, typeName, dtype, name.Line, name.Col)
