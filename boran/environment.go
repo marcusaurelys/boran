@@ -100,14 +100,14 @@ func (e *Environment) String(h *Heap) string {
 				loc := "(stack)"
 				valStr := "<invalid>"
 				if slot.Heap {
-					loc = fmt.Sprintf("@0x%04x", slot.Addr)
+					loc = fmt.Sprintf("@0x%012x", h.DisplayAddr(slot.Addr))
 					if b, ok := h.Get(slot.Addr); ok {
 						valStr = b.Value.String()
 					}
 				} else {
 					valStr = slot.Value.String()
 				}
-				sb.WriteString(fmt.Sprintf("    %-12s %-8s = %s\n", n, loc, valStr))
+				sb.WriteString(fmt.Sprintf("    %-12s %-20s = %s\n", n, loc, valStr))
 
 			}
 		}
@@ -157,8 +157,14 @@ func (cs *CallStack) Depth() int { return len(cs.frames) }
 
 // String renders the stack top-first (most recent call first), which is
 // the conventional debugger presentation and also makes runaway recursion
-// easy to eyeball during line-by-line execution.
-func (cs *CallStack) String() string {
+// easy to eyeball during line-by-line execution. Each frame shows its
+// depth and function name (both always known -- FnName is set from the
+// call-site label at every invoke(), so there's no case where a frame's
+// identity is actually unknown) plus that frame's own locals (params and
+// top-of-function let/const bindings; nested block scopes inside the
+// function body aren't walked here, same way the frame itself only ever
+// pointed at the function's own environment).
+func (cs *CallStack) String(h *Heap) string {
 	if len(cs.frames) == 0 {
 		return "  (empty — top level)\n"
 	}
@@ -166,6 +172,30 @@ func (cs *CallStack) String() string {
 	for i := len(cs.frames) - 1; i >= 0; i-- {
 		f := cs.frames[i]
 		sb.WriteString(fmt.Sprintf("  #%d  %s()  called at %d:%d\n", i, f.FnName, f.CallLine, f.CallCol))
+
+		names := make([]string, 0, len(f.Env.vars))
+		for n := range f.Env.vars {
+			names = append(names, n)
+		}
+		sort.Strings(names)
+		if len(names) == 0 {
+			sb.WriteString("        (no locals)\n")
+			continue
+		}
+		for _, n := range names {
+			slot := f.Env.vars[n]
+			loc := "(stack)"
+			valStr := "<invalid>"
+			if slot.Heap {
+				loc = fmt.Sprintf("@0x%012x", h.DisplayAddr(slot.Addr))
+				if b, ok := h.Get(slot.Addr); ok {
+					valStr = b.Value.String()
+				}
+			} else {
+				valStr = slot.Value.String()
+			}
+			sb.WriteString(fmt.Sprintf("        %-12s %-20s = %s\n", n, loc, valStr))
+		}
 	}
 	return sb.String()
 }

@@ -113,7 +113,7 @@ func (sc *stepController) hook(i *Interpreter, node Node, env *Environment, line
 	fmt.Print(env.String(i.Heap))
 
 	fmt.Println("--- Call Stack ---")
-	fmt.Print(i.Stack.String())
+	fmt.Print(i.Stack.String(i.Heap))
 
 	fmt.Println("--- Heap ---")
 	fmt.Print(i.Heap.String())

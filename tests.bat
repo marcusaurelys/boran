@@ -4,7 +4,7 @@ setlocal enabledelayedexpansion
 
 set ROOT=%~dp0
 set BORAN_DIR=%ROOT%boran
-set SAMPLES_DIR=%ROOT%samples
+set SAMPLES_DIR=%ROOT%features
 set EXE=%BORAN_DIR%\boran.exe
  
 echo ================================================

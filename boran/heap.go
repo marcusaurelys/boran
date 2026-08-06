@@ -82,8 +82,46 @@ func (h *Heap) Free(addr int) {
 // Len reports how many live (non-freed) cells are currently allocated.
 func (h *Heap) Len() int { return len(h.cells) }
 
+// ----------------------------------------------------------------------
+// Display addressing
+//
+// The underlying representation is unchanged: 'cells' is still keyed by
+// plain sequential ints (1, 2, 3, ...) handed out by nextAddr, and every
+// struct/array/etc. still lives in exactly one Box regardless of its
+// field/element count. What changes here is purely cosmetic: instead of
+// printing that raw sequential int directly (which reads as an array
+// index, not a memory address), every display site maps it through
+// DisplayAddr to get something that *looks* like a real, word-aligned
+// heap address -- spaced out, hex, with a plausible-looking base.
+//
+// This is presentation only. Get/Set/Alloc/Free/incref/decref all keep
+// using the real int key; nothing about allocation, refcounting, or
+// lookup semantics changes. displayAddrWords is deliberately a flat
+// per-allocation stride (not per-field/per-element): nested structs,
+// arrays, and enums already get their own Box (and thus their own
+// address) whenever they're constructed, so one word per *allocation* is
+// enough to make the spacing look real without needing to model actual
+// field byte-widths anywhere.
+// ----------------------------------------------------------------------
+
+const (
+	heapDisplayBase = uint64(0x602000000010) // ASan-heap-style base, arbitrary but consistent
+	heapWordSize    = uint64(0x10)           // 16-byte "word" stride between allocations
+)
+
+// DisplayAddr maps a real heap key to the fake-but-plausible address shown
+// in String()/environment & call-stack dumps. addr <= 0 (the reserved
+// null/sentinel address) always displays as 0x0.
+func (h *Heap) DisplayAddr(addr int) uint64 {
+	if addr <= 0 {
+		return 0
+	}
+	return heapDisplayBase + uint64(addr-1)*heapWordSize
+}
+
 // String renders a live snapshot of the heap, address-sorted, for display
 // alongside the symbol table and call stack during line-by-line execution.
+// Addresses are rendered via DisplayAddr -- see the block comment above.
 func (h *Heap) String() string {
 	if len(h.cells) == 0 {
 		return "  (empty)\n"
@@ -95,11 +133,12 @@ func (h *Heap) String() string {
 	sort.Ints(addrs)
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("  %-8s | %-14s | %-5s | %s\n", "ADDR", "TYPE", "REFS", "VALUE"))
-	sb.WriteString("  " + strings.Repeat("-", 70) + "\n")
+	sb.WriteString(fmt.Sprintf("  %-16s | %-14s | %-5s | %s\n", "ADDRESS", "TYPE", "REFS", "VALUE"))
+	sb.WriteString("  " + strings.Repeat("-", 78) + "\n")
 	for _, a := range addrs {
 		b := h.cells[a]
-		sb.WriteString(fmt.Sprintf("  0x%04x   | %-14s | %-5d | %s\n", a, b.Value.TypeTag(), b.RefCount, b.Value.String()))
+		addrStr := fmt.Sprintf("0x%012x", h.DisplayAddr(a))
+		sb.WriteString(fmt.Sprintf("  %-16s | %-14s | %-5d | %s\n", addrStr, b.Value.TypeTag(), b.RefCount, b.Value.String()))
 	}
 	return sb.String()
 }
