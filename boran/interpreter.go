@@ -834,8 +834,50 @@ func typeTagOf(dtype *DatatypeNode) string {
 	return dtype.Kind
 }
 
+// zeroValueFor returns the default "empty" runtime value for a declared
+// type: 0 for int, 0.0 for float, "" for string, false for bool, the NUL
+// char for char. Arrays (including arrays-of-arrays) and any type we don't
+// have a concrete zero for just default to int 0, per spec -- a missing
+// slot in an array literal is filled with a plain scalar placeholder
+// rather than a recursively-built nested structure. Used to pad short
+// array literals up to their declared length and to seed struct fields
+// that have neither an instance value nor a declared default.
+func zeroValueFor(dtype *DatatypeNode) RTValue {
+	if dtype == nil {
+		return &IntVal{Val: 0}
+	}
+	switch typeTagOf(dtype) {
+	case "float":
+		return &FloatVal{Val: 0}
+	case "string":
+		return &StringVal{Val: ""}
+	case "bool":
+		return &BoolVal{Val: false}
+	case "char":
+		return &CharVal{Val: 0}
+	default: // int, array, struct, enum, fn, ptr, named/unknown
+		return &IntVal{Val: 0}
+	}
+}
+
 func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) RTValue {
 	typeTag := typeTagOf(dtype)
+	if v == nil {
+		// 'let x : T' with no '=' initializer at all. For an array-typed
+		// declaration this still has a fixed declared length, so build a
+		// full zero-filled array rather than a bare scalar placeholder;
+		// everything else just gets its scalar zero value.
+		if dtype != nil && dtype.Kind == "array" {
+			elems := make([]int, dtype.ArrLen)
+			for idx := range elems {
+				elems[idx] = i.Heap.Alloc(zeroValueFor(dtype.Elem))
+			}
+			av := &ArrayVal{Elems: elems, ElemType: typeTagOf(dtype.Elem)}
+			av.HeapAddr = i.Heap.Alloc(av)
+			return av
+		}
+		return zeroValueFor(dtype)
+	}
 	switch val := v.(type) {
 	case *ExprValue:
 		return i.evalExpr(val.Expr, env)
@@ -846,11 +888,27 @@ func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) 
 			elemDtype = dtype.Elem
 		}
 		elemType := typeTagOf(elemDtype)
-		elems := make([]int, len(val.Elements))
-		for idx, el := range val.Elements {
-			ev := i.evalValue(el, env, elemDtype)
-			if idx == 0 && elemType == "" {
-				elemType = ev.TypeTag()
+		// A declared array type carries its own fixed length. If the
+		// literal supplies fewer elements than that (including the empty
+		// '[]' literal), the remaining slots are filled with the type's
+		// zero value (0 / 0.0 / "" / false) rather than left missing --
+		// missing elements were previously silently dropped, leaving the
+		// array shorter than its declared type and prone to spurious
+		// out-of-bounds errors down the line.
+		declaredLen := len(val.Elements)
+		if dtype != nil && dtype.Kind == "array" && dtype.ArrLen > declaredLen {
+			declaredLen = dtype.ArrLen
+		}
+		elems := make([]int, declaredLen)
+		for idx := 0; idx < declaredLen; idx++ {
+			var ev RTValue
+			if idx < len(val.Elements) {
+				ev = i.evalValue(val.Elements[idx], env, elemDtype)
+				if idx == 0 && elemType == "" {
+					elemType = ev.TypeTag()
+				}
+			} else {
+				ev = zeroValueFor(elemDtype)
 			}
 			if cAddr, isContainer := containerAddr(ev); isContainer {
 				// A container element is identified by its own HeapAddr --
@@ -864,6 +922,9 @@ func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) 
 			} else {
 				elems[idx] = i.Heap.Alloc(ev)
 			}
+		}
+		if elemType == "" {
+			elemType = typeTagOf(elemDtype)
 		}
 		av := &ArrayVal{Elems: elems, ElemType: elemType}
 		av.HeapAddr = i.Heap.Alloc(av)
@@ -881,9 +942,15 @@ func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) 
 			// the instance literal omits still exist), then overlay
 			// whatever the instance literal actually provides.
 			for _, f := range def.Fields {
-				var fv RTValue = &NullVal{}
+				var fv RTValue
 				if f.Default != nil {
 					fv = i.evalValue(f.Default, env, f.DeclaredType)
+				} else {
+					// A 'let' field with no '=' initializer in the struct
+					// definition: seed it with its type's zero value (0 /
+					// 0.0 / "" / false) instead of a bare null, matching
+					// how a short/empty array literal is padded.
+					fv = zeroValueFor(f.DeclaredType)
 				}
 				if cAddr, isContainer := containerAddr(fv); isContainer {
 					sv.SetField(f.Name, cAddr)

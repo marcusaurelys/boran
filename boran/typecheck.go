@@ -86,8 +86,8 @@ func (t *TCType) String() string {
 	}
 }
 
-func tUnknown() *TCType { return &TCType{Kind: "unknown"} }
-func tVoid() *TCType    { return &TCType{Kind: "void"} }
+func tUnknown() *TCType         { return &TCType{Kind: "unknown"} }
+func tVoid() *TCType            { return &TCType{Kind: "void"} }
 func tBuiltin(k string) *TCType { return &TCType{Kind: k} }
 
 // fromDatatypeNode converts the parser's structured type node into the
@@ -172,13 +172,13 @@ func typesCompatible(want, got *TCType) bool {
 // ============================================================================
 
 type tcSymbol struct {
-	Name     string
-	Kind     SymbolKind
-	Type     *TCType
-	Mutable  bool // true for 'let', false for 'const'/param
-	FnSig    *fnSignature
-	Line     int
-	Col      int
+	Name    string
+	Kind    SymbolKind
+	Type    *TCType
+	Mutable bool // true for 'let', false for 'const'/param
+	FnSig   *fnSignature
+	Line    int
+	Col     int
 }
 
 type fnSignature struct {
@@ -189,10 +189,16 @@ type fnSignature struct {
 type tcScope struct {
 	parent  *tcScope
 	symbols map[string]*tcSymbol
+	// hoisted marks names that were pre-declared by predeclareFunctions
+	// (so mutually-recursive function bindings can see each other) but
+	// haven't had their real checkDecl pass run yet. checkDecl consults
+	// this to update the symbol in place instead of reporting a bogus
+	// "multiply-defined" error against its own forward declaration.
+	hoisted map[string]bool
 }
 
 func newTCScope(parent *tcScope) *tcScope {
-	return &tcScope{parent: parent, symbols: make(map[string]*tcSymbol)}
+	return &tcScope{parent: parent, symbols: make(map[string]*tcSymbol), hoisted: make(map[string]bool)}
 }
 
 func (s *tcScope) declare(sym *tcSymbol) (redeclared bool) {
@@ -245,10 +251,57 @@ func (c *TypeChecker) exitScope() {
 	}
 }
 
+// predeclareFunctions does a shallow forward pass over one statement list
+// (a <program> or a single <block>'s <stmt_list> -- it does NOT recurse
+// into nested blocks/if/for bodies), pre-declaring every function-valued
+// 'let'/'const' binding at that level before any of their bodies are
+// checked. Without this, two functions in the same scope that call each
+// other (mutual recursion) would fail to type-check: whichever is written
+// first would see the other as not-yet-declared. Ordinary (non-function)
+// bindings are untouched, so plain variables still require declare-
+// before-use in source order.
+func (c *TypeChecker) predeclareFunctions(stmts []Stmt) {
+	for _, stmt := range stmts {
+		var name, typeTag string
+		var dtype *DatatypeNode
+		var val Value
+		var mutable bool
+		var line, col int
+		switch n := stmt.(type) {
+		case *ConstDecl:
+			name, typeTag, dtype, val, mutable = n.Name, n.TypeName, n.DeclaredType, n.Value, false
+			line, col = n.Pos()
+		case *LetDecl:
+			name, typeTag, dtype, val, mutable = n.Name, n.TypeName, n.DeclaredType, n.Value, true
+			line, col = n.Pos()
+		default:
+			continue
+		}
+		fl, ok := val.(*FnLiteral)
+		if !ok || typeTag != "fn" {
+			continue
+		}
+		if _, exists := c.current.symbols[name]; exists {
+			// Genuine duplicate (or already hoisted by an earlier
+			// statement with the same name) -- leave it for the normal
+			// sequential pass to report as multiply-defined.
+			continue
+		}
+		kind := SymConst
+		if mutable {
+			kind = SymLet
+		}
+		sym := &tcSymbol{Name: name, Kind: kind, Type: fromDatatypeNode(dtype), Mutable: mutable, FnSig: c.fnSigFromLiteral(fl), Line: line, Col: col}
+		c.current.symbols[name] = sym
+		c.current.hoisted[name] = true
+	}
+}
+
 // Check runs semantic analysis over the whole program and returns all
 // diagnostics collected. It never panics on a single bad statement; each
 // statement is checked independently so one error doesn't suppress others.
 func (c *TypeChecker) Check(prog *Program) []SemError {
+	c.predeclareFunctions(prog.Statements)
 	for _, stmt := range prog.Statements {
 		c.checkStmt(stmt)
 	}
@@ -267,6 +320,7 @@ func (c *TypeChecker) checkStmt(s Stmt) {
 		c.checkAssign(n)
 	case *Block:
 		c.enterScope()
+		c.predeclareFunctions(n.Statements)
 		for _, st := range n.Statements {
 			c.checkStmt(st)
 		}
@@ -335,7 +389,15 @@ func (c *TypeChecker) checkDecl(name, typeTag string, dtype *DatatypeNode, val V
 		sym.FnSig = c.fnSigFromLiteral(fl)
 	}
 
-	if c.current.declare(sym) {
+	if c.current.hoisted[name] {
+		// This name was pre-declared by predeclareFunctions specifically
+		// so other functions in the same scope could call it ahead of its
+		// own checkDecl pass -- finish that pass now by updating the
+		// symbol in place rather than treating it as a fresh declare
+		// (which would misreport as multiply-defined against itself).
+		c.current.symbols[name] = sym
+		delete(c.current.hoisted, name)
+	} else if c.current.declare(sym) {
 		prev, _ := c.current.resolve(name)
 		c.errorf(ErrMultiplyDefined, line, col,
 			"%q is already declared in this scope (previously declared at %d:%d)", name, prev.Line, prev.Col)
