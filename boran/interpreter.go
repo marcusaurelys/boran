@@ -78,10 +78,10 @@ type Interpreter struct {
 	Output io.Writer
 	Input  *bufio.Reader
 
-	OnStep     StepHook
+	OnStep      StepHook
 	BeforeInput func(prompt string) // fired right before input() blocks on ReadString, if set
-	AfterInput func() // fired right after input() reads a line, if set
-	Errors     []*RuntimeError
+	AfterInput  func()              // fired right after input() reads a line, if set
+	Errors      []*RuntimeError
 }
 
 func NewInterpreter(out io.Writer, in io.Reader) *Interpreter {
@@ -141,6 +141,14 @@ func (i *Interpreter) Run(prog *Program) (err error) {
 
 // ---- Statements -----------------------------------------------------------
 
+func isEphemeralArraySource(e Expr) bool {
+	switch e.(type) {
+	case *RangeExpr:
+		return true
+	}
+	return false
+}
+
 func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 	line, col := s.Pos()
 	if i.OnStep != nil {
@@ -157,6 +165,30 @@ func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 		return sigNone
 
 	case *AssignStmt:
+		if n.Target.Deref == 0 && len(n.Target.Suffixes) == 0 {
+			// Plain 'x = value;' / 'this = value;' -- no lvalue chain, so
+			// no heap address is needed unless x was already promoted
+			// (its address taken elsewhere). Write straight into the slot.
+			name := n.Target.Name
+			if n.Target.Kind == TargetThis {
+				name = "this"
+			}
+			_, slot, ok := env.ResolveOwner(name)
+			if !ok {
+				rtPanic(line, col, "assignment to undeclared variable %q", name)
+			}
+			var declType *DatatypeNode
+			if slot.Heap {
+				declType = i.declaredTypeAtAddr(slot.Addr)
+			}
+			val := i.evalValue(n.Value, env, declType)
+			if slot.Heap {
+				i.Heap.Set(slot.Addr, val)
+			} else {
+				slot.Value = val
+			}
+			return sigNone
+		}
 		addr := i.addressOfTarget(n.Target, env)
 		val := i.evalValue(n.Value, env, i.declaredTypeAtAddr(addr))
 		i.Heap.Set(addr, val)
@@ -193,13 +225,21 @@ func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 		if !ok {
 			rtPanic(line, col, "'for %s in ...' requires an array, got %s", n.VarName, iterVal.TypeTag())
 		}
+
+		ephemeral := isEphemeralArraySource(n.Iter)
 		for _, elemAddr := range arr.Elems {
 			child := NewEnvironment(env)
 			box, ok := i.Heap.Get(elemAddr)
 			if !ok {
 				rtPanic(line, col, "dangling array element reference")
 			}
-			child.Define(n.VarName, i.Heap.Alloc(box.Value))
+			child.Define(n.VarName, box.Value)
+			if ephemeral {
+				// value's already been copied into the loop var above;
+				// this cell is now provably unreachable from anywhere.
+				i.Heap.Free(elemAddr)
+			}
+
 			sig := i.execStmt(n.Body, child)
 			if sig.kind == ctrlBreak {
 				break
@@ -255,7 +295,7 @@ func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 		for idx, a := range n.Args {
 			parts[idx] = i.evalExpr(a, env).String()
 		}
-		fmt.Fprintln(i.Output, strings.Join(parts, " "))
+		fmt.Fprint(i.Output, strings.Join(parts, " "))
 		return sigNone
 
 	case *ReturnStmt:
@@ -289,8 +329,7 @@ func (i *Interpreter) execDecl(name, typeTag string, dtype *DatatypeNode, val Va
 	if td, ok := rv.(*TypeDefVal); ok {
 		td.Name = name
 	}
-	addr := i.Heap.Alloc(rv)
-	env.Define(name, addr)
+	env.Define(name, rv)
 }
 
 // declaredTypeAtAddr recovers a struct's declared type from whatever's
@@ -311,70 +350,137 @@ func (i *Interpreter) declaredTypeAtAddr(addr int) *DatatypeNode {
 
 // ---- lvalue address resolution --------------------------------------------
 
+// readSlot returns the current value held by slot, resolving through the
+// heap if the binding has been promoted, or reading it directly if it's
+// still an inline "stack" value.
+func (i *Interpreter) readSlot(slot *Slot, line, col int, name string) RTValue {
+	if !slot.Heap {
+		return slot.Value
+	}
+	box, ok := i.Heap.Get(slot.Addr)
+	if !ok {
+		rtPanic(line, col, "invalid/freed reference for %q", name)
+	}
+	return box.Value
+}
+
+// promote ensures name's binding (found by walking env's parent chain) is
+// backed by a real heap address, allocating one now if it's still an
+// inline slot, and returns that address. Idempotent -- promoting an
+// already-promoted binding just returns its existing address. This is the
+// only place a plain variable ever gains heap identity: '&', '++'/'--',
+// and lvalue chains (a.b, a[i], ...) rooted at a name all funnel through
+// here via addressOfExpr/addressOfTarget.
+func (i *Interpreter) promote(env *Environment, name string) int {
+	_, slot, ok := env.ResolveOwner(name)
+	if !ok {
+		panic(fmt.Sprintf("internal error: promote called on unresolvable name %q", name))
+	}
+	if !slot.Heap {
+		slot.Addr = i.Heap.Alloc(slot.Value)
+		slot.Value = nil
+		slot.Heap = true
+	}
+	return slot.Addr
+}
+
 // addressOfTarget resolves an AssignStmt's AssignTarget (the specialized
 // lvalue-chain type, distinct from a general Expr) down to the heap address
 // that should actually be overwritten.
 func (i *Interpreter) addressOfTarget(t AssignTarget, env *Environment) int {
 	line, col := t.Pos()
-	var addr int
+
+	// Resolve the root binding's *owning* environment and slot, but don't
+	// promote yet -- indexing/field access into it doesn't need the root
+	// itself to have a heap address (see addressOfExpr for the same fix).
+	var ownerEnv *Environment
+	var slot *Slot
 	var ok bool
+	var name string
 	switch t.Kind {
 	case TargetIdent:
-		addr, ok = env.Resolve(t.Name)
+		name = t.Name
+		ownerEnv, slot, ok = env.ResolveOwner(t.Name)
 		if !ok {
 			rtPanic(line, col, "assignment to undeclared variable %q", t.Name)
 		}
 	case TargetThis:
-		addr, ok = env.Resolve("this")
+		name = "this"
+		ownerEnv, slot, ok = env.ResolveOwner("this")
 		if !ok {
 			rtPanic(line, col, "'this' used outside of a method")
 		}
 	}
 
+	if t.Deref == 0 && len(t.Suffixes) == 0 {
+		return i.promote(ownerEnv, name)
+	}
+
+	cur := i.readSlot(slot, line, col, name)
+
+	var addr int
+	haveAddr := false
 	for d := 0; d < t.Deref; d++ {
-		box, ok := i.Heap.Get(addr)
-		if !ok {
-			rtPanic(line, col, "dereference of invalid/freed pointer")
+		var ptr *PtrVal
+		if !haveAddr {
+			ptr, ok = cur.(*PtrVal)
+		} else {
+			box, gok := i.Heap.Get(addr)
+			if !gok {
+				rtPanic(line, col, "dereference of invalid/freed pointer")
+			}
+			ptr, ok = box.Value.(*PtrVal)
 		}
-		ptr, ok := box.Value.(*PtrVal)
 		if !ok {
 			rtPanic(line, col, "cannot dereference non-pointer value")
 		}
 		addr = ptr.Addr
+		haveAddr = true
+	}
+	if haveAddr {
+		box, gok := i.Heap.Get(addr)
+		if !gok {
+			rtPanic(line, col, "invalid/freed reference in assignment target")
+		}
+		cur = box.Value
 	}
 
-	for _, suf := range t.Suffixes {
-		box, ok := i.Heap.Get(addr)
-		if !ok {
-			rtPanic(line, col, "invalid/freed reference in assignment target")
+	for idx, suf := range t.Suffixes {
+		if idx > 0 {
+			box, gok := i.Heap.Get(addr)
+			if !gok {
+				rtPanic(line, col, "invalid/freed reference in assignment target")
+			}
+			cur = box.Value
 		}
 		switch suf.Kind {
 		case SuffixField:
-			sv, ok := box.Value.(*StructVal)
-			if !ok {
+			sv, sok := cur.(*StructVal)
+			if !sok {
 				rtPanic(line, col, "'.%s' used on a non-struct value", suf.Field)
 			}
-			fieldAddr, ok := sv.Fields[suf.Field]
-			if !ok {
+			fieldAddr, fok := sv.Fields[suf.Field]
+			if !fok {
 				rtPanic(line, col, "%q is not a field of struct %q", suf.Field, sv.TypeName)
 			}
 			addr = fieldAddr
 		case SuffixIndex:
-			arr, ok := box.Value.(*ArrayVal)
-			if !ok {
+			arr, aok := cur.(*ArrayVal)
+			if !aok {
 				rtPanic(line, col, "'[...]' used on a non-array value")
 			}
 			idxVal := i.evalExpr(suf.Index, env)
-			idx, ok := idxVal.(*IntVal)
-			if !ok {
+			iv, iok := idxVal.(*IntVal)
+			if !iok {
 				rtPanic(line, col, "array index must be int, got %s", idxVal.TypeTag())
 			}
-			if idx.Val < 0 || int(idx.Val) >= len(arr.Elems) {
-				rtPanic(line, col, "array index %d out of bounds (length %d)", idx.Val, len(arr.Elems))
+			if iv.Val < 0 || int(iv.Val) >= len(arr.Elems) {
+				rtPanic(line, col, "array index %d out of bounds (length %d)", iv.Val, len(arr.Elems))
 			}
-			addr = arr.Elems[idx.Val]
+			addr = arr.Elems[iv.Val]
 		}
 	}
+
 	return addr
 }
 
@@ -385,18 +491,16 @@ func (i *Interpreter) addressOfExpr(e Expr, env *Environment) int {
 	line, col := e.Pos()
 	switch n := e.(type) {
 	case *Identifier:
-		addr, ok := env.Resolve(n.Name)
-		if !ok {
+		if _, _, ok := env.ResolveOwner(n.Name); !ok {
 			rtPanic(line, col, "undeclared variable %q", n.Name)
 		}
-		return addr
+		return i.promote(env, n.Name)
 
 	case *ThisExpr:
-		addr, ok := env.Resolve("this")
-		if !ok {
+		if _, _, ok := env.ResolveOwner("this"); !ok {
 			rtPanic(line, col, "'this' used outside of a method")
 		}
-		return addr
+		return i.promote(env, "this")
 
 	case *GroupExpr:
 		return i.addressOfExpr(n.Inner, env)
@@ -415,12 +519,8 @@ func (i *Interpreter) addressOfExpr(e Expr, env *Environment) int {
 		}
 
 	case *MemberAccess:
-		baseAddr := i.addressOfExpr(n.Base, env)
-		box, ok := i.Heap.Get(baseAddr)
-		if !ok {
-			rtPanic(line, col, "invalid/freed reference")
-		}
-		sv, ok := box.Value.(*StructVal)
+		baseVal := i.evalExpr(n.Base, env)
+		sv, ok := baseVal.(*StructVal)
 		if !ok {
 			rtPanic(line, col, "'.%s' used on a non-struct value", n.Field)
 		}
@@ -431,12 +531,8 @@ func (i *Interpreter) addressOfExpr(e Expr, env *Environment) int {
 		return fieldAddr
 
 	case *IndexExpr:
-		baseAddr := i.addressOfExpr(n.Base, env)
-		box, ok := i.Heap.Get(baseAddr)
-		if !ok {
-			rtPanic(line, col, "invalid/freed reference")
-		}
-		arr, ok := box.Value.(*ArrayVal)
+		baseVal := i.evalExpr(n.Base, env)
+		arr, ok := baseVal.(*ArrayVal)
 		if !ok {
 			rtPanic(line, col, "'[...]' used on a non-array value")
 		}
@@ -551,23 +647,18 @@ func (i *Interpreter) evalExpr(e Expr, env *Environment) RTValue {
 		return evalLiteral(n)
 
 	case *Identifier:
-		addr, ok := env.Resolve(n.Name)
+		slot, ok := env.Resolve(n.Name)
 		if !ok {
 			rtPanic(line, col, "undeclared variable %q", n.Name)
 		}
-		box, ok := i.Heap.Get(addr)
-		if !ok {
-			rtPanic(line, col, "invalid/freed reference for %q", n.Name)
-		}
-		return box.Value
+		return i.readSlot(slot, line, col, n.Name)
 
 	case *ThisExpr:
-		addr, ok := env.Resolve("this")
+		slot, ok := env.Resolve("this")
 		if !ok {
 			rtPanic(line, col, "'this' used outside of a method")
 		}
-		box, _ := i.Heap.Get(addr)
-		return box.Value
+		return i.readSlot(slot, line, col, "this")
 
 	case *InputExpr:
 		promptVal := i.evalExpr(n.Prompt, env)
@@ -601,17 +692,14 @@ func (i *Interpreter) evalExpr(e Expr, env *Environment) RTValue {
 		return i.evalBinary(n, env)
 
 	case *FnCall:
-		addr, ok := env.Resolve(n.Callee)
+		slot, ok := env.Resolve(n.Callee)
 		if !ok {
 			rtPanic(line, col, "call to undeclared function %q", n.Callee)
 		}
-		box, ok := i.Heap.Get(addr)
+		calleeVal := i.readSlot(slot, line, col, n.Callee)
+		fn, ok := calleeVal.(*FnVal)
 		if !ok {
-			rtPanic(line, col, "invalid/freed reference for %q", n.Callee)
-		}
-		fn, ok := box.Value.(*FnVal)
-		if !ok {
-			rtPanic(line, col, "%q is not callable (got %s)", n.Callee, box.Value.TypeTag())
+			rtPanic(line, col, "%q is not callable (got %s)", n.Callee, calleeVal.TypeTag())
 		}
 		args := i.evalArgs(n.Args, env)
 		return i.callFunction(fn, args, n.Callee, line, col)
@@ -694,10 +782,10 @@ func (i *Interpreter) invoke(fn *FnVal, args []RTValue, thisAddr *int, label str
 	}
 	callEnv := NewEnvironment(fn.Closure)
 	if thisAddr != nil {
-		callEnv.Define("this", *thisAddr)
+		callEnv.DefineAddr("this", *thisAddr)
 	}
 	for idx, p := range fn.Lit.Params {
-		callEnv.Define(p.Name, i.Heap.Alloc(args[idx]))
+		callEnv.Define(p.Name, args[idx])
 	}
 
 	i.Stack.Push(&CallFrame{FnName: label, Env: callEnv, CallLine: line, CallCol: col})

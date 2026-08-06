@@ -6,6 +6,16 @@ import (
 	"strings"
 )
 
+// Slot is a binding's storage. Most locals never need heap identity, so a
+// Slot starts out holding its RTValue inline (the "stack" case) and is
+// only promoted to a real heap address the moment something takes '&' on
+// it, indexes/derefs through it, etc. -- see Interpreter.promote.
+type Slot struct {
+	Heap  bool
+	Value RTValue // valid when !Heap
+	Addr  int     // valid when Heap
+}
+
 // Environment is the runtime counterpart to the parser's static Scope
 // (symboltable.go): same parent-chain shape, but it binds names to heap
 // addresses rather than to declaration metadata. Every block, function
@@ -13,49 +23,61 @@ import (
 // Environment chained to its enclosing one.
 type Environment struct {
 	Parent *Environment
-	vars   map[string]int // name -> heap address
+	vars   map[string]*Slot
 }
 
 func NewEnvironment(parent *Environment) *Environment {
-	return &Environment{Parent: parent, vars: make(map[string]int)}
+	return &Environment{Parent: parent, vars: make(map[string]*Slot)}
 }
 
-// Define binds a new name in *this* scope. Returns false if the name is
-// already bound here (the interpreter shouldn't normally hit this, since
-// the type checker already caught multiply-defined names -- but it stays
-// defensive in case the interpreter is ever run standalone without a prior
-// checker pass).
-func (e *Environment) Define(name string, addr int) bool {
+// Define binds a new name in *this* scope to an inline value -- no heap
+// allocation. Returns false if the name is already bound here (the
+// interpreter shouldn't normally hit this, since the type checker already
+// caught multiply-defined names -- but it stays defensive in case the
+// interpreter is ever run standalone without a prior checker pass).
+func (e *Environment) Define(name string, val RTValue) bool {
 	if _, ok := e.vars[name]; ok {
 		return false
 	}
-	e.vars[name] = addr
+	e.vars[name] = &Slot{Heap: false, Value: val}
+	return true
+}
+
+// DefineAddr binds name directly to an existing heap address, skipping the
+// inline slot entirely. Used for bindings that are already heap-identity
+// values by construction -- currently just 'this', which always refers to
+// an existing StructVal already living on the heap.
+func (e *Environment) DefineAddr(name string, addr int) bool {
+	if _, ok := e.vars[name]; ok {
+		return false
+	}
+	e.vars[name] = &Slot{Heap: true, Addr: addr}
 	return true
 }
 
 // Resolve looks up which heap address a name is currently bound to,
 // walking outward through enclosing scopes.
-func (e *Environment) Resolve(name string) (int, bool) {
+func (e *Environment) Resolve(name string) (*Slot, bool) {
 	for env := e; env != nil; env = env.Parent {
-		if addr, ok := env.vars[name]; ok {
-			return addr, true
+		if slot, ok := env.vars[name]; ok {
+			return slot, true
 		}
 	}
-	return 0, false
+	return nil, false
 }
 
-// Rebind changes which address an existing name points to (used for plain
-// `x = value;` on a 'let' binding). It writes into whichever scope in the
-// chain actually owns the name, matching lexical scoping -- it does NOT
-// always write into the innermost scope.
-func (e *Environment) Rebind(name string, addr int) bool {
+// ResolveOwner is like Resolve but also returns the specific Environment
+// in the chain that actually owns the binding -- needed by promote(),
+// which must mutate the Slot in place wherever it really lives, and by
+// plain assignment, which writes into the owning scope rather than always
+// the innermost one.
+func (e *Environment) ResolveOwner(name string) (*Environment, *Slot, bool) {
 	for env := e; env != nil; env = env.Parent {
-		if _, ok := env.vars[name]; ok {
-			env.vars[name] = addr
-			return true
+		if slot, ok := env.vars[name]; ok {
+			return env, slot, true
 		}
 	}
-	return false
+	return nil, nil, false
 }
 
 // String renders the scope chain from innermost to outermost, resolving
@@ -73,12 +95,19 @@ func (e *Environment) String(h *Heap) string {
 		if len(names) > 0 {
 			sb.WriteString(fmt.Sprintf("  Scope %d:\n", depth))
 			for _, n := range names {
-				addr := env.vars[n]
+				slot := env.vars[n]
+				loc := "(stack)"
 				valStr := "<invalid>"
-				if b, ok := h.Get(addr); ok {
-					valStr = b.Value.String()
+				if slot.Heap {
+					loc = fmt.Sprintf("@0x%04x", slot.Addr)
+					if b, ok := h.Get(slot.Addr); ok {
+						valStr = b.Value.String()
+					}
+				} else {
+					valStr = slot.Value.String()
 				}
-				sb.WriteString(fmt.Sprintf("    %-12s @0x%04x = %s\n", n, addr, valStr))
+				sb.WriteString(fmt.Sprintf("    %-12s %-8s = %s\n", n, loc, valStr))
+
 			}
 		}
 		depth++
