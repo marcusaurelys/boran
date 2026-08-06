@@ -107,6 +107,11 @@ func printNode(n Node, depth int) string {
 		}
 		res += indent + ")\n"
 
+	case *NewExpr:
+		res += indent + "NEW(\n"
+		res += printNode(node.Arg, depth+1)
+		res += indent + ")\n"
+
 	case *FnCall:
 		res += fmt.Sprintf("%sCALL %s(\n", indent, node.Callee)
 		for _, arg := range node.Args {

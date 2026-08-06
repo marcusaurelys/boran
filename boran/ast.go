@@ -335,6 +335,16 @@ type RangeExpr struct {
 
 func (e *RangeExpr) exprNode() {}
 
+// NewExpr represents 'new(expr)', dynamic heap allocation of a single
+// scalar value. Evaluates to a pointer (ptr type) to a fresh heap cell
+// holding whatever Arg evaluates to.
+type NewExpr struct {
+	pos
+	Arg Expr
+}
+
+func (e *NewExpr) exprNode() {}
+
 type InputExpr struct {
 	pos
 	Prompt Expr

@@ -197,15 +197,39 @@ func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 				// see its contents silently replaced too.
 				if slot.Heap {
 					i.decref(slot.Addr)
+				} else {
+					i.release(slot.Value)
 				}
 				slot.Heap = true
 				slot.Addr = newAddr
 				if needsIncref(n.Value) {
 					i.incref(newAddr)
 				}
+			} else if pAddr, isPtr := ownedPtrAddr(val); isPtr {
+				// Owning-pointer reassignment ('p = new(...)' or
+				// 'p = someOtherPtr;'): release whatever this slot
+				// previously owned before adopting the new target, or
+				// the old target would never be freed -- symmetric with
+				// the container-rebind branch above.
+				if slot.Heap {
+					if old, ok := i.Heap.Get(slot.Addr); ok {
+						i.release(old.Value)
+					}
+					i.Heap.Set(slot.Addr, val)
+				} else {
+					i.release(slot.Value)
+					slot.Value = val
+				}
+				if needsIncref(n.Value) {
+					i.incref(pAddr)
+				}
 			} else if slot.Heap {
+				if old, ok := i.Heap.Get(slot.Addr); ok {
+					i.release(old.Value)
+				}
 				i.Heap.Set(slot.Addr, val)
 			} else {
+				i.release(slot.Value)
 				slot.Value = val
 			}
 			return sigNone
@@ -292,6 +316,21 @@ func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 				// needs its own real reference for the loop var's slot.
 				child.DefineAddr(n.VarName, cAddr)
 				i.incref(cAddr)
+			} else if pAddr, isPtr := ownedPtrAddr(box.Value); isPtr {
+				// Same aliasing-read logic, but ONLY when the array
+				// survives the loop: in ephemeral mode the element's
+				// wrapper box (elemAddr) is about to be force-freed below
+				// without decref'ing what it owns, which already
+				// transfers that one claim to the loop var untouched --
+				// incref-ing here too would leak it (two claims, only
+				// one release at teardown). In non-ephemeral mode the
+				// array keeps its own claim, so the loop var genuinely
+				// needs a fresh temporary one, released by teardown at
+				// the end of this iteration.
+				child.Define(n.VarName, box.Value)
+				if !ephemeral {
+					i.incref(pAddr)
+				}
 			} else {
 				child.Define(n.VarName, box.Value)
 			}
@@ -406,6 +445,16 @@ func (i *Interpreter) execDecl(name, typeTag string, dtype *DatatypeNode, val Va
 		}
 		return
 	}
+	if pAddr, ok := ownedPtrAddr(rv); ok {
+		// Unlike a container, the pointer value itself still lives
+		// inline in this slot (env.Define, not DefineAddr) -- only the
+		// separate cell it points at is heap-tracked/refcounted.
+		if needsIncref(val) {
+			i.incref(pAddr)
+		}
+		env.Define(name, rv)
+		return
+	}
 	env.Define(name, rv)
 }
 
@@ -486,6 +535,22 @@ func containerAddr(v RTValue) (int, bool) {
 	return 0, false
 }
 
+// ownedPtrAddr returns the target address an *owning* pointer (one
+// created via 'new(...)') is responsible for, so callers can incref/
+// decref it the same way containerAddr's callers do for arrays/structs.
+// Unlike containerAddr, the returned address is NOT this value's own
+// identity -- a PtrVal is always stored inline (or in its own private
+// wrapper box) at its binding site; ownedPtrAddr only ever answers "what
+// heap cell does this pointer keep alive," never "what heap cell is this
+// value."  A non-owning pointer ('&x') returns ok=false: it never frees
+// anything, since it doesn't own what it points to.
+func ownedPtrAddr(v RTValue) (int, bool) {
+	if pv, ok := v.(*PtrVal); ok && pv.Owned {
+		return pv.Addr, true
+	}
+	return 0, false
+}
+
 func (i *Interpreter) incref(addr int) {
 	if box, ok := i.Heap.Get(addr); ok {
 		box.RefCount++
@@ -515,6 +580,14 @@ func (i *Interpreter) decref(addr int) {
 		for _, fieldAddr := range val.Fields {
 			i.decref(fieldAddr)
 		}
+	case *PtrVal:
+		// A wrapper box (a scalar array element / struct field) whose
+		// content is an owning pointer: freeing this box must also
+		// release the separate cell it owns, or that cell would leak --
+		// nothing else will ever call decref on it once this box is gone.
+		if val.Owned {
+			i.decref(val.Addr)
+		}
 	}
 	i.Heap.Free(addr)
 }
@@ -525,11 +598,15 @@ func (i *Interpreter) decref(addr int) {
 func (i *Interpreter) retain(v RTValue) {
 	if addr, ok := containerAddr(v); ok {
 		i.incref(addr)
+	} else if addr, ok := ownedPtrAddr(v); ok {
+		i.incref(addr)
 	}
 }
 
 func (i *Interpreter) release(v RTValue) {
 	if addr, ok := containerAddr(v); ok {
+		i.decref(addr)
+	} else if addr, ok := ownedPtrAddr(v); ok {
 		i.decref(addr)
 	}
 }
@@ -602,9 +679,15 @@ func (i *Interpreter) rebindThis(thisAddr int, newSv *StructVal) {
 				if _, isContainer := containerAddr(fbox.Value); isContainer {
 					i.release(fbox.Value)
 				} else {
-					// Scalar field: no refcount tracks it, and we're
-					// abandoning this specific box (not reusing it), so
-					// it needs an explicit direct free or it leaks.
+					// Scalar field: no refcount tracks the wrapper box
+					// itself, and we're abandoning this specific box (not
+					// reusing it), so it needs an explicit direct free or
+					// it leaks. But if it holds an *owning* pointer, that
+					// pointer's separate target cell needs releasing too,
+					// or freeing just this wrapper would leak the target.
+					if pAddr, isPtr := ownedPtrAddr(fbox.Value); isPtr {
+						i.decref(pAddr)
+					}
 					i.Heap.Free(oldFieldAddr)
 				}
 			}
@@ -637,15 +720,32 @@ func needsIncrefExpr(e Expr) bool {
 func (i *Interpreter) teardown(env *Environment) {
 	for _, slot := range env.vars {
 		if !slot.Heap {
+			// Never promoted onto the heap, so there's no wrapper box
+			// here for a plain scalar to leak -- Go's own GC reclaims
+			// the slot. The one exception is an *owning* pointer
+			// ('new(...)'): its VALUE is inline here, but it's still
+			// responsible for a real, separately-tracked heap cell that
+			// nothing else will release unless we do it now.
+			if pAddr, ok := ownedPtrAddr(slot.Value); ok {
+				i.decref(pAddr)
+			}
 			continue
 		}
 		box, ok := i.Heap.Get(slot.Addr)
 		if !ok {
 			continue // already freed
 		}
-		switch box.Value.(type) {
+		switch v := box.Value.(type) {
 		case *ArrayVal, *StructVal:
 			i.decref(slot.Addr)
+		case *PtrVal:
+			// A promoted (heap-boxed) pointer local, e.g. one that had
+			// '&' taken on it. Release whatever it owns before freeing
+			// its own wrapper box.
+			if v.Owned {
+				i.decref(v.Addr)
+			}
+			i.Heap.Free(slot.Addr)
 		default:
 			i.Heap.Free(slot.Addr)
 		}
@@ -855,7 +955,9 @@ func zeroValueFor(dtype *DatatypeNode) RTValue {
 		return &BoolVal{Val: false}
 	case "char":
 		return &CharVal{Val: 0}
-	default: // int, array, struct, enum, fn, ptr, named/unknown
+	case "ptr":
+		return &PtrVal{Addr: 0} // null pointer, not owning -- nothing to free
+	default: // int, array, struct, enum, fn, named/unknown
 		return &IntVal{Val: 0}
 	}
 }
@@ -919,6 +1021,13 @@ func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) 
 				// binding might separately take on it later.
 				elems[idx] = cAddr
 				i.incref(cAddr)
+			} else if pAddr, isPtr := ownedPtrAddr(ev); isPtr {
+				// Same idea for a pointer element, except the pointer
+				// value itself still needs its own private wrapper box
+				// (its identity isn't its target's address) -- only the
+				// target it owns gets the extra structural reference.
+				elems[idx] = i.Heap.Alloc(ev)
+				i.incref(pAddr)
 			} else {
 				elems[idx] = i.Heap.Alloc(ev)
 			}
@@ -955,6 +1064,9 @@ func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) 
 				if cAddr, isContainer := containerAddr(fv); isContainer {
 					sv.SetField(f.Name, cAddr)
 					i.incref(cAddr)
+				} else if pAddr, isPtr := ownedPtrAddr(fv); isPtr {
+					sv.SetField(f.Name, i.Heap.Alloc(fv))
+					i.incref(pAddr)
 				} else {
 					sv.SetField(f.Name, i.Heap.Alloc(fv))
 				}
@@ -984,11 +1096,17 @@ func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) 
 						if oldVal != nil {
 							i.release(oldVal)
 						}
+						if pAddr, isPtr := ownedPtrAddr(fv); isPtr && needsIncref(fi.Value) {
+							i.incref(pAddr)
+						}
 					}
 				} else {
 					if cAddr, isContainer := containerAddr(fv); isContainer {
 						sv.SetField(fi.Name, cAddr)
 						i.incref(cAddr)
+					} else if pAddr, isPtr := ownedPtrAddr(fv); isPtr {
+						sv.SetField(fi.Name, i.Heap.Alloc(fv))
+						i.incref(pAddr)
 					} else {
 						sv.SetField(fi.Name, i.Heap.Alloc(fv))
 					}
@@ -1005,6 +1123,9 @@ func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) 
 			if cAddr, isContainer := containerAddr(fv); isContainer {
 				sv.SetField(fi.Name, cAddr)
 				i.incref(cAddr)
+			} else if pAddr, isPtr := ownedPtrAddr(fv); isPtr {
+				sv.SetField(fi.Name, i.Heap.Alloc(fv))
+				i.incref(pAddr)
 			} else {
 				sv.SetField(fi.Name, i.Heap.Alloc(fv))
 			}
@@ -1057,6 +1178,17 @@ func (i *Interpreter) evalExpr(e Expr, env *Environment) RTValue {
 
 	case *RangeExpr:
 		return i.evalRange(n, env, line, col)
+
+	case *NewExpr:
+		// Fresh allocation, no other owner yet -- starts at refcount 0,
+		// same convention as ArrLiteral/StructInstance. The binding site
+		// (execDecl, AssignStmt, array/struct construction, param
+		// binding, ...) claims the first (and only) reference via
+		// retain()/incref, gated by needsIncref exactly like every other
+		// fresh-vs-aliased value in this interpreter.
+		v := i.evalExpr(n.Arg, env)
+		addr := i.Heap.Alloc(v)
+		return &PtrVal{Addr: addr, Owned: true}
 
 	case *GroupExpr:
 		return i.evalExpr(n.Inner, env)

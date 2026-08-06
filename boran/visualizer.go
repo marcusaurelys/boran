@@ -99,6 +99,8 @@ func getNodeLabel(n Node) string {
 		return "INPUT_EXPR"
 	case *RangeExpr:
 		return fmt.Sprintf("RANGE_EXPR [%d arg(s)]", len(node.Args))
+	case *NewExpr:
+		return "NEW_EXPR"
 	case *FnCall:
 		return fmt.Sprintf("FN_CALL (%s)", node.Callee)
 	case *MethodCall:
@@ -220,6 +222,8 @@ func getChildren(n Node) []Node {
 		for _, a := range node.Args {
 			add(a)
 		}
+	case *NewExpr:
+		add(node.Arg)
 	case *PrintStmt:
 		for _, a := range node.Args {
 			add(a)

@@ -86,8 +86,8 @@ func (t *TCType) String() string {
 	}
 }
 
-func tUnknown() *TCType         { return &TCType{Kind: "unknown"} }
-func tVoid() *TCType            { return &TCType{Kind: "void"} }
+func tUnknown() *TCType { return &TCType{Kind: "unknown"} }
+func tVoid() *TCType    { return &TCType{Kind: "void"} }
 func tBuiltin(k string) *TCType { return &TCType{Kind: k} }
 
 // fromDatatypeNode converts the parser's structured type node into the
@@ -172,13 +172,13 @@ func typesCompatible(want, got *TCType) bool {
 // ============================================================================
 
 type tcSymbol struct {
-	Name    string
-	Kind    SymbolKind
-	Type    *TCType
-	Mutable bool // true for 'let', false for 'const'/param
-	FnSig   *fnSignature
-	Line    int
-	Col     int
+	Name     string
+	Kind     SymbolKind
+	Type     *TCType
+	Mutable  bool // true for 'let', false for 'const'/param
+	FnSig    *fnSignature
+	Line     int
+	Col      int
 }
 
 type fnSignature struct {
@@ -562,6 +562,14 @@ func (c *TypeChecker) checkExpr(e Expr) *TCType {
 			}
 		}
 		return &TCType{Kind: "array", Elem: tBuiltin("int"), ArrLen: -1} // length is only known at runtime
+
+	case *NewExpr:
+		argType := c.checkExpr(n.Arg)
+		if argType != nil && argType.Kind != "unknown" && !isPrimitiveScalar(argType) {
+			line, col := n.Arg.Pos()
+			c.errorf(ErrTypeMismatch, line, col, "new(...) requires a scalar argument (int, float, char, string, or bool), got %s", argType.String())
+		}
+		return &TCType{Kind: "ptr", Elem: argType}
 
 	case *GroupExpr:
 		return c.checkExpr(n.Inner)

@@ -131,6 +131,14 @@ func (v *FnVal) String() string {
 // aliasing rather than copy semantics.
 type PtrVal struct {
 	Addr int
+	// Owned marks a pointer created by 'new(...)': this pointer's target
+	// is a heap cell nobody else already owns, so it participates in the
+	// interpreter's refcounting (incref on every additional binding,
+	// decref on every unbinding) the same way arrays/structs do -- see
+	// ownedPtrAddr, retain/release, and teardown in interpreter.go.
+	// '&x' pointers leave this false: they merely reference memory some
+	// other binding already owns, so they never free their target.
+	Owned bool
 }
 
 func (v *PtrVal) rtValueNode()    {}

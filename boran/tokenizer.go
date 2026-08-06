@@ -66,7 +66,7 @@ var keywords = map[string]TokenType{
 	"struct": TOKEN_KEYWORD, "enum": TOKEN_KEYWORD, "break": TOKEN_KEYWORD, "continue": TOKEN_KEYWORD,
 	"if": TOKEN_KEYWORD, "else": TOKEN_KEYWORD, "for": TOKEN_KEYWORD,
 	"in": TOKEN_KEYWORD, "return": TOKEN_KEYWORD,
-	"print": TOKEN_KEYWORD, "input": TOKEN_KEYWORD, "range": TOKEN_KEYWORD,
+	"print": TOKEN_KEYWORD, "input": TOKEN_KEYWORD, "range": TOKEN_KEYWORD, "new": TOKEN_KEYWORD,
 	"true": TOKEN_BOOL_LIT, "false": TOKEN_BOOL_LIT,
 	"null": TOKEN_KEYWORD, "this": TOKEN_KEYWORD, "as": TOKEN_KEYWORD,
 }
