@@ -12,7 +12,8 @@ import (
 // copy: '&x' just returns x's address, and any write through that address
 // is visible to every other holder of it.
 type Box struct {
-	Value RTValue
+	Value    RTValue
+	RefCount int // structural references currently pointing at this cell -- see Interpreter.incref/decref
 }
 
 // Heap is a simulated address space. This exists mainly to satisfy the
@@ -34,7 +35,11 @@ func NewHeap() *Heap {
 	}
 }
 
-// Alloc reserves a new cell holding v and returns its address.
+// Alloc reserves a new cell holding v and returns its address. RefCount
+// starts at 0 -- a freshly allocated cell isn't "owned" by anyone until
+// something actually stores its address somewhere (see Interpreter.incref),
+// which keeps fresh construction and Interpreter.decref's cascade using
+// the exact same accounting rather than needing a special first-owner case.
 func (h *Heap) Alloc(v RTValue) int {
 	addr := h.nextAddr
 	h.nextAddr++
@@ -90,11 +95,11 @@ func (h *Heap) String() string {
 	sort.Ints(addrs)
 
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("  %-8s | %-14s | %s\n", "ADDR", "TYPE", "VALUE"))
+	sb.WriteString(fmt.Sprintf("  %-8s | %-14s | %-5s | %s\n", "ADDR", "TYPE", "REFS", "VALUE"))
 	sb.WriteString("  " + strings.Repeat("-", 70) + "\n")
 	for _, a := range addrs {
 		b := h.cells[a]
-		sb.WriteString(fmt.Sprintf("  0x%04x   | %-14s | %s\n", a, b.Value.TypeTag(), b.Value.String()))
+		sb.WriteString(fmt.Sprintf("  0x%04x   | %-14s | %-5d | %s\n", a, b.Value.TypeTag(), b.RefCount, b.Value.String()))
 	}
 	return sb.String()
 }

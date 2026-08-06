@@ -60,6 +60,15 @@ func (v *NullVal) String() string  { return "null" }
 type ArrayVal struct {
 	Elems    []int // heap addresses, one per element
 	ElemType string
+
+	// HeapAddr is this array header's own permanent identity: the address
+	// of the box that holds this exact *ArrayVal, set once at
+	// construction (see evalValue). Every Environment slot that binds a
+	// name to this array points at HeapAddr directly (never a separate
+	// wrapper), so aliasing ('let b = a;') shares identity rather than
+	// copying -- and refcounting (Interpreter.incref/decref) tracks
+	// exactly this address.
+	HeapAddr int
 }
 
 func (v *ArrayVal) rtValueNode()    {}
@@ -74,6 +83,10 @@ type StructVal struct {
 	TypeName string
 	Fields   map[string]int // field name -> heap address
 	order    []string       // preserves declaration order for display
+
+	// HeapAddr is this struct instance's own permanent identity -- see
+	// ArrayVal.HeapAddr for the full rationale; same mechanism here.
+	HeapAddr int
 }
 
 func NewStructVal(typeName string) *StructVal {

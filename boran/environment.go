@@ -24,6 +24,7 @@ type Slot struct {
 type Environment struct {
 	Parent *Environment
 	vars   map[string]*Slot
+	owned  []int
 }
 
 func NewEnvironment(parent *Environment) *Environment {

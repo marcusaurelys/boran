@@ -126,7 +126,7 @@ func (i *Interpreter) Run(prog *Program) (err error) {
 				err = re
 				return
 			}
-			panic(r) // not one of ours -- a real bug, don't swallow it
+			panic(r)
 		}
 	}()
 
@@ -182,7 +182,28 @@ func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 				declType = i.declaredTypeAtAddr(slot.Addr)
 			}
 			val := i.evalValue(n.Value, env, declType)
-			if slot.Heap {
+			if newSv, isSv := val.(*StructVal); isSv && n.Target.Kind == TargetThis && isStructInstanceLiteral(n.Value) && slot.Heap {
+				// 'this = { ...literal... };' -- special-cased ahead of the
+				// general container-rebind branch below: 'this' aliases the
+				// caller's own variable, so it needs the shared-struct-mutated-
+				// in-place treatment, not the ordinary "point this local binding
+				// somewhere new" rebind that's correct for a plain local variable.
+				i.rebindThis(slot.Addr, newSv)
+			} else if newAddr, isContainer := containerAddr(val); isContainer {
+				// Container-typed reassignment rebinds the slot's own
+				// identity rather than mutating the old box in place --
+				// otherwise any OTHER alias of the old container (e.g. a
+				// 'let other = x;' taken before this assignment) would
+				// see its contents silently replaced too.
+				if slot.Heap {
+					i.decref(slot.Addr)
+				}
+				slot.Heap = true
+				slot.Addr = newAddr
+				if needsIncref(n.Value) {
+					i.incref(newAddr)
+				}
+			} else if slot.Heap {
 				i.Heap.Set(slot.Addr, val)
 			} else {
 				slot.Value = val
@@ -191,7 +212,18 @@ func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 		}
 		addr := i.addressOfTarget(n.Target, env)
 		val := i.evalValue(n.Value, env, i.declaredTypeAtAddr(addr))
+		old, _ := i.Heap.Get(addr)
+		var oldVal RTValue
+		if old != nil {
+			oldVal = old.Value
+		}
 		i.Heap.Set(addr, val)
+		if oldVal != nil {
+			i.release(oldVal)
+		}
+		if needsIncref(n.Value) {
+			i.retain(val)
+		}
 		return sigNone
 
 	case *Block:
@@ -199,9 +231,11 @@ func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 		for _, st := range n.Statements {
 			sig := i.execStmt(st, child)
 			if sig.kind != ctrlNone {
+				i.teardown(child)
 				return sig
 			}
 		}
+		i.teardown(child)
 		return sigNone
 
 	case *IfStmt:
@@ -227,13 +261,40 @@ func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 		}
 
 		ephemeral := isEphemeralArraySource(n.Iter)
-		for _, elemAddr := range arr.Elems {
+		// Whatever index the loop stops at -- whether it walks off the end
+		// normally, or exits early via break/return -- everything from that
+		// point in arr.Elems onward was never visited, so it never got its
+		// per-iteration free below. Track it here and sweep the remainder
+		// (plus the array's own header) in one deferred cleanup covering
+		// every exit path uniformly, rather than duplicating the same
+		// free-the-rest logic at each of the three separate return points.
+		visited := 0
+		if ephemeral {
+			defer func() {
+				for _, elemAddr := range arr.Elems[visited:] {
+					i.Heap.Free(elemAddr)
+				}
+				i.Heap.Free(arr.HeapAddr)
+			}()
+		}
+
+		for idx, elemAddr := range arr.Elems {
+			visited = idx + 1
 			child := NewEnvironment(env)
 			box, ok := i.Heap.Get(elemAddr)
 			if !ok {
 				rtPanic(line, col, "dangling array element reference")
 			}
-			child.Define(n.VarName, box.Value)
+			if cAddr, isContainer := containerAddr(box.Value); isContainer {
+				// Reading a container-typed element is an aliasing read
+				// of an existing structural place (arr's own Elems
+				// entry), same as reading any other variable/field --
+				// needs its own real reference for the loop var's slot.
+				child.DefineAddr(n.VarName, cAddr)
+				i.incref(cAddr)
+			} else {
+				child.Define(n.VarName, box.Value)
+			}
 			if ephemeral {
 				// value's already been copied into the loop var above;
 				// this cell is now provably unreachable from anywhere.
@@ -241,6 +302,7 @@ func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 			}
 
 			sig := i.execStmt(n.Body, child)
+			i.teardown(child)
 			if sig.kind == ctrlBreak {
 				break
 			}
@@ -302,7 +364,15 @@ func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 		if n.Value == nil {
 			return ctrlSignal{kind: ctrlReturn, value: &NullVal{}}
 		}
-		return ctrlSignal{kind: ctrlReturn, value: i.evalExpr(n.Value, env)}
+		v := i.evalExpr(n.Value, env)
+		// Protective retain: about to unwind through invoke's teardown,
+		// which will remove whatever local/param references currently
+		// keep v alive (possibly several, if it's been aliased through a
+		// chain of locals). This +1 guarantees the count never dips to 0
+		// mid-teardown; the caller's own binding (or discard) is what
+		// ultimately accounts for -- and balances -- this reference.
+		i.retain(v)
+		return ctrlSignal{kind: ctrlReturn, value: v}
 
 	case *BreakStmt:
 		return ctrlSignal{kind: ctrlBreak}
@@ -328,6 +398,13 @@ func (i *Interpreter) execDecl(name, typeTag string, dtype *DatatypeNode, val Va
 	rv := i.evalValue(val, env, dtype)
 	if td, ok := rv.(*TypeDefVal); ok {
 		td.Name = name
+	}
+	if addr, ok := containerAddr(rv); ok {
+		env.DefineAddr(name, addr)
+		if needsIncref(val) {
+			i.incref(addr)
+		}
+		return
 	}
 	env.Define(name, rv)
 }
@@ -382,6 +459,197 @@ func (i *Interpreter) promote(env *Environment, name string) int {
 		slot.Heap = true
 	}
 	return slot.Addr
+}
+
+// ---- Reference counting ------------------------------------------------
+//
+// Only containers (*ArrayVal / *StructVal) participate in refcounting --
+// they're the only values with a persistent heap identity (HeapAddr) that
+// can legitimately be shared across more than one Environment slot. Plain
+// scalars stay Phase 1's inline-or-promoted-once model (never shared, so
+// teardown just frees them directly, no counting needed). Pointers ('&x')
+// are deliberately *not* retained/released by anything below -- they're
+// weak/non-owning references, matching C-like semantics: dereferencing a
+// pointer whose target has since been freed is a detectable runtime error
+// (via Heap.Get), not a crash, and that's the accepted tradeoff rather
+// than pointers keeping their targets alive forever.
+
+// containerAddr returns v's own persistent heap address if v is a
+// container, or ok=false for anything else (scalars, pointers, etc.).
+func containerAddr(v RTValue) (int, bool) {
+	switch val := v.(type) {
+	case *ArrayVal:
+		return val.HeapAddr, true
+	case *StructVal:
+		return val.HeapAddr, true
+	}
+	return 0, false
+}
+
+func (i *Interpreter) incref(addr int) {
+	if box, ok := i.Heap.Get(addr); ok {
+		box.RefCount++
+	}
+}
+
+// decref removes one structural reference to addr. If that was the last
+// one, it cascades: every address the freed container itself references
+// (its Elems/Fields) gets decref'd too, recursively freeing anything that
+// was only reachable through it.
+func (i *Interpreter) decref(addr int) {
+
+	box, ok := i.Heap.Get(addr)
+	if !ok {
+		return
+	}
+	box.RefCount--
+	if box.RefCount > 0 {
+		return
+	}
+	switch val := box.Value.(type) {
+	case *ArrayVal:
+		for _, elemAddr := range val.Elems {
+			i.decref(elemAddr)
+		}
+	case *StructVal:
+		for _, fieldAddr := range val.Fields {
+			i.decref(fieldAddr)
+		}
+	}
+	i.Heap.Free(addr)
+}
+
+// retain/release are the convenience entry points used at every binding
+// site below: no-ops for anything without a container identity, so
+// callers don't need their own type switch first.
+func (i *Interpreter) retain(v RTValue) {
+	if addr, ok := containerAddr(v); ok {
+		i.incref(addr)
+	}
+}
+
+func (i *Interpreter) release(v RTValue) {
+	if addr, ok := containerAddr(v); ok {
+		i.decref(addr)
+	}
+}
+
+// needsIncref/needsIncrefExpr decide whether *binding* a value to a new
+// structural place (a new 'let'/'const', a reassignment, a function
+// parameter) should add a real reference, or whether the value already
+// arrives holding the one reference this new binding needs:
+//   - reading an EXISTING place (a variable, a field, an element) is
+//     aliasing -- the old place keeps its reference, so the new one needs
+//     a genuinely additional increment.
+//   - a fresh literal, or a function call's result, is NOT aliasing
+//     anything yet: a literal starts at refcount 0 (unclaimed) and this is
+//     its first claim; a call result already survived its own frame's
+//     teardown via ReturnStmt's protective retain (see below), so it's
+//     already carrying exactly the reference this new binding needs.
+//
+// Getting this wrong in either direction either double-counts (permanent
+// leak) or under-counts (premature free of a still-aliased value) -- both
+// were tried and ruled out before landing on this rule.
+func needsIncref(val Value) bool {
+	ev, ok := val.(*ExprValue)
+	if !ok {
+		return true // ArrLiteral, StructInstance: fresh construction
+	}
+	return needsIncrefExpr(ev.Expr)
+}
+
+// isStructInstanceLiteral reports whether val is a bare struct-instance
+// literal ('{ x: ..., y: ... }'), as opposed to an aliasing read (a plain
+// variable, field, or element) that merely evaluates to a struct. Used to
+// gate rebindThis: harvesting fields out of the RHS is only safe when the
+// RHS is freshly constructed for this assignment and nothing else could
+// possibly be holding a reference to it yet.
+func isStructInstanceLiteral(val Value) bool {
+	_, ok := val.(*StructInstance)
+	return ok
+}
+
+// rebindThis implements 'this = { ...literal... };' by mutating the
+// struct this already points at in place, field by field, rather than
+// rebinding this's own callEnv slot to the literal's address. 'this' is
+// an alias for the caller's own variable -- rebinding just the local
+// slot would be invisible to the caller once callEnv is torn down at
+// return, since the caller's own binding still points at the original
+// address the whole time. Mutating the shared struct's Fields map keeps
+// the caller-visible identity (thisAddr) unchanged, just with each
+// field's content replaced.
+//
+// newSv's own outer shell (its self-box) becomes unreachable once its
+// fields are harvested; since a fresh literal's shell is never itself
+// referenced by anyone (0-baseline, same convention as everywhere else
+// fresh containers are built), it's freed directly rather than via
+// decref/release -- decref would incorrectly cascade into the fields
+// that were just migrated into oldSv, re-freeing them out from under
+// their new owner.
+func (i *Interpreter) rebindThis(thisAddr int, newSv *StructVal) {
+	oldBox, ok := i.Heap.Get(thisAddr)
+	if !ok {
+		return
+	}
+	oldSv, ok := oldBox.Value.(*StructVal)
+	if !ok {
+		return
+	}
+	for _, name := range newSv.order {
+		newFieldAddr := newSv.Fields[name]
+		if oldFieldAddr, exists := oldSv.Fields[name]; exists {
+			if fbox, ok := i.Heap.Get(oldFieldAddr); ok {
+				if _, isContainer := containerAddr(fbox.Value); isContainer {
+					i.release(fbox.Value)
+				} else {
+					// Scalar field: no refcount tracks it, and we're
+					// abandoning this specific box (not reusing it), so
+					// it needs an explicit direct free or it leaks.
+					i.Heap.Free(oldFieldAddr)
+				}
+			}
+		}
+		oldSv.SetField(name, newFieldAddr)
+	}
+	i.Heap.Free(newSv.HeapAddr)
+}
+
+func needsIncrefExpr(e Expr) bool {
+	for {
+		g, ok := e.(*GroupExpr)
+		if !ok {
+			break
+		}
+		e = g.Inner
+	}
+	switch e.(type) {
+	case *FnCall, *MethodCall:
+		return false
+	}
+	return true
+}
+
+// teardown releases every container-typed local declared directly in env,
+// and frees every promoted-scalar local outright (they're never shared,
+// so no counting is needed for them -- see the section comment above).
+// Call this exactly once per scope exit: Block, a ForIterStmt iteration's
+// child env, and invoke's callEnv on both its exit paths.
+func (i *Interpreter) teardown(env *Environment) {
+	for _, slot := range env.vars {
+		if !slot.Heap {
+			continue
+		}
+		box, ok := i.Heap.Get(slot.Addr)
+		if !ok {
+			continue // already freed
+		}
+		switch box.Value.(type) {
+		case *ArrayVal, *StructVal:
+			i.decref(slot.Addr)
+		default:
+			i.Heap.Free(slot.Addr)
+		}
+	}
 }
 
 // addressOfTarget resolves an AssignStmt's AssignTarget (the specialized
@@ -584,16 +852,28 @@ func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) 
 			if idx == 0 && elemType == "" {
 				elemType = ev.TypeTag()
 			}
-			elems[idx] = i.Heap.Alloc(ev)
+			if cAddr, isContainer := containerAddr(ev); isContainer {
+				// A container element is identified by its own HeapAddr --
+				// store that directly rather than wrapping it in a second
+				// box, and incref it here: this array's Elems entry is now
+				// a real, permanent structural owner, independent of
+				// whatever transient reference a loop variable or 'this'
+				// binding might separately take on it later.
+				elems[idx] = cAddr
+				i.incref(cAddr)
+			} else {
+				elems[idx] = i.Heap.Alloc(ev)
+			}
 		}
-		return &ArrayVal{Elems: elems, ElemType: elemType}
+		av := &ArrayVal{Elems: elems, ElemType: elemType}
+		av.HeapAddr = i.Heap.Alloc(av)
+		return av
 
 	case *StructLiteral:
 		return &TypeDefVal{Kind: "struct", Name: typeTag}
 
 	case *EnumBody:
 		return &TypeDefVal{Kind: "enum", Name: typeTag}
-
 	case *StructInstance:
 		sv := NewStructVal(typeTag)
 		if def, ok := i.structDefs[typeTag]; ok {
@@ -605,7 +885,12 @@ func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) 
 				if f.Default != nil {
 					fv = i.evalValue(f.Default, env, f.DeclaredType)
 				}
-				sv.SetField(f.Name, i.Heap.Alloc(fv))
+				if cAddr, isContainer := containerAddr(fv); isContainer {
+					sv.SetField(f.Name, cAddr)
+					i.incref(cAddr)
+				} else {
+					sv.SetField(f.Name, i.Heap.Alloc(fv))
+				}
 			}
 			for _, fi := range val.Fields {
 				var fieldDtype *DatatypeNode
@@ -616,11 +901,33 @@ func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) 
 				}
 				fv := i.evalValue(fi.Value, env, fieldDtype)
 				if addr, exists := sv.Fields[fi.Name]; exists {
-					i.Heap.Set(addr, fv)
+					if cAddr, isContainer := containerAddr(fv); isContainer {
+						i.decref(addr)
+						sv.SetField(fi.Name, cAddr)
+						if needsIncref(fi.Value) {
+							i.incref(cAddr)
+						}
+					} else {
+						old, _ := i.Heap.Get(addr)
+						var oldVal RTValue
+						if old != nil {
+							oldVal = old.Value
+						}
+						i.Heap.Set(addr, fv)
+						if oldVal != nil {
+							i.release(oldVal)
+						}
+					}
 				} else {
-					sv.SetField(fi.Name, i.Heap.Alloc(fv))
+					if cAddr, isContainer := containerAddr(fv); isContainer {
+						sv.SetField(fi.Name, cAddr)
+						i.incref(cAddr)
+					} else {
+						sv.SetField(fi.Name, i.Heap.Alloc(fv))
+					}
 				}
 			}
+			sv.HeapAddr = i.Heap.Alloc(sv)
 			return sv
 		}
 		// Unknown/unregistered type name: still build something usable
@@ -628,8 +935,14 @@ func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) 
 		// best-effort stance on unresolved names.
 		for _, fi := range val.Fields {
 			fv := i.evalValue(fi.Value, env, nil)
-			sv.SetField(fi.Name, i.Heap.Alloc(fv))
+			if cAddr, isContainer := containerAddr(fv); isContainer {
+				sv.SetField(fi.Name, cAddr)
+				i.incref(cAddr)
+			} else {
+				sv.SetField(fi.Name, i.Heap.Alloc(fv))
+			}
 		}
+		sv.HeapAddr = i.Heap.Alloc(sv)
 		return sv
 
 	case *FnLiteral:
@@ -759,7 +1072,17 @@ func (i *Interpreter) evalExpr(e Expr, env *Environment) RTValue {
 func (i *Interpreter) evalArgs(argExprs []Expr, env *Environment) []RTValue {
 	args := make([]RTValue, len(argExprs))
 	for idx, a := range argExprs {
-		args[idx] = i.evalExpr(a, env)
+		v := i.evalExpr(a, env)
+		if needsIncrefExpr(a) {
+			// Aliasing an existing variable/field/element into a call:
+			// the callee's parameter binding is a genuinely additional,
+			// temporary reference for the duration of the call (retain
+			// here, matching invoke's unconditional teardown decref on
+			// exit). Fresh literals/nested call results are left alone,
+			// same reasoning as needsIncref for declarations.
+			i.retain(v)
+		}
+		args[idx] = v
 	}
 	return args
 }
@@ -782,10 +1105,23 @@ func (i *Interpreter) invoke(fn *FnVal, args []RTValue, thisAddr *int, label str
 	}
 	callEnv := NewEnvironment(fn.Closure)
 	if thisAddr != nil {
+		// The receiver is always an alias of an existing struct instance
+		// (never fresh construction), so this call's borrow of it always
+		// needs its own real reference -- symmetric with the unconditional
+		// decref every container-typed local gets in teardown below.
 		callEnv.DefineAddr("this", *thisAddr)
+		i.incref(*thisAddr)
 	}
 	for idx, p := range fn.Lit.Params {
-		callEnv.Define(p.Name, args[idx])
+		// evalArgs already retained container-typed args that needed it
+		// (see needsIncrefExpr there); param binding here just claims
+		// that same address, uniformly, regardless of whether it was
+		// freshly retained or arrived pre-counted.
+		if addr, ok := containerAddr(args[idx]); ok {
+			callEnv.DefineAddr(p.Name, addr)
+		} else {
+			callEnv.Define(p.Name, args[idx])
+		}
 	}
 
 	i.Stack.Push(&CallFrame{FnName: label, Env: callEnv, CallLine: line, CallCol: col})
@@ -794,12 +1130,14 @@ func (i *Interpreter) invoke(fn *FnVal, args []RTValue, thisAddr *int, label str
 	for _, st := range fn.Lit.Body.Statements {
 		sig := i.execStmt(st, callEnv)
 		if sig.kind == ctrlReturn {
+			i.teardown(callEnv)
 			return sig.value
 		}
 		if sig.kind == ctrlBreak || sig.kind == ctrlContinue {
 			rtPanic(line, col, "'break'/'continue' used outside of a loop")
 		}
 	}
+	i.teardown(callEnv)
 	return &NullVal{}
 }
 
@@ -1101,7 +1439,9 @@ func (i *Interpreter) evalRange(n *RangeExpr, env *Environment, line, col int) R
 			elems = append(elems, i.Heap.Alloc(&IntVal{Val: v}))
 		}
 	}
-	return &ArrayVal{Elems: elems, ElemType: "int"}
+	av := &ArrayVal{Elems: elems, ElemType: "int"}
+	av.HeapAddr = i.Heap.Alloc(av)
+	return av
 }
 
 // castValue implements the 'as' operator's runtime behavior. The type
