@@ -1,12 +1,6 @@
 # ================================================================
 # BORAN — COMPREHENSIVE LANGUAGE SHOWCASE
 # ----------------------------------------------------------------
-# One clean, fully-correct program meant to exercise every
-# gradeable language feature *and* stress a handful of feature
-# combinations (pointers inside loops, recursion unwinding through
-# try/catch, structs holding arrays of structs, casts inside loop
-# conditions, etc.) so unintended interactions surface here rather
-# than in a smaller, less demanding test.
 #
 # Covered in this file:
 #   - headers / line comments               (this block)

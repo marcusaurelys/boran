@@ -1,0 +1,473 @@
+================================================================
+  BORAN — USER MANUAL
+  Language version: grammar v2.4
+================================================================
+
+CONTENTS
+  1. What is Boran
+  2. Running a program (CLI)
+  3. Comments and basic syntax
+  4. Variables: let and const
+  5. Datatypes
+  6. Literals and values
+  7. Operators and expressions
+  8. Type casting (as)
+  9. Arrays
+  10. Pointers (& and *)
+  11. Dynamic allocation (new)
+  12. Error handling (try / catch / throw)
+  13. Control flow: if / else
+  14. Loops: the unified 'for'
+  15. range()
+  16. break / continue / return
+  17. Functions
+  18. Structs
+  19. Enums
+  20. Chaining (member/index/call access)
+  21. I/O: print and input
+  22. Semantic errors the checker catches
+  23. Execution modes (--step, --ir)
+  24. Quick reference tables
+
+================================================================
+1. WHAT IS BORAN
+================================================================
+Boran is a statically-typed, C-like language. Every variable has a
+declared type, checked before the program runs. Under the hood it
+compiles to an AST, is type-checked, then either tree-walked
+directly or (optionally) lowered to a small IR for a demo
+optimization pass. You don't need to know any of that to write
+Boran code — it reads like a small, explicit C/TypeScript hybrid.
+
+Minimal complete program:
+
+    const main : fn = () : int => {
+        print("Hello, Boran!");
+        return 0;
+    };
+    main();
+
+Every program ends with an explicit call to main() — main is not
+auto-invoked.
+
+================================================================
+2. RUNNING A PROGRAM (CLI)
+================================================================
+    boran <source_file>              run normally
+    boran <source_file> --step       line-by-line stepping mode
+    boran <source_file> --ir         run + show the IR/optimizer demo
+    boran <source_file> --vs 	     compare wallclock time of optimized TAC vs. AST
+    boran <source_file> --log	     outputs a log file with the symbol table, final heap state, and abstract syntax tree
+
+All three modes append a full report (parse tree, symbol table,
+errors, program output, final heap state) to parse_results.txt in
+the current directory. --step and --ir additionally print live to
+your terminal.
+
+--step pauses before every statement and shows the active symbol
+table, call stack, and heap. Press Enter to advance one statement,
+or type 'c' to run to completion (it still traces one line per step,
+and automatically re-pauses if the program hits an input() call).
+
+--ir lowers main()'s body to three-address code (TAC), runs four
+optimization passes (constant propagation, constant folding, common
+subexpression elimination, dead code elimination), and prints the
+TAC before/after plus a parity check against the normal interpreter.
+It only covers scalar arithmetic/comparisons/logic and
+if/for-while/break/continue/return/print — anything involving
+structs, arrays, pointers, enums, function calls, 'new', or
+try/catch/throw is reported as "not lowered" and simply skipped in
+that view (it still runs fine normally, just via the tree-walking
+interpreter).
+
+Execution is skipped entirely if there are any syntax or semantic
+errors — fix those first and the diagnostics will tell you exactly
+where.
+
+================================================================
+3. COMMENTS AND BASIC SYNTAX
+================================================================
+Comments start with '#' and run to end of line:
+
+    # this is a comment
+
+Statements generally end with ';'. Block-bodied statements (if,
+for-in, for-while, function bodies, struct/enum bodies, try/catch)
+do NOT need a trailing ';' after their closing '}' — the block
+itself ends the statement. The one loop form that still accepts (but
+no longer requires) a trailing ';' is repeat-until, for backward
+compatibility:
+
+    for { ... } cond;      # ';' optional here, both forms are fine
+    for { ... } cond
+
+Everything else follows ordinary C-like block syntax with '{' '}'.
+
+================================================================
+4. VARIABLES: let AND const
+================================================================
+    let <name> : <type> = <value>;     # mutable binding
+    let <name> : <type>;               # mutable, no initializer
+    const <name> : <type> = <value>;   # immutable binding
+
+'const' means the *binding itself* can't be reassigned. If a const
+holds a struct instance, its 'let' fields can still be mutated
+through it — const only locks the name, not necessarily everything
+reachable through it.
+
+    let score : int = 0;
+    const maxPlayers : int = 4;
+    maxPlayers = 8;        # ERROR: constant reassignment
+
+================================================================
+5. DATATYPES
+================================================================
+Primitives:  int, float, char, string, bool
+Compound:    <type>[N]     array of N elements, e.g. int[5]
+             <type>*       pointer to a value, e.g. int*
+             fn            function-typed value/parameter
+             struct        struct type definition
+             enum          enum type definition
+User-defined types (structs/enums you've declared) are referenced
+by name as the type, e.g. `let p : Player = ...`.
+
+Note: there is no separate 'error' datatype. A value caught by a
+'catch' clause (see section 12) is always an ordinary string.
+
+================================================================
+6. LITERALS AND VALUES
+================================================================
+    42              int
+    3.14            float
+    'a'             char
+    "hello"         string  (escapes: \n \t \r \\ \' \" \0)
+    true / false    bool
+    null            pointer/null value
+    [1, 2, 3]       array literal
+    { x: 1, y: 2 }  struct instance literal
+
+================================================================
+7. OPERATORS AND EXPRESSIONS
+================================================================
+Precedence, loosest to tightest:
+    ||                          logical or
+    &&                          logical and
+    == != < > <= >=             relational (non-chaining)
+    + -                         additive
+    * / %                       multiplicative
+    - ++ -- * & (prefix)        unary (negate, inc/dec, deref, addr-of)
+    as                          type cast (see section 8)
+    ++ -- (postfix), (), [], .  postfix / call / index / member / chain
+
+Parentheses group as usual: (a + b) * c
+
+Postfix ++ / -- return the pre-operation value, same as C. Prefix
+forms are also accepted by the grammar but behave the same way in
+this implementation — avoid relying on the difference, and never
+write something like `x = x++;` (redundant and confusing).
+
+================================================================
+8. TYPE CASTING (as)
+================================================================
+    let f : float = 7 as float;
+    let s : string = f as string;
+    let n : int = "42" as int;
+
+'as' converts between the five scalar primitives: int, float, char,
+string, bool. Casts chain left-to-right: `9 as float as string`.
+Casting to/from a struct, array, fn, enum, or pointer type is a
+compile-time type-mismatch error. A handful of primitive pairings
+can still fail at *runtime* if the value genuinely isn't
+convertible — e.g. `"abc" as int` — and raise a runtime error rather
+than crashing. As of grammar v2.3, an invalid numeric cast like this
+is one of the three runtime faults you can catch with try/catch
+instead of letting it terminate the program — see section 12.
+
+================================================================
+9. ARRAYS
+================================================================
+    let nums : int[3] = [10, 20, 30];
+    nums[0] = nums[0] + nums[1];
+    for n in nums {
+        print(n);
+    }
+
+Indexing is 0-based. Multi-dimensional access chains naturally:
+`matrix[0][1]`. Note that an out-of-bounds index is always a fatal
+runtime error — it is not one of the three faults try/catch can
+intercept (see section 12).
+
+================================================================
+10. POINTERS (& and *)
+================================================================
+    let health : int = 100;
+    let hp : int* = &health;   # address-of
+    *hp = *hp - 25;            # dereference + write through it
+    print(health);             # 75 — the original changed too
+
+Pointers give real aliasing: writing through a pointer is visible
+to every other holder of that address, not a copy.
+
+================================================================
+11. DYNAMIC ALLOCATION (new)
+================================================================
+    let number : int* = new(5);
+    *number = *number + 1;
+    print(*number);        # 6
+
+'new(...)' takes exactly one argument — an atomic literal value of
+type int, float, char, string, or bool — allocates space for it on
+the heap, and evaluates to a pointer to that value. It only applies
+to the five scalar primitives; struct, enum, and array values are
+already heap-allocated by their own literal/instance forms, so
+'new' with a struct/enum/array/pointer/fn argument is a compile-time
+type error.
+
+Dereferencing a pointer that is null, or that points at a freed
+cell, is a null-pointer dereference — one of the three runtime
+faults catchable with try/catch (see section 12).
+
+================================================================
+12. ERROR HANDLING (try / catch / throw)
+================================================================
+    try {
+        throw "out of range";
+    } catch (e) {
+        print(e);
+    }
+
+'throw' unwinds to the nearest enclosing 'catch'. Its <expr> must
+evaluate to a string — that's a static type error otherwise. The
+'catch' clause takes a single untyped binding, e.g. `catch (e)`; the
+caught value is always an ordinary string (there is no separate
+'error' datatype), scoped to the catch block.
+
+In addition to an explicit 'throw', exactly three native runtime
+faults are catchable the same way, arriving as a string describing
+the fault, instead of always terminating the program:
+
+  - division by zero        (int or float, '/' or '%')
+  - an invalid numeric cast  ('as int' / 'as float' on a
+                               non-convertible string, e.g.
+                               "abc" as int)
+  - a null-pointer dereference  ('*p' where p is null, or points
+                                  at a freed cell)
+
+Every other runtime fault — array-index-out-of-bounds, calling a
+non-function value, an undeclared-variable reference that somehow
+reaches runtime, etc. — is still always fatal, whether or not it
+happens inside a try block. These three are a deliberate, curated
+subset, not a general exception mechanism.
+
+An uncaught throw (explicit or native) still terminates the program,
+same as any other uncaught runtime error.
+
+'try', 'catch', and 'throw' are reserved words. 'error' is NOT a
+keyword and remains available as an ordinary identifier.
+
+================================================================
+13. CONTROL FLOW: if / else
+================================================================
+    if score > 100 {
+        print("high score");
+    } else if score > 50 {
+        print("mid score");
+    } else {
+        print("low score");
+    }
+
+No parentheses required around the condition. No trailing ';'.
+
+================================================================
+14. LOOPS: THE UNIFIED 'for'
+================================================================
+Boran has one keyword, 'for', covering three loop shapes:
+
+  for-each (over an array):
+      for x in someArray { ... }
+
+  while-style (condition checked first):
+      for counter < 10 { ... }
+
+  repeat-until (condition checked after, runs body at least once):
+      for {
+          ...
+      } counter == 0
+
+None of the three require a trailing ';' (repeat-until still
+accepts one for backward compatibility, but it's optional).
+
+================================================================
+15. range()
+================================================================
+A builtin that produces an int[] array, for use with for-in:
+
+    range(end)               0 .. end-1, step 1
+    range(start, end)        start .. end-1, step 1
+    range(start, end, step)  step can be negative to count down
+
+    for i in range(5) { print(i); }              # 0 1 2 3 4
+    for i in range(10, 0, -2) { print(i); }       # 10 8 6 4 2
+
+Arguments must be int or float (floats truncate). A step of 0 is a
+runtime error. 'range' is a reserved word — it can't be used as a
+variable or function name.
+
+================================================================
+16. break / continue / return
+================================================================
+    break;      # exit the nearest enclosing loop
+    continue;   # skip to the next iteration
+    return;     # exit a function with no value
+    return x;   # exit a function returning x
+
+================================================================
+17. FUNCTIONS
+================================================================
+Functions are just fn-typed values, usually bound with const:
+
+    const add : fn = (x : int, y : int) : int => {
+        return x + y;
+    };
+    print(add(2, 3));
+
+Functions are first-class — pass one as an argument (higher-order),
+store one in a variable, or call one straight out of a variable:
+
+    const applyTwice : fn = (op : fn, seed : int) : int => {
+        return op(op(seed));
+    };
+    const double : fn = (n : int) : int => { return n * 2; };
+    print(applyTwice(double, 5));   # 20
+
+Recursion works normally:
+
+    const factorial : fn = (n : int) : int => {
+        if n <= 1 { return 1; }
+        return n * factorial(n - 1);
+    };
+
+Calling a function with the wrong number of arguments is a
+compile-time cardinality error.
+
+================================================================
+18. STRUCTS
+================================================================
+Define a struct type, then create instances of it:
+
+    const Vector2 : struct = {
+        let x : float = 0.0,
+        let y : float = 0.0,
+
+        const magnitude : fn = () : float => {
+            return this.x * this.x + this.y * this.y;
+        },
+
+        let scale : fn = (factor : float) => {
+            this = { x : this.x * factor, y : this.y * factor };
+        }
+    };
+
+    let v : Vector2 = { x : 3.0, y : 4.0 };
+    v.scale(2.0);
+    print(v.magnitude());
+
+Fields and methods are declared the same way (let = mutable, const
+= immutable), inside the struct's braces. Methods use 'this' to
+refer to the receiving instance; a 'let' method can even rebind the
+whole instance via `this = {...}`. Structs can nest — a field's type
+can itself be a struct type.
+
+================================================================
+19. ENUMS
+================================================================
+    const Direction : enum = { north, east, south, west };
+
+    let facing : Direction = Direction.north;
+    if facing == Direction.north {
+        print("facing north");
+    }
+
+================================================================
+20. CHAINING
+================================================================
+Member access, indexing, and calls all chain freely, in any order:
+
+    a.start.x
+    matrix[0][1]
+    makePoint().x
+    a.start.normalize()
+    a.start.x = 5.0;          # chained assignment target too
+
+================================================================
+21. I/O: print AND input
+================================================================
+    print("value:", x, y);        # multiple comma-separated args
+    let name : string = input("Enter your name: ");
+
+print always prints its arguments space-separated with a trailing
+newline. input shows the prompt, blocks for a line of text, and
+returns it as a string.
+
+================================================================
+22. SEMANTIC ERRORS THE CHECKER CATCHES
+================================================================
+Before your program runs, the checker validates it and reports any
+of these five categories (execution is skipped if any are found):
+
+  - undeclared variable      using a name that was never declared
+  - type mismatch            e.g. assigning an int to a string
+  - multiply-defined variable  redeclaring a name in the same scope
+  - constant reassignment    rebinding a const's own name
+  - cardinality/ordinality   calling a function with the wrong
+                              number of arguments
+
+Diagnostics are printed with a line:column and a short label, e.g.:
+  4:23: [type mismatch] cannot cast Point to int
+
+These are static (compile-time) checks. They're separate from the
+three catchable *runtime* faults described in section 12
+(division by zero, invalid numeric cast, null-pointer dereference),
+which only surface once the program is actually executing.
+
+================================================================
+23. EXECUTION MODES (--step, --ir)
+================================================================
+See section 2 for the CLI flags. Briefly:
+
+  (no flag)   run start to finish, output + final heap state logged
+  --step      pause before each statement; inspect symbol table,
+              call stack, and heap live; Enter = next, c = continue
+  --ir        additionally show the IR/optimizer pipeline for
+              main()'s scalar-arithmetic subset, with a correctness
+              parity check against the normal interpreter's output.
+              'new', try/catch/throw, structs, arrays, pointers,
+              enums, and function calls are all reported as "not
+              lowered" in this view and simply skipped (they still
+              run normally otherwise).
+
+================================================================
+24. QUICK REFERENCE
+================================================================
+Declarations:   let / const  name : type = value
+Types:          int float char string bool  T[N]  T*  fn  struct enum
+Operators:      + - * / %  == != < > <= >=  && || !  & *  ++ --  as
+Control flow:   if / else if / else
+Loops:          for x in expr {}
+                for cond {}
+                for {} cond
+Loop control:   break; continue;
+Functions:      const name : fn = (p:T,...) : R => { ... };
+Structs:        const Name : struct = { let/const field : T [= v], ... };
+Instances:      { field: value, ... }
+Enums:          const Name : enum = { a, b, c };
+                Name.a
+Pointers:       &x    *ptr
+Heap alloc:     new(literal)                    # int/float/char/string/bool only
+Casting:        expr as type
+Error handling: try { ... throw "msg"; } catch (e) { ... }
+                # e is always a plain string; 'error' is not a keyword
+                # catchable runtime faults: div-by-zero, bad numeric
+                #   cast, null-pointer deref (all else stays fatal)
+range:          range(end) | range(start,end) | range(start,end,step)
+I/O:            print(a, b, ...);   input("prompt: ")
