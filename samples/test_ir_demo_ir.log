@@ -1,0 +1,223 @@
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [n : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (5)
+    │           ├── LET_DECL [base : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── LITERAL (2)
+    │           │           └── BINARY_OP (*)
+    │           │               ├── LITERAL (3)
+    │           │               └── LITERAL (4)
+    │           ├── LET_DECL [doubled : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── IDENTIFIER (base)
+    │           │           └── IDENTIFIER (base)
+    │           ├── LET_DECL [area1 : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (*)
+    │           │           ├── IDENTIFIER (n)
+    │           │           └── IDENTIFIER (doubled)
+    │           ├── LET_DECL [area2 : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (*)
+    │           │           ├── IDENTIFIER (n)
+    │           │           └── IDENTIFIER (doubled)
+    │           ├── LET_DECL [total : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── IDENTIFIER (area1)
+    │           │           └── IDENTIFIER (area2)
+    │           ├── LET_DECL [unused : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (*)
+    │           │           ├── IDENTIFIER (total)
+    │           │           └── LITERAL (99)
+    │           ├── IF_STMT
+    │           │   ├── BINARY_OP (>)
+    │           │   │   ├── IDENTIFIER (total)
+    │           │   │   └── LITERAL (50)
+    │           │   ├── BLOCK
+    │           │   │   └── PRINT_STMT
+    │           │   │       ├── LITERAL ("total is large:")
+    │           │   │       ├── IDENTIFIER (total)
+    │           │   │       └── LITERAL ("\n")
+    │           │   └── BLOCK
+    │           │       └── PRINT_STMT
+    │           │           ├── LITERAL ("total is small:")
+    │           │           ├── IDENTIFIER (total)
+    │           │           └── LITERAL ("\n")
+    │           ├── LET_DECL [i : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_WHILE
+    │           │   ├── BINARY_OP (<)
+    │           │   │   ├── IDENTIFIER (i)
+    │           │   │   └── LITERAL (5)
+    │           │   └── BLOCK
+    │           │       ├── IF_STMT
+    │           │       │   ├── BINARY_OP (==)
+    │           │       │   │   ├── IDENTIFIER (i)
+    │           │       │   │   └── LITERAL (2)
+    │           │       │   └── BLOCK
+    │           │       │       ├── ASSIGNMENT -> i
+    │           │       │       │   └── VALUE_EXPR
+    │           │       │       │       └── BINARY_OP (+)
+    │           │       │       │           ├── IDENTIFIER (i)
+    │           │       │       │           └── LITERAL (1)
+    │           │       │       └── CONTINUE_STMT
+    │           │       ├── PRINT_STMT
+    │           │       │   ├── LITERAL ("loop i =")
+    │           │       │   ├── IDENTIFIER (i)
+    │           │       │   └── LITERAL ("\n")
+    │           │       └── ASSIGNMENT -> i
+    │           │           └── VALUE_EXPR
+    │           │               └── BINARY_OP (+)
+    │           │                   ├── IDENTIFIER (i)
+    │           │                   └── LITERAL (1)
+    │           ├── RETURN_STMT
+    │           └── PRINT_STMT
+    │               ├── LITERAL ("this line can never run")
+    │               └── LITERAL ("\n")
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  main            | fn         | fn         |                          | 21:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    base            | let        | int        |                          | 25:9
+    doubled         | let        | int        |                          | 28:9
+    area1           | let        | int        |                          | 31:9
+    area2           | let        | int        |                          | 32:9
+    total           | let        | int        |                          | 33:9
+    unused          | let        | int        |                          | 36:9
+    i               | let        | int        |                          | 44:9
+    n               | let        | int        |                          | 22:9
+
+
+--- PROGRAM OUTPUT ---
+  (AST tree-walking execution skipped: running via TAC, per --ir)
+
+--- IR / OPTIMIZATION PIPELINE ---
+(main() function found; note: function calls are unsupported currently so all functions should be inlined into main() :3 )
+
+--- TAC (before optimization) ---
+    n = 5
+    t0 = 3 MUL 4
+    t1 = 2 ADD t0
+    base = t1
+    t2 = base ADD base
+    doubled = t2
+    t3 = n MUL doubled
+    area1 = t3
+    t4 = n MUL doubled
+    area2 = t4
+    t5 = area1 ADD area2
+    total = t5
+    t6 = total MUL 99
+    unused = t6
+    t7 = total GT 50
+    ifFalse t7 goto L0
+    print total is large:, total, 
+
+    goto L1
+L0:
+    print total is small:, total, 
+
+L1:
+    i = 0
+L2:
+    t8 = i LT 5
+    ifFalse t8 goto L3
+    t9 = i EQ 2
+    ifFalse t9 goto L4
+    t10 = i ADD 1
+    i = t10
+    goto L2
+L4:
+    print loop i =, i, 
+
+    t11 = i ADD 1
+    i = t11
+    goto L2
+L3:
+    return total
+    print this line can never run, 
+
+
+--- TAC (after optimization) ---
+    n = 5
+    base = 14
+    doubled = 28
+    area1 = 140
+    area2 = 140
+    total = 280
+    unused = 27720
+    ifFalse true goto L0
+    print total is large:, 280, 
+
+    goto L1
+L0:
+    print total is small:, total, 
+
+L1:
+    i = 0
+L2:
+    t8 = i LT 5
+    ifFalse t8 goto L3
+    t9 = i EQ 2
+    ifFalse t9 goto L4
+    t10 = i ADD 1
+    i = t10
+    goto L2
+L4:
+    print loop i =, i, 
+
+    t11 = i ADD 1
+    i = t11
+    goto L2
+L3:
+    return total
+
+--- OPTIMIZATION REPORT ---
+  fixed point reached after 8 round(s)
+  constants propagated : 19
+  expressions folded   : 7
+  subexpressions reused (CSE) : 1
+  dead instructions removed   : 9
+  instruction count: 38 -> 29
+
+--- PARITY CHECK ---
+  unoptimized TAC output:
+    total is large: 280 
+    
+    loop i = 0 
+    
+    loop i = 1 
+    
+    loop i = 3 
+    
+    loop i = 4 
+  optimized TAC output:
+    total is large: 280 
+    
+    loop i = 0 
+    
+    loop i = 1 
+    
+    loop i = 3 
+    
+    loop i = 4 
+  MATCH: optimized TAC produces identical output to unoptimized TAC.
+

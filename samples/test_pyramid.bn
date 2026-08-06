@@ -1,9 +1,18 @@
 
 
 const main : fn = () : int => {
-    let max_input : string = input("Input an integer: \n");
+    let max_input : string = input("Input an integer: ");
     let max : int = max_input as int;
+    
+
+    if max % 2 == 0 {
+        print("This is an even number.\n");
+    } else {
+        print("This is an odd number.\n");
+    }
+
     print("printing pyramid of size ", max, "\n");
+
     for i in range(max) {
         for j in range(i){
             print("*");

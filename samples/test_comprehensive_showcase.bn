@@ -171,7 +171,7 @@ const main : fn = () : int => {
 
     let simpleMath : int = a + b;
     let complexMath : int = (a + b) * c - a / c % b;
-    print("simpleMath:", simpleMath, "complexMath:", complexMath, "\n");
+    print("simpleMath:", simpleMath, "\n",  "complexMath:", complexMath, "\n");
 
     # ============================================================
     # 4) Boolean expressions: simple, complex, multi-operator

@@ -1,0 +1,16 @@
+const swap : fn = (x: int*, y: int*) => {
+    let malloc : int* = new(0);
+    *malloc = *y;
+    *y = *x;
+    *x = *malloc;
+};
+
+const main : fn = () => {
+    let x : int = 4;
+    let y : int = 5;
+    swap(&x, &y);
+    print(x, "\n");
+    print(y, "\n");
+};
+
+main();

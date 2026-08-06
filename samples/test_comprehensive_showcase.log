@@ -1,0 +1,946 @@
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [Suit : enum]
+    │   └── ENUM_DEFINITION
+    ├── CONST_DECL [Point : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [let x : int]
+    │       │   └── VALUE_EXPR
+    │       │       └── LITERAL (0)
+    │       ├── FIELD_DEF [let y : int]
+    │       │   └── VALUE_EXPR
+    │       │       └── LITERAL (0)
+    │       ├── FIELD_DEF [const magnitudeSquared : fn]
+    │       │   └── FN_LITERAL
+    │       │       └── BLOCK
+    │       │           └── RETURN_STMT
+    │       └── FIELD_DEF [let translate : fn]
+    │           └── FN_LITERAL
+    │               └── BLOCK
+    │                   └── ASSIGNMENT -> this
+    │                       └── STRUCT_INSTANCE
+    │                           ├── FIELD_INIT [x]
+    │                           │   └── VALUE_EXPR
+    │                           │       └── BINARY_OP (+)
+    │                           │           ├── MEMBER_ACCESS [.x]
+    │                           │           │   └── THIS
+    │                           │           └── IDENTIFIER (dx)
+    │                           └── FIELD_INIT [y]
+    │                               └── VALUE_EXPR
+    │                                   └── BINARY_OP (+)
+    │                                       ├── MEMBER_ACCESS [.y]
+    │                                       │   └── THIS
+    │                                       └── IDENTIFIER (dy)
+    ├── CONST_DECL [Card : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [let suit : Suit]
+    │       │   └── VALUE_EXPR
+    │       │       └── MEMBER_ACCESS [.clubs]
+    │       │           └── IDENTIFIER (Suit)
+    │       └── FIELD_DEF [let rank : int]
+    │           └── VALUE_EXPR
+    │               └── LITERAL (1)
+    ├── CONST_DECL [Player : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [let name : string]
+    │       │   └── VALUE_EXPR
+    │       │       └── LITERAL ("")
+    │       ├── FIELD_DEF [let hand : array]
+    │       │   └── ARRAY_LITERAL
+    │       │       ├── STRUCT_INSTANCE
+    │       │       │   ├── FIELD_INIT [suit]
+    │       │       │   │   └── VALUE_EXPR
+    │       │       │   │       └── MEMBER_ACCESS [.clubs]
+    │       │       │   │           └── IDENTIFIER (Suit)
+    │       │       │   └── FIELD_INIT [rank]
+    │       │       │       └── VALUE_EXPR
+    │       │       │           └── LITERAL (1)
+    │       │       └── STRUCT_INSTANCE
+    │       │           ├── FIELD_INIT [suit]
+    │       │           │   └── VALUE_EXPR
+    │       │           │       └── MEMBER_ACCESS [.clubs]
+    │       │           │           └── IDENTIFIER (Suit)
+    │       │           └── FIELD_INIT [rank]
+    │       │               └── VALUE_EXPR
+    │       │                   └── LITERAL (1)
+    │       ├── FIELD_DEF [let score : int]
+    │       │   └── VALUE_EXPR
+    │       │       └── LITERAL (0)
+    │       └── FIELD_DEF [let addToScore : fn]
+    │           └── FN_LITERAL
+    │               └── BLOCK
+    │                   └── ASSIGNMENT -> this.score
+    │                       └── VALUE_EXPR
+    │                           └── BINARY_OP (+)
+    │                               ├── MEMBER_ACCESS [.score]
+    │                               │   └── THIS
+    │                               └── IDENTIFIER (amount)
+    ├── CONST_DECL [factorial : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── IF_STMT
+    │           │   ├── BINARY_OP (<=)
+    │           │   │   ├── IDENTIFIER (n)
+    │           │   │   └── LITERAL (1)
+    │           │   └── BLOCK
+    │           │       └── RETURN_STMT
+    │           └── RETURN_STMT
+    ├── CONST_DECL [gcd : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── IF_STMT
+    │           │   ├── BINARY_OP (==)
+    │           │   │   ├── IDENTIFIER (b)
+    │           │   │   └── LITERAL (0)
+    │           │   └── BLOCK
+    │           │       └── RETURN_STMT
+    │           └── RETURN_STMT
+    ├── CONST_DECL [tripleIt : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           └── RETURN_STMT
+    ├── CONST_DECL [applyTwice : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [once : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (op)
+    │           │           └── IDENTIFIER (seed)
+    │           ├── LET_DECL [twice : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (op)
+    │           │           └── IDENTIFIER (once)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [riskyRecurse : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── IF_STMT
+    │           │   ├── BINARY_OP (==)
+    │           │   │   ├── IDENTIFIER (n)
+    │           │   │   └── LITERAL (0)
+    │           │   └── BLOCK
+    │           │       └── RETURN_STMT
+    │           └── RETURN_STMT
+    ├── CONST_DECL [applyDamage : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── ASSIGNMENT -> *hp
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (-)
+    │           │           ├── UNARY_OP (*)
+    │           │           │   └── IDENTIFIER (hp)
+    │           │           └── IDENTIFIER (amount)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [age : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (21)
+    │           ├── LET_DECL [pi : float]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (3.14159)
+    │           ├── LET_DECL [grade : char]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL ('A')
+    │           ├── LET_DECL [label : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL ("boran")
+    │           ├── LET_DECL [isReady : bool]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (true)
+    │           ├── CONST_DECL [MAX_PLAYERS : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (4)
+    │           ├── CONST_DECL [GREETING : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL ("hello, boran")
+    │           ├── PRINT_STMT
+    │           │   ├── IDENTIFIER (GREETING)
+    │           │   ├── LITERAL ("MAX_PLAYERS:")
+    │           │   ├── IDENTIFIER (MAX_PLAYERS)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [scores : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (10)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (20)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (30)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (40)
+    │           │       └── VALUE_EXPR
+    │           │           └── LITERAL (50)
+    │           ├── LET_DECL [origin : Point]
+    │           │   └── STRUCT_INSTANCE
+    │           │       ├── FIELD_INIT [x]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── LITERAL (0)
+    │           │       └── FIELD_INIT [y]
+    │           │           └── VALUE_EXPR
+    │           │               └── LITERAL (0)
+    │           ├── LET_DECL [health : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (100)
+    │           ├── LET_DECL [hpPtr : ptr]
+    │           │   └── VALUE_EXPR
+    │           │       └── UNARY_OP (&)
+    │           │           └── IDENTIFIER (health)
+    │           ├── LET_DECL [heapCounter : ptr]
+    │           │   └── VALUE_EXPR
+    │           │       └── NEW_EXPR
+    │           │           └── LITERAL (0)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("age:")
+    │           │   ├── IDENTIFIER (age)
+    │           │   ├── LITERAL ("pi:")
+    │           │   ├── IDENTIFIER (pi)
+    │           │   ├── LITERAL ("grade:")
+    │           │   ├── IDENTIFIER (grade)
+    │           │   ├── LITERAL ("label:")
+    │           │   ├── IDENTIFIER (label)
+    │           │   ├── LITERAL ("isReady:")
+    │           │   ├── IDENTIFIER (isReady)
+    │           │   └── LITERAL ("\n")
+    │           ├── ASSIGNMENT -> age
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── IDENTIFIER (age)
+    │           │           └── LITERAL (1)
+    │           ├── LET_DECL [bonus : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── INDEX_ACCESS
+    │           │           │   ├── IDENTIFIER (scores)
+    │           │           │   └── LITERAL (0)
+    │           │           └── INDEX_ACCESS
+    │           │               ├── IDENTIFIER (scores)
+    │           │               └── LITERAL (1)
+    │           ├── ASSIGNMENT -> scores[LITERAL(0)]
+    │           │   ├── LITERAL (0)
+    │           │   └── VALUE_EXPR
+    │           │       └── IDENTIFIER (bonus)
+    │           ├── LET_DECL [counter : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── EXPR_STMT
+    │           │   └── UNARY_OP (++) (postfix)
+    │           │       └── IDENTIFIER (counter)
+    │           ├── EXPR_STMT
+    │           │   └── UNARY_OP (++)
+    │           │       └── IDENTIFIER (counter)
+    │           ├── LET_DECL [countdown : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (5)
+    │           ├── EXPR_STMT
+    │           │   └── UNARY_OP (--) (postfix)
+    │           │       └── IDENTIFIER (countdown)
+    │           ├── EXPR_STMT
+    │           │   └── UNARY_OP (--)
+    │           │       └── IDENTIFIER (countdown)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("age:")
+    │           │   ├── IDENTIFIER (age)
+    │           │   ├── LITERAL ("scores[0]:")
+    │           │   ├── INDEX_ACCESS
+    │           │   │   ├── IDENTIFIER (scores)
+    │           │   │   └── LITERAL (0)
+    │           │   ├── LITERAL ("counter:")
+    │           │   ├── IDENTIFIER (counter)
+    │           │   ├── LITERAL ("countdown:")
+    │           │   ├── IDENTIFIER (countdown)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [a : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (10)
+    │           ├── LET_DECL [b : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (3)
+    │           ├── LET_DECL [c : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (2)
+    │           ├── LET_DECL [simpleMath : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── IDENTIFIER (a)
+    │           │           └── IDENTIFIER (b)
+    │           ├── LET_DECL [complexMath : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (-)
+    │           │           ├── BINARY_OP (*)
+    │           │           │   ├── PAREN_EXPR
+    │           │           │   │   └── BINARY_OP (+)
+    │           │           │   │       ├── IDENTIFIER (a)
+    │           │           │   │       └── IDENTIFIER (b)
+    │           │           │   └── IDENTIFIER (c)
+    │           │           └── BINARY_OP (%)
+    │           │               ├── BINARY_OP (/)
+    │           │               │   ├── IDENTIFIER (a)
+    │           │               │   └── IDENTIFIER (c)
+    │           │               └── IDENTIFIER (b)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("simpleMath:")
+    │           │   ├── IDENTIFIER (simpleMath)
+    │           │   ├── LITERAL ("complexMath:")
+    │           │   ├── IDENTIFIER (complexMath)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [simpleBool : bool]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (>)
+    │           │           ├── IDENTIFIER (a)
+    │           │           └── IDENTIFIER (b)
+    │           ├── LET_DECL [complexBool : bool]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (&&)
+    │           │           ├── BINARY_OP (>)
+    │           │           │   ├── IDENTIFIER (a)
+    │           │           │   └── IDENTIFIER (b)
+    │           │           └── BINARY_OP (<=)
+    │           │               ├── IDENTIFIER (c)
+    │           │               └── IDENTIFIER (b)
+    │           ├── LET_DECL [multiBool : bool]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (||)
+    │           │           ├── BINARY_OP (&&)
+    │           │           │   ├── PAREN_EXPR
+    │           │           │   │   └── BINARY_OP (>)
+    │           │           │   │       ├── IDENTIFIER (a)
+    │           │           │   │       └── IDENTIFIER (b)
+    │           │           │   └── PAREN_EXPR
+    │           │           │       └── BINARY_OP (<)
+    │           │           │           ├── IDENTIFIER (c)
+    │           │           │           └── IDENTIFIER (a)
+    │           │           └── BINARY_OP (&&)
+    │           │               ├── UNARY_OP (!)
+    │           │               │   └── PAREN_EXPR
+    │           │               │       └── BINARY_OP (==)
+    │           │               │           ├── IDENTIFIER (a)
+    │           │               │           └── IDENTIFIER (b)
+    │           │               └── PAREN_EXPR
+    │           │                   └── BINARY_OP (!=)
+    │           │                       ├── IDENTIFIER (c)
+    │           │                       └── IDENTIFIER (a)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("simpleBool:")
+    │           │   ├── IDENTIFIER (simpleBool)
+    │           │   ├── LITERAL ("complexBool:")
+    │           │   ├── IDENTIFIER (complexBool)
+    │           │   ├── LITERAL ("multiBool:")
+    │           │   ├── IDENTIFIER (multiBool)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [facing : Suit]
+    │           │   └── VALUE_EXPR
+    │           │       └── MEMBER_ACCESS [.hearts]
+    │           │           └── IDENTIFIER (Suit)
+    │           ├── LET_DECL [facingLabel : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL ("")
+    │           ├── IF_STMT
+    │           │   ├── BINARY_OP (==)
+    │           │   │   ├── IDENTIFIER (facing)
+    │           │   │   └── MEMBER_ACCESS [.clubs]
+    │           │   │       └── IDENTIFIER (Suit)
+    │           │   ├── BLOCK
+    │           │   │   └── ASSIGNMENT -> facingLabel
+    │           │   │       └── VALUE_EXPR
+    │           │   │           └── LITERAL ("clubs")
+    │           │   └── IF_STMT
+    │           │       ├── BINARY_OP (==)
+    │           │       │   ├── IDENTIFIER (facing)
+    │           │       │   └── MEMBER_ACCESS [.hearts]
+    │           │       │       └── IDENTIFIER (Suit)
+    │           │       ├── BLOCK
+    │           │       │   └── ASSIGNMENT -> facingLabel
+    │           │       │       └── VALUE_EXPR
+    │           │       │           └── LITERAL ("hearts")
+    │           │       └── BLOCK
+    │           │           └── ASSIGNMENT -> facingLabel
+    │           │               └── VALUE_EXPR
+    │           │                   └── LITERAL ("other")
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("facing:")
+    │           │   ├── IDENTIFIER (facingLabel)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [total : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_ITER [var: v]
+    │           │   ├── IDENTIFIER (scores)
+    │           │   └── BLOCK
+    │           │       └── ASSIGNMENT -> total
+    │           │           └── VALUE_EXPR
+    │           │               └── BINARY_OP (+)
+    │           │                   ├── IDENTIFIER (total)
+    │           │                   └── IDENTIFIER (v)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("sum of scores:")
+    │           │   ├── IDENTIFIER (total)
+    │           │   └── LITERAL ("\n")
+    │           ├── FOR_ITER [var: i]
+    │           │   ├── RANGE_EXPR [1 arg(s)]
+    │           │   │   └── LITERAL (5)
+    │           │   └── BLOCK
+    │           │       └── ASSIGNMENT -> *heapCounter
+    │           │           └── VALUE_EXPR
+    │           │               └── BINARY_OP (+)
+    │           │                   ├── UNARY_OP (*)
+    │           │                   │   └── IDENTIFIER (heapCounter)
+    │           │                   └── IDENTIFIER (i)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("heapCounter after range loop:")
+    │           │   ├── UNARY_OP (*)
+    │           │   │   └── IDENTIFIER (heapCounter)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [w : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_WHILE
+    │           │   ├── BINARY_OP (<)
+    │           │   │   ├── IDENTIFIER (w)
+    │           │   │   └── LITERAL (10)
+    │           │   └── BLOCK
+    │           │       ├── ASSIGNMENT -> w
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── BINARY_OP (+)
+    │           │       │           ├── IDENTIFIER (w)
+    │           │       │           └── LITERAL (1)
+    │           │       ├── IF_STMT
+    │           │       │   ├── BINARY_OP (==)
+    │           │       │   │   ├── IDENTIFIER (w)
+    │           │       │   │   └── LITERAL (3)
+    │           │       │   └── BLOCK
+    │           │       │       └── CONTINUE_STMT
+    │           │       └── IF_STMT
+    │           │           ├── BINARY_OP (==)
+    │           │           │   ├── IDENTIFIER (w)
+    │           │           │   └── LITERAL (7)
+    │           │           └── BLOCK
+    │           │               └── BREAK_STMT
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("for-while ended at w:")
+    │           │   ├── IDENTIFIER (w)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [downCount : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (3)
+    │           ├── FOR_REPEAT_UNTIL
+    │           │   ├── BLOCK
+    │           │   │   └── EXPR_STMT
+    │           │   │       └── UNARY_OP (--) (postfix)
+    │           │   │           └── IDENTIFIER (downCount)
+    │           │   └── BINARY_OP (==)
+    │           │       ├── IDENTIFIER (downCount)
+    │           │       └── LITERAL (0)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("repeat-until ended at downCount:")
+    │           │   ├── IDENTIFIER (downCount)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [grid : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── ARRAY_LITERAL
+    │           │       │   ├── VALUE_EXPR
+    │           │       │   │   └── LITERAL (1)
+    │           │       │   ├── VALUE_EXPR
+    │           │       │   │   └── LITERAL (2)
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── LITERAL (3)
+    │           │       └── ARRAY_LITERAL
+    │           │           ├── VALUE_EXPR
+    │           │           │   └── LITERAL (4)
+    │           │           ├── VALUE_EXPR
+    │           │           │   └── LITERAL (5)
+    │           │           └── VALUE_EXPR
+    │           │               └── LITERAL (6)
+    │           ├── LET_DECL [gridTotal : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_ITER [var: gi]
+    │           │   ├── RANGE_EXPR [1 arg(s)]
+    │           │   │   └── LITERAL (2)
+    │           │   └── BLOCK
+    │           │       └── FOR_ITER [var: gj]
+    │           │           ├── RANGE_EXPR [1 arg(s)]
+    │           │           │   └── LITERAL (3)
+    │           │           └── BLOCK
+    │           │               └── ASSIGNMENT -> gridTotal
+    │           │                   └── VALUE_EXPR
+    │           │                       └── BINARY_OP (+)
+    │           │                           ├── IDENTIFIER (gridTotal)
+    │           │                           └── INDEX_ACCESS
+    │           │                               ├── INDEX_ACCESS
+    │           │                               │   ├── IDENTIFIER (grid)
+    │           │                               │   └── IDENTIFIER (gi)
+    │           │                               └── IDENTIFIER (gj)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("2D grid total:")
+    │           │   ├── IDENTIFIER (gridTotal)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [p1 : Point]
+    │           │   └── STRUCT_INSTANCE
+    │           │       ├── FIELD_INIT [x]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── LITERAL (3)
+    │           │       └── FIELD_INIT [y]
+    │           │           └── VALUE_EXPR
+    │           │               └── LITERAL (4)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("p1.magnitudeSquared():")
+    │           │   ├── METHOD_CALL [.magnitudeSquared]
+    │           │   │   └── IDENTIFIER (p1)
+    │           │   └── LITERAL ("\n")
+    │           ├── EXPR_STMT
+    │           │   └── METHOD_CALL [.translate]
+    │           │       ├── IDENTIFIER (p1)
+    │           │       ├── LITERAL (1)
+    │           │       └── LITERAL (1)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("p1 after translate: x =")
+    │           │   ├── MEMBER_ACCESS [.x]
+    │           │   │   └── IDENTIFIER (p1)
+    │           │   ├── LITERAL ("y =")
+    │           │   ├── MEMBER_ACCESS [.y]
+    │           │   │   └── IDENTIFIER (p1)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [players : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── STRUCT_INSTANCE
+    │           │       │   ├── FIELD_INIT [name]
+    │           │       │   │   └── VALUE_EXPR
+    │           │       │   │       └── LITERAL ("Ada")
+    │           │       │   ├── FIELD_INIT [hand]
+    │           │       │   │   └── ARRAY_LITERAL
+    │           │       │   │       ├── STRUCT_INSTANCE
+    │           │       │   │       │   ├── FIELD_INIT [suit]
+    │           │       │   │       │   │   └── VALUE_EXPR
+    │           │       │   │       │   │       └── MEMBER_ACCESS [.spades]
+    │           │       │   │       │   │           └── IDENTIFIER (Suit)
+    │           │       │   │       │   └── FIELD_INIT [rank]
+    │           │       │   │       │       └── VALUE_EXPR
+    │           │       │   │       │           └── LITERAL (10)
+    │           │       │   │       └── STRUCT_INSTANCE
+    │           │       │   │           ├── FIELD_INIT [suit]
+    │           │       │   │           │   └── VALUE_EXPR
+    │           │       │   │           │       └── MEMBER_ACCESS [.diamonds]
+    │           │       │   │           │           └── IDENTIFIER (Suit)
+    │           │       │   │           └── FIELD_INIT [rank]
+    │           │       │   │               └── VALUE_EXPR
+    │           │       │   │                   └── LITERAL (4)
+    │           │       │   └── FIELD_INIT [score]
+    │           │       │       └── VALUE_EXPR
+    │           │       │           └── LITERAL (0)
+    │           │       └── STRUCT_INSTANCE
+    │           │           ├── FIELD_INIT [name]
+    │           │           │   └── VALUE_EXPR
+    │           │           │       └── LITERAL ("Lin")
+    │           │           ├── FIELD_INIT [hand]
+    │           │           │   └── ARRAY_LITERAL
+    │           │           │       ├── STRUCT_INSTANCE
+    │           │           │       │   ├── FIELD_INIT [suit]
+    │           │           │       │   │   └── VALUE_EXPR
+    │           │           │       │   │       └── MEMBER_ACCESS [.clubs]
+    │           │           │       │   │           └── IDENTIFIER (Suit)
+    │           │           │       │   └── FIELD_INIT [rank]
+    │           │           │       │       └── VALUE_EXPR
+    │           │           │       │           └── LITERAL (7)
+    │           │           │       └── STRUCT_INSTANCE
+    │           │           │           ├── FIELD_INIT [suit]
+    │           │           │           │   └── VALUE_EXPR
+    │           │           │           │       └── MEMBER_ACCESS [.hearts]
+    │           │           │           │           └── IDENTIFIER (Suit)
+    │           │           │           └── FIELD_INIT [rank]
+    │           │           │               └── VALUE_EXPR
+    │           │           │                   └── LITERAL (9)
+    │           │           └── FIELD_INIT [score]
+    │           │               └── VALUE_EXPR
+    │           │                   └── LITERAL (0)
+    │           ├── FOR_ITER [var: pl]
+    │           │   ├── IDENTIFIER (players)
+    │           │   └── BLOCK
+    │           │       └── FOR_ITER [var: c]
+    │           │           ├── MEMBER_ACCESS [.hand]
+    │           │           │   └── IDENTIFIER (pl)
+    │           │           └── BLOCK
+    │           │               └── EXPR_STMT
+    │           │                   └── METHOD_CALL [.addToScore]
+    │           │                       ├── IDENTIFIER (pl)
+    │           │                       └── MEMBER_ACCESS [.rank]
+    │           │                           └── IDENTIFIER (c)
+    │           ├── FOR_ITER [var: pl]
+    │           │   ├── IDENTIFIER (players)
+    │           │   └── BLOCK
+    │           │       └── PRINT_STMT
+    │           │           ├── MEMBER_ACCESS [.name]
+    │           │           │   └── IDENTIFIER (pl)
+    │           │           ├── LITERAL ("score:")
+    │           │           ├── MEMBER_ACCESS [.score]
+    │           │           │   └── IDENTIFIER (pl)
+    │           │           └── LITERAL ("\n")
+    │           ├── LET_DECL [remaining : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (applyDamage)
+    │           │           ├── IDENTIFIER (hpPtr)
+    │           │           └── LITERAL (30)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("health after applyDamage via static pointer:")
+    │           │   ├── IDENTIFIER (remaining)
+    │           │   ├── LITERAL ("health var:")
+    │           │   ├── IDENTIFIER (health)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [px : ptr]
+    │           │   └── VALUE_EXPR
+    │           │       └── UNARY_OP (&)
+    │           │           └── MEMBER_ACCESS [.x]
+    │           │               └── IDENTIFIER (origin)
+    │           ├── ASSIGNMENT -> *px
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── UNARY_OP (*)
+    │           │           │   └── IDENTIFIER (px)
+    │           │           └── LITERAL (5)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("origin.x mutated via pointer to a struct field:")
+    │           │   ├── MEMBER_ACCESS [.x]
+    │           │   │   └── IDENTIFIER (origin)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [heapVals : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── NEW_EXPR
+    │           │       │       └── LITERAL (1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── NEW_EXPR
+    │           │       │       └── LITERAL (2)
+    │           │       └── VALUE_EXPR
+    │           │           └── NEW_EXPR
+    │           │               └── LITERAL (3)
+    │           ├── FOR_ITER [var: hp]
+    │           │   ├── IDENTIFIER (heapVals)
+    │           │   └── BLOCK
+    │           │       └── ASSIGNMENT -> *hp
+    │           │           └── VALUE_EXPR
+    │           │               └── BINARY_OP (*)
+    │           │                   ├── UNARY_OP (*)
+    │           │                   │   └── IDENTIFIER (hp)
+    │           │                   └── LITERAL (10)
+    │           ├── LET_DECL [heapSum : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_ITER [var: hp]
+    │           │   ├── IDENTIFIER (heapVals)
+    │           │   └── BLOCK
+    │           │       └── ASSIGNMENT -> heapSum
+    │           │           └── VALUE_EXPR
+    │           │               └── BINARY_OP (+)
+    │           │                   ├── IDENTIFIER (heapSum)
+    │           │                   └── UNARY_OP (*)
+    │           │                       └── IDENTIFIER (hp)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("sum of dynamic pointer array after in-loop mutation:")
+    │           │   ├── IDENTIFIER (heapSum)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [buckets : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (0)
+    │           │       └── VALUE_EXPR
+    │           │           └── LITERAL (0)
+    │           ├── LET_DECL [bucketPtrs : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── UNARY_OP (&)
+    │           │       │       └── INDEX_ACCESS
+    │           │       │           ├── IDENTIFIER (buckets)
+    │           │       │           └── LITERAL (0)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── UNARY_OP (&)
+    │           │       │       └── INDEX_ACCESS
+    │           │       │           ├── IDENTIFIER (buckets)
+    │           │       │           └── LITERAL (1)
+    │           │       └── VALUE_EXPR
+    │           │           └── UNARY_OP (&)
+    │           │               └── INDEX_ACCESS
+    │           │                   ├── IDENTIFIER (buckets)
+    │           │                   └── LITERAL (2)
+    │           ├── FOR_ITER [var: i]
+    │           │   ├── RANGE_EXPR [1 arg(s)]
+    │           │   │   └── LITERAL (3)
+    │           │   └── BLOCK
+    │           │       ├── LET_DECL [bp : ptr]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── INDEX_ACCESS
+    │           │       │           ├── IDENTIFIER (bucketPtrs)
+    │           │       │           └── IDENTIFIER (i)
+    │           │       └── ASSIGNMENT -> *bp
+    │           │           └── VALUE_EXPR
+    │           │               └── BINARY_OP (+)
+    │           │                   ├── UNARY_OP (*)
+    │           │                   │   └── IDENTIFIER (bp)
+    │           │                   └── PAREN_EXPR
+    │           │                       └── BINARY_OP (*)
+    │           │                           ├── IDENTIFIER (i)
+    │           │                           └── LITERAL (100)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("buckets after indexed pointer mutation:")
+    │           │   ├── INDEX_ACCESS
+    │           │   │   ├── IDENTIFIER (buckets)
+    │           │   │   └── LITERAL (0)
+    │           │   ├── INDEX_ACCESS
+    │           │   │   ├── IDENTIFIER (buckets)
+    │           │   │   └── LITERAL (1)
+    │           │   ├── INDEX_ACCESS
+    │           │   │   ├── IDENTIFIER (buckets)
+    │           │   │   └── LITERAL (2)
+    │           │   └── LITERAL ("\n")
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("factorial(5):")
+    │           │   ├── FN_CALL (factorial)
+    │           │   │   └── LITERAL (5)
+    │           │   └── LITERAL ("\n")
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("gcd(48, 18):")
+    │           │   ├── FN_CALL (gcd)
+    │           │   │   ├── LITERAL (48)
+    │           │   │   └── LITERAL (18)
+    │           │   └── LITERAL ("\n")
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("applyTwice(tripleIt, 2):")
+    │           │   ├── FN_CALL (applyTwice)
+    │           │   │   ├── IDENTIFIER (tripleIt)
+    │           │   │   └── LITERAL (2)
+    │           │   └── LITERAL ("\n")
+    │           ├── FOR_ITER [var: k]
+    │           │   ├── RANGE_EXPR [1 arg(s)]
+    │           │   │   └── LITERAL (3)
+    │           │   └── BLOCK
+    │           │       ├── LET_DECL [asFloat : float]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── CAST_EXPR [as float]
+    │           │       │           └── IDENTIFIER (k)
+    │           │       ├── LET_DECL [asStr : string]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── CAST_EXPR [as string]
+    │           │       │           └── IDENTIFIER (asFloat)
+    │           │       └── PRINT_STMT
+    │           │           ├── LITERAL ("k as float as string:")
+    │           │           ├── IDENTIFIER (asStr)
+    │           │           └── LITERAL ("\n")
+    │           ├── NODE (*main.TryCatchStmt)
+    │           ├── LET_DECL [zeroDivisor : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── NODE (*main.TryCatchStmt)
+    │           ├── NODE (*main.TryCatchStmt)
+    │           ├── LET_DECL [nullPtr : ptr]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (null)
+    │           ├── NODE (*main.TryCatchStmt)
+    │           ├── NODE (*main.TryCatchStmt)
+    │           ├── NODE (*main.TryCatchStmt)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("execution continues normally after recovery")
+    │           │   └── LITERAL ("\n")
+    │           ├── FOR_ITER [var: i]
+    │           │   ├── RANGE_EXPR [1 arg(s)]
+    │           │   │   └── LITERAL (4)
+    │           │   └── BLOCK
+    │           │       └── NODE (*main.TryCatchStmt)
+    │           ├── LET_DECL [name : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── INPUT_EXPR
+    │           │           └── LITERAL ("Enter your name: ")
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("Hello,")
+    │           │   ├── IDENTIFIER (name)
+    │           │   └── LITERAL ("-- comprehensive showcase complete.")
+    │           └── RETURN_STMT
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  factorial       | fn         | fn         |                          | 73:7
+  applyDamage     | fn         | fn         |                          | 111:7
+  main            | fn         | fn         |                          | 121:7
+  Player          | struct     | struct     |                          | 57:7
+  gcd             | fn         | fn         |                          | 80:7
+  tripleIt        | fn         | fn         |                          | 87:7
+  applyTwice      | fn         | fn         |                          | 91:7
+  riskyRecurse    | fn         | fn         |                          | 102:7
+  Suit            | enum       | enum       |                          | 37:7
+  Point           | struct     | struct     |                          | 39:7
+  Card            | struct     | struct     |                          | 52:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    dx              | param      | int        |                          | 47:27
+    dy              | param      | int        |                          | 47:37
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    amount          | param      | int        |                          | 65:28
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    n               | param      | int        |                          | 73:25
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    a               | param      | int        |                          | 80:19
+    b               | param      | int        |                          | 80:28
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    n               | param      | int        |                          | 87:24
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    op              | param      | fn         |                          | 91:26
+    seed            | param      | int        |                          | 91:35
+    once            | let        | int        |                          | 92:9
+    twice           | let        | int        |                          | 93:9
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    n               | param      | int        |                          | 102:28
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    amount          | param      | int        |                          | 111:38
+    hp              | param      | ptr        | points to int            | 111:27
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    a               | let        | int        |                          | 174:9
+    complexBool     | let        | bool       |                          | 187:9
+    total           | let        | int        |                          | 211:9
+    downCount       | let        | int        |                          | 238:9
+    isReady         | let        | bool       |                          | 132:9
+    GREETING        | const      | string     |                          | 136:11
+    c               | let        | int        |                          | 176:9
+    zeroDivisor     | let        | int        |                          | 347:9
+    heapCounter     | let        | ptr        | points to int            | 150:9
+    counter         | let        | int        |                          | 162:9
+    MAX_PLAYERS     | const      | int        |                          | 135:11
+    facingLabel     | let        | string     |                          | 196:9
+    heapVals        | let        | array      | length=3, elem=int*      | 294:9
+    age             | let        | int        |                          | 128:9
+    label           | let        | string     |                          | 131:9
+    complexMath     | let        | int        |                          | 179:9
+    multiBool       | let        | bool       |                          | 188:9
+    facing          | let        | Suit       |                          | 195:9
+    health          | let        | int        |                          | 146:9
+    simpleMath      | let        | int        |                          | 178:9
+    nullPtr         | let        | ptr        | points to int            | 365:9
+    w               | let        | int        |                          | 225:9
+    remaining       | let        | int        |                          | 283:9
+    b               | let        | int        |                          | 175:9
+    p1              | let        | Point      |                          | 258:9
+    players         | let        | array      | length=2, elem=Player    | 265:9
+    heapSum         | let        | int        |                          | 298:9
+    name            | let        | string     |                          | 421:9
+    grade           | let        | char       |                          | 130:9
+    bonus           | let        | int        |                          | 159:9
+    countdown       | let        | int        |                          | 165:9
+    px              | let        | ptr        | points to int            | 288:9
+    bucketPtrs      | let        | array      | length=3, elem=int*      | 307:9
+    pi              | let        | float      |                          | 129:9
+    scores          | let        | array      | length=5, elem=int       | 140:9
+    simpleBool      | let        | bool       |                          | 186:9
+    grid            | let        | array      | length=3, elem=int[2]    | 245:9
+    gridTotal       | let        | int        |                          | 246:9
+    buckets         | let        | array      | length=3, elem=int       | 306:9
+    origin          | let        | Point      |                          | 143:9
+    hpPtr           | let        | ptr        | points to int            | 147:9
+
+    Scope Level 2:
+      NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+      --------------------------------------------------------------------------------
+      bp              | let        | ptr        | points to int            | 309:13
+
+    Scope Level 2:
+      NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+      --------------------------------------------------------------------------------
+      asFloat         | let        | float      |                          | 327:13
+      asStr           | let        | string     |                          | 328:13
+
+    Scope Level 2:
+      NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+      --------------------------------------------------------------------------------
+      bad             | let        | int        |                          | 349:13
+
+    Scope Level 2:
+      NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+      --------------------------------------------------------------------------------
+      notANumber      | let        | string     |                          | 357:13
+      bad             | let        | int        |                          | 358:13
+
+    Scope Level 2:
+      NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+      --------------------------------------------------------------------------------
+      bad             | let        | int        |                          | 367:13
+
+      Scope Level 3:
+        NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+        --------------------------------------------------------------------------------
+        bad             | let        | int        |                          | 378:17
+
+    Scope Level 2:
+      NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+      --------------------------------------------------------------------------------
+      r               | let        | int        |                          | 391:13
+
+
+--- PROGRAM OUTPUT ---
+hello, boran MAX_PLAYERS: 4 
+age: 21 pi: 3.14159 grade: A label: boran isReady: true 
+age: 22 scores[0]: 30 counter: 2 countdown: 3 
+simpleMath: 13 complexMath: 24 
+simpleBool: true complexBool: true multiBool: true 
+facing: hearts 
+sum of scores: 170 
+heapCounter after range loop: 10 
+for-while ended at w: 7 
+repeat-until ended at downCount: 0 
+2D grid total: 21 
+p1.magnitudeSquared(): 25 
+p1 after translate: x = 4 y = 5 
+Ada score: 14 
+Lin score: 16 
+health after applyDamage via static pointer: 70 health var: 70 
+origin.x mutated via pointer to a struct field: 5 
+sum of dynamic pointer array after in-loop mutation: 60 
+buckets after indexed pointer mutation: 0 100 200 
+factorial(5): 120 
+gcd(48, 18): 6 
+applyTwice(tripleIt, 2): 18 
+k as float as string: 0 
+k as float as string: 1 
+k as float as string: 2 
+caught explicit throw: manual diagnostic check 
+caught native fault: division by zero 
+caught native fault: cannot cast string "abc" to int: not a valid integer 
+caught native fault: null pointer dereference 
+inner catch saw: division by zero 
+outer catch saw: wrapped: division by zero 
+caught fault unwound through recursion: division by zero 
+execution continues normally after recovery 
+loop iteration ok, i = 0 
+recovered in loop: skip iteration 1 
+loop iteration ok, i = 2 
+Enter your name: Hello, Joel -- comprehensive showcase complete.
+--- FINAL HEAP STATE ---
+  (empty)

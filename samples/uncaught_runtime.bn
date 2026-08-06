@@ -1,0 +1,10 @@
+const main : fn = () => {
+    let x : int = 5;
+    try{
+            let y : int = x / 0;
+    } catch(e){
+        print(e);
+    }
+};
+
+main();

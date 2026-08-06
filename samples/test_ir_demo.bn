@@ -36,9 +36,9 @@ const main : fn = () : int => {
     let unused : int = total * 99;
 
     if total > 50 {
-        print("total is large:", total);
+        print("total is large:", total, "\n");
     } else {
-        print("total is small:", total);
+        print("total is small:", total, "\n");
     }
 
     let i : int = 0;
@@ -47,7 +47,7 @@ const main : fn = () : int => {
             i = i + 1;
             continue;
         }
-        print("loop i =", i);
+        print("loop i =", i, "\n");
         i = i + 1;
     }
 
@@ -55,7 +55,7 @@ const main : fn = () : int => {
 
     # unreachable: this can never execute, since the return above
     # always fires first on every path through this function
-    print("this line can never run");
+    print("this line can never run", "\n");
 };
 
 main();

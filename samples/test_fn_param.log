@@ -1,0 +1,48 @@
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [apply_twice : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [once : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (op)
+    │           │           └── IDENTIFIER (seed)
+    │           ├── LET_DECL [twice : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (op)
+    │           │           └── IDENTIFIER (once)
+    │           └── RETURN_STMT
+    └── CONST_DECL [doubleIt : fn]
+        └── FN_LITERAL
+            └── BLOCK
+                └── RETURN_STMT
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  apply_twice     | fn         | fn         |                          | 1:7
+  doubleIt        | fn         | fn         |                          | 7:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    once            | let        | int        |                          | 2:9
+    twice           | let        | int        |                          | 3:9
+    op              | param      | fn         |                          | 1:27
+    seed            | param      | int        |                          | 1:36
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    n               | param      | int        |                          | 7:24
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    x               | let        | int        |                          | 13:9
+    y               | let        | int        |                          | 14:9
+
+
+--- SYNTAX ERRORS (1) ---
+   16:2: expected SEMICOLON but found EOF ("")

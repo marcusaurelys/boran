@@ -1,0 +1,68 @@
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [swap : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [temp : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── UNARY_OP (*)
+    │           │           └── IDENTIFIER (y)
+    │           ├── ASSIGNMENT -> *y
+    │           │   └── VALUE_EXPR
+    │           │       └── UNARY_OP (*)
+    │           │           └── IDENTIFIER (x)
+    │           └── ASSIGNMENT -> *x
+    │               └── VALUE_EXPR
+    │                   └── IDENTIFIER (temp)
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [x : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (4)
+    │           ├── LET_DECL [y : ptr]
+    │           │   └── VALUE_EXPR
+    │           │       └── NEW_EXPR
+    │           │           └── LITERAL (5)
+    │           ├── EXPR_STMT
+    │           │   └── FN_CALL (swap)
+    │           │       ├── UNARY_OP (&)
+    │           │       │   └── IDENTIFIER (x)
+    │           │       └── IDENTIFIER (y)
+    │           ├── PRINT_STMT
+    │           │   ├── IDENTIFIER (x)
+    │           │   └── LITERAL ("\n")
+    │           └── PRINT_STMT
+    │               ├── UNARY_OP (*)
+    │               │   └── IDENTIFIER (y)
+    │               └── LITERAL ("\n")
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  swap            | fn         | fn         |                          | 1:7
+  main            | fn         | fn         |                          | 7:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    x               | param      | ptr        | points to int            | 1:20
+    y               | param      | ptr        | points to int            | 1:29
+    temp            | let        | int        |                          | 2:9
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    y               | let        | ptr        | points to int            | 9:9
+    x               | let        | int        |                          | 8:9
+
+
+--- PROGRAM OUTPUT ---
+5 
+4 
+
+--- FINAL HEAP STATE ---
+  (empty)

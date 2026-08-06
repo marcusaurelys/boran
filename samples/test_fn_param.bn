@@ -1,0 +1,24 @@
+const apply_twice : fn = (op : fn, seed : int) : int => {
+    let once : int = op(seed);
+    let twice : int = op(once);
+    return twice;
+};
+
+const doubleIt : fn = (n : int) : int => {
+    return n * 2;
+};
+
+const returnString : fn = (n : int) : string => {
+    return "this should be bad";
+};
+
+
+const main : fn = () => {
+    let x : int = 5;
+    let y: int = apply_twice(doubleIt, x);
+    print(y, "\n");
+    let z : int = apply_twice(returnString, x);
+    print(z, "\n"); 
+};
+
+main();
