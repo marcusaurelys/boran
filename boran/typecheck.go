@@ -360,6 +360,23 @@ func (c *TypeChecker) checkStmt(s Stmt) {
 		c.checkExpr(n.Call)
 	case *BreakStmt, *ContinueStmt:
 		// nothing to check
+	case *TryCatchStmt:
+		c.checkStmt(n.Try) // reuses the ordinary *Block case above
+
+		c.enterScope()
+		l, col := n.Pos()
+		c.current.declare(&tcSymbol{Name: n.CatchVar, Kind: SymLet, Type: tBuiltin("string"), Mutable: true, Line: l, Col: col})
+		c.predeclareFunctions(n.Catch.Statements)
+		for _, st := range n.Catch.Statements {
+			c.checkStmt(st)
+		}
+		c.exitScope()
+	case *ThrowStmt:
+		t := c.checkExpr(n.Value)
+		if t != nil && t.Kind != "unknown" && t.Kind != "string" {
+			line, col := n.Value.Pos()
+			c.errorf(ErrTypeMismatch, line, col, "'throw' requires a string value, got %s", t.String())
+		}
 	}
 }
 

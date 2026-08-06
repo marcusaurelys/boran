@@ -1,0 +1,907 @@
+
+
+================================================================================
+ NEW RUN: 2026-08-06 00:09:20 | Elapsed: 695µs | Source: test_pyramid.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    └── CONST_DECL [main : fn]
+        └── FN_LITERAL
+            └── BLOCK
+                ├── LET_DECL [max_input : string]
+                │   └── VALUE_EXPR
+                │       └── INPUT_EXPR
+                │           └── LITERAL ("Input an integer: ")
+                ├── LET_DECL [max : int]
+                │   └── VALUE_EXPR
+                │       └── CAST_EXPR [as int]
+                │           └── IDENTIFIER (max_input)
+                ├── PRINT_STMT
+                │   ├── LITERAL ("printing pyramid of size ")
+                │   └── IDENTIFIER (max)
+                └── FOR_ITER [var: i]
+                    ├── RANGE_EXPR [1 arg(s)]
+                    │   └── IDENTIFIER (max)
+                    └── BLOCK
+                        ├── FOR_ITER [var: j]
+                        │   ├── RANGE_EXPR [1 arg(s)]
+                        │   │   └── IDENTIFIER (i)
+                        │   └── BLOCK
+                        │       └── PRINT_STMT
+                        │           └── LITERAL ("*")
+                        └── PRINT_STMT
+                            └── LITERAL ("\n")
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  main            | fn         | fn         |                          | 3:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    max_input       | let        | string     |                          | 4:9
+    max             | let        | int        |                          | 5:9
+
+
+--- PROGRAM OUTPUT ---
+
+--- FINAL HEAP STATE ---
+  ADDR     | TYPE           | VALUE
+  ----------------------------------------------------------------------
+  0x0001   | fn             | fn <anonymous>
+
+
+================================================================================
+ NEW RUN: 2026-08-06 00:10:29 | Elapsed: 0s | Source: test_pyramid.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [max_input : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── INPUT_EXPR
+    │           │           └── LITERAL ("Input an integer: ")
+    │           ├── LET_DECL [max : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── CAST_EXPR [as int]
+    │           │           └── IDENTIFIER (max_input)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("printing pyramid of size ")
+    │           │   └── IDENTIFIER (max)
+    │           └── FOR_ITER [var: i]
+    │               ├── RANGE_EXPR [1 arg(s)]
+    │               │   └── IDENTIFIER (max)
+    │               └── BLOCK
+    │                   ├── FOR_ITER [var: j]
+    │                   │   ├── RANGE_EXPR [1 arg(s)]
+    │                   │   │   └── IDENTIFIER (i)
+    │                   │   └── BLOCK
+    │                   │       └── PRINT_STMT
+    │                   │           └── LITERAL ("*")
+    │                   └── PRINT_STMT
+    │                       └── LITERAL ("\n")
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  main            | fn         | fn         |                          | 3:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    max_input       | let        | string     |                          | 4:9
+    max             | let        | int        |                          | 5:9
+
+
+--- PROGRAM OUTPUT ---
+Input an integer: printing pyramid of size  5
+
+
+*
+
+
+*
+*
+
+
+*
+*
+*
+
+
+*
+*
+*
+*
+
+
+
+--- FINAL HEAP STATE ---
+  ADDR     | TYPE           | VALUE
+  ----------------------------------------------------------------------
+  0x0001   | fn             | fn <anonymous>
+  0x0002   | string         | 5
+  0x0003   | int            | 5
+  0x0004   | int            | 0
+  0x0005   | int            | 1
+  0x0006   | int            | 2
+  0x0007   | int            | 3
+  0x0008   | int            | 4
+  0x0009   | int            | 0
+  0x000a   | int            | 1
+  0x000b   | int            | 0
+  0x000c   | int            | 0
+  0x000d   | int            | 2
+  0x000e   | int            | 0
+  0x000f   | int            | 1
+  0x0010   | int            | 0
+  0x0011   | int            | 1
+  0x0012   | int            | 3
+  0x0013   | int            | 0
+  0x0014   | int            | 1
+  0x0015   | int            | 2
+  0x0016   | int            | 0
+  0x0017   | int            | 1
+  0x0018   | int            | 2
+  0x0019   | int            | 4
+  0x001a   | int            | 0
+  0x001b   | int            | 1
+  0x001c   | int            | 2
+  0x001d   | int            | 3
+  0x001e   | int            | 0
+  0x001f   | int            | 1
+  0x0020   | int            | 2
+  0x0021   | int            | 3
+
+
+================================================================================
+ NEW RUN: 2026-08-06 00:12:14 | Elapsed: 0s | Source: test_pyramid.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [max_input : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── INPUT_EXPR
+    │           │           └── LITERAL ("Input an integer: ")
+    │           ├── LET_DECL [max : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── CAST_EXPR [as int]
+    │           │           └── IDENTIFIER (max_input)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("printing pyramid of size ")
+    │           │   └── IDENTIFIER (max)
+    │           └── FOR_ITER [var: i]
+    │               ├── RANGE_EXPR [1 arg(s)]
+    │               │   └── IDENTIFIER (max)
+    │               └── BLOCK
+    │                   ├── FOR_ITER [var: j]
+    │                   │   ├── RANGE_EXPR [1 arg(s)]
+    │                   │   │   └── IDENTIFIER (i)
+    │                   │   └── BLOCK
+    │                   │       └── PRINT_STMT
+    │                   │           └── LITERAL ("*")
+    │                   └── PRINT_STMT
+    │                       └── LITERAL ("\n")
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  main            | fn         | fn         |                          | 3:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    max_input       | let        | string     |                          | 4:9
+    max             | let        | int        |                          | 5:9
+
+
+--- PROGRAM OUTPUT ---
+Input an integer: printing pyramid of size  5
+*
+**
+***
+****
+
+--- FINAL HEAP STATE ---
+  ADDR     | TYPE           | VALUE
+  ----------------------------------------------------------------------
+  0x0001   | fn             | fn <anonymous>
+  0x0002   | string         | 5
+  0x0003   | int            | 5
+  0x0004   | int            | 0
+  0x0005   | int            | 1
+  0x0006   | int            | 2
+  0x0007   | int            | 3
+  0x0008   | int            | 4
+  0x0009   | int            | 0
+  0x000a   | int            | 1
+  0x000b   | int            | 0
+  0x000c   | int            | 0
+  0x000d   | int            | 2
+  0x000e   | int            | 0
+  0x000f   | int            | 1
+  0x0010   | int            | 0
+  0x0011   | int            | 1
+  0x0012   | int            | 3
+  0x0013   | int            | 0
+  0x0014   | int            | 1
+  0x0015   | int            | 2
+  0x0016   | int            | 0
+  0x0017   | int            | 1
+  0x0018   | int            | 2
+  0x0019   | int            | 4
+  0x001a   | int            | 0
+  0x001b   | int            | 1
+  0x001c   | int            | 2
+  0x001d   | int            | 3
+  0x001e   | int            | 0
+  0x001f   | int            | 1
+  0x0020   | int            | 2
+  0x0021   | int            | 3
+
+
+================================================================================
+ NEW RUN: 2026-08-06 00:12:52 | Elapsed: 0s | Source: test_pyramid.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [max_input : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── INPUT_EXPR
+    │           │           └── LITERAL ("Input an integer: \n")
+    │           ├── LET_DECL [max : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── CAST_EXPR [as int]
+    │           │           └── IDENTIFIER (max_input)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("printing pyramid of size ")
+    │           │   ├── IDENTIFIER (max)
+    │           │   └── LITERAL ("\n")
+    │           └── FOR_ITER [var: i]
+    │               ├── RANGE_EXPR [1 arg(s)]
+    │               │   └── IDENTIFIER (max)
+    │               └── BLOCK
+    │                   ├── FOR_ITER [var: j]
+    │                   │   ├── RANGE_EXPR [1 arg(s)]
+    │                   │   │   └── IDENTIFIER (i)
+    │                   │   └── BLOCK
+    │                   │       └── PRINT_STMT
+    │                   │           └── LITERAL ("*")
+    │                   └── PRINT_STMT
+    │                       └── LITERAL ("\n")
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  main            | fn         | fn         |                          | 3:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    max             | let        | int        |                          | 5:9
+    max_input       | let        | string     |                          | 4:9
+
+
+--- PROGRAM OUTPUT ---
+Input an integer: 
+printing pyramid of size  5 
+
+*
+**
+***
+****
+
+--- FINAL HEAP STATE ---
+  ADDR     | TYPE           | VALUE
+  ----------------------------------------------------------------------
+  0x0001   | fn             | fn <anonymous>
+  0x0002   | string         | 5
+  0x0003   | int            | 5
+  0x0004   | int            | 0
+  0x0005   | int            | 1
+  0x0006   | int            | 2
+  0x0007   | int            | 3
+  0x0008   | int            | 4
+  0x0009   | int            | 0
+  0x000a   | int            | 1
+  0x000b   | int            | 0
+  0x000c   | int            | 0
+  0x000d   | int            | 2
+  0x000e   | int            | 0
+  0x000f   | int            | 1
+  0x0010   | int            | 0
+  0x0011   | int            | 1
+  0x0012   | int            | 3
+  0x0013   | int            | 0
+  0x0014   | int            | 1
+  0x0015   | int            | 2
+  0x0016   | int            | 0
+  0x0017   | int            | 1
+  0x0018   | int            | 2
+  0x0019   | int            | 4
+  0x001a   | int            | 0
+  0x001b   | int            | 1
+  0x001c   | int            | 2
+  0x001d   | int            | 3
+  0x001e   | int            | 0
+  0x001f   | int            | 1
+  0x0020   | int            | 2
+  0x0021   | int            | 3
+
+
+================================================================================
+ NEW RUN: 2026-08-06 04:31:15 | Elapsed: 0s | Source: scope.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+
+--- SYMBOL TABLE ---
+
+--- SYNTAX ERRORS (4) ---
+   1:22: expected ARROW but found LBRACE ("{")
+   3:1: unexpected token RBRACE ("}") in expression
+   5:25: expected LBRACE but found KEYWORD ("int")
+   7:1: unexpected token RBRACE ("}") in expression
+
+--- PROGRAM OUTPUT ---
+  (skipped: syntax/semantic errors present)
+
+
+================================================================================
+ NEW RUN: 2026-08-06 04:31:21 | Elapsed: 807.5µs | Source: scope.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+
+--- SYNTAX ERRORS (4) ---
+   1:22: expected ARROW but found LBRACE ("{")
+   3:1: unexpected token RBRACE ("}") in expression
+   5:25: expected LBRACE but found KEYWORD ("int")
+   7:1: unexpected token RBRACE ("}") in expression
+
+--- SEMANTIC ERRORS (1) ---
+   9:1: [undeclared variable] call to undeclared function "main"
+
+--- PROGRAM OUTPUT ---
+  (skipped: syntax/semantic errors present)
+
+
+================================================================================
+ NEW RUN: 2026-08-06 04:31:37 | Elapsed: 589.9µs | Source: scope.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+
+--- SYNTAX ERRORS (4) ---
+   1:25: expected LBRACE but found IDENTIFIER ("void")
+   3:1: unexpected token RBRACE ("}") in expression
+   5:25: expected LBRACE but found KEYWORD ("int")
+   7:1: unexpected token RBRACE ("}") in expression
+
+--- SEMANTIC ERRORS (1) ---
+   9:1: [undeclared variable] call to undeclared function "main"
+
+--- PROGRAM OUTPUT ---
+  (skipped: syntax/semantic errors present)
+
+
+================================================================================
+ NEW RUN: 2026-08-06 04:32:11 | Elapsed: 646.8µs | Source: scope.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+
+--- SYNTAX ERRORS (2) ---
+   5:1: expected SEMICOLON but found KEYWORD ("const")
+   7:1: unexpected token RBRACE ("}") in expression
+
+--- SEMANTIC ERRORS (1) ---
+   9:1: [undeclared variable] call to undeclared function "main"
+
+--- PROGRAM OUTPUT ---
+  (skipped: syntax/semantic errors present)
+
+
+================================================================================
+ NEW RUN: 2026-08-06 04:32:36 | Elapsed: 608.3µs | Source: scope.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [test : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           └── PRINT_STMT
+    │               └── IDENTIFIER (x)
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  test            | fn         | fn         |                          | 1:7
+
+
+--- SYNTAX ERRORS (3) ---
+   5:25: expected LBRACE but found KEYWORD ("int")
+   7:1: unexpected token RBRACE ("}") in expression
+   7:2: unexpected token SEMICOLON (";") in expression
+
+--- SEMANTIC ERRORS (2) ---
+   2:11: [undeclared variable] undeclared variable "x"
+   9:1: [undeclared variable] call to undeclared function "main"
+
+--- PROGRAM OUTPUT ---
+  (skipped: syntax/semantic errors present)
+
+
+================================================================================
+ NEW RUN: 2026-08-06 04:33:58 | Elapsed: 0s | Source: scope.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [test : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           └── PRINT_STMT
+    │               └── IDENTIFIER (x)
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [x : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (5)
+    │           └── RETURN_STMT
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  test            | fn         | fn         |                          | 1:7
+  main            | fn         | fn         |                          | 5:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    x               | let        | int        |                          | 6:9
+
+
+--- SEMANTIC ERRORS (1) ---
+   2:11: [undeclared variable] undeclared variable "x"
+
+--- PROGRAM OUTPUT ---
+  (skipped: syntax/semantic errors present)
+
+
+================================================================================
+ NEW RUN: 2026-08-06 04:56:36 | Elapsed: 0s | Source: test_pyramid.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [max_input : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── INPUT_EXPR
+    │           │           └── LITERAL ("Input an integer: \n")
+    │           ├── LET_DECL [max : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── CAST_EXPR [as int]
+    │           │           └── IDENTIFIER (max_input)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("printing pyramid of size ")
+    │           │   ├── IDENTIFIER (max)
+    │           │   └── LITERAL ("\n")
+    │           └── FOR_ITER [var: i]
+    │               ├── RANGE_EXPR [1 arg(s)]
+    │               │   └── IDENTIFIER (max)
+    │               └── BLOCK
+    │                   ├── FOR_ITER [var: j]
+    │                   │   ├── RANGE_EXPR [1 arg(s)]
+    │                   │   │   └── IDENTIFIER (i)
+    │                   │   └── BLOCK
+    │                   │       └── PRINT_STMT
+    │                   │           └── LITERAL ("*")
+    │                   └── PRINT_STMT
+    │                       └── LITERAL ("\n")
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  main            | fn         | fn         |                          | 3:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    max_input       | let        | string     |                          | 4:9
+    max             | let        | int        |                          | 5:9
+
+
+--- PROGRAM OUTPUT ---
+
+--- RUNTIME ERROR ---
+  15:1: runtime error: invalid/freed reference for "main"
+
+--- FINAL HEAP STATE ---
+  (empty)
+
+
+================================================================================
+ NEW RUN: 2026-08-06 05:00:09 | Elapsed: 0s | Source: test_pyramid.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [max_input : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── INPUT_EXPR
+    │           │           └── LITERAL ("Input an integer: \n")
+    │           ├── LET_DECL [max : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── CAST_EXPR [as int]
+    │           │           └── IDENTIFIER (max_input)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("printing pyramid of size ")
+    │           │   ├── IDENTIFIER (max)
+    │           │   └── LITERAL ("\n")
+    │           └── FOR_ITER [var: i]
+    │               ├── RANGE_EXPR [1 arg(s)]
+    │               │   └── IDENTIFIER (max)
+    │               └── BLOCK
+    │                   ├── FOR_ITER [var: j]
+    │                   │   ├── RANGE_EXPR [1 arg(s)]
+    │                   │   │   └── IDENTIFIER (i)
+    │                   │   └── BLOCK
+    │                   │       └── PRINT_STMT
+    │                   │           └── LITERAL ("*")
+    │                   └── PRINT_STMT
+    │                       └── LITERAL ("\n")
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  main            | fn         | fn         |                          | 3:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    max_input       | let        | string     |                          | 4:9
+    max             | let        | int        |                          | 5:9
+
+
+--- PROGRAM OUTPUT ---
+
+--- RUNTIME ERROR ---
+  15:1: runtime error: invalid/freed reference for "main"
+
+--- FINAL HEAP STATE ---
+  (empty)
+
+
+================================================================================
+ NEW RUN: 2026-08-06 05:20:36 | Elapsed: 0s | Source: test_pyramid.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [max_input : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── INPUT_EXPR
+    │           │           └── LITERAL ("Input an integer: \n")
+    │           ├── LET_DECL [max : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── CAST_EXPR [as int]
+    │           │           └── IDENTIFIER (max_input)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("printing pyramid of size ")
+    │           │   ├── IDENTIFIER (max)
+    │           │   └── LITERAL ("\n")
+    │           └── FOR_ITER [var: i]
+    │               ├── RANGE_EXPR [1 arg(s)]
+    │               │   └── IDENTIFIER (max)
+    │               └── BLOCK
+    │                   ├── FOR_ITER [var: j]
+    │                   │   ├── RANGE_EXPR [1 arg(s)]
+    │                   │   │   └── IDENTIFIER (i)
+    │                   │   └── BLOCK
+    │                   │       └── PRINT_STMT
+    │                   │           └── LITERAL ("*")
+    │                   └── PRINT_STMT
+    │                       └── LITERAL ("\n")
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  main            | fn         | fn         |                          | 3:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    max_input       | let        | string     |                          | 4:9
+    max             | let        | int        |                          | 5:9
+
+
+--- PROGRAM OUTPUT ---
+
+--- RUNTIME ERROR ---
+  15:1: runtime error: invalid/freed reference for "main"
+
+--- FINAL HEAP STATE ---
+  (empty)
+
+
+================================================================================
+ NEW RUN: 2026-08-06 05:22:24 | Elapsed: 0s | Source: test_pyramid.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [max_input : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── INPUT_EXPR
+    │           │           └── LITERAL ("Input an integer: \n")
+    │           ├── LET_DECL [max : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── CAST_EXPR [as int]
+    │           │           └── IDENTIFIER (max_input)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("printing pyramid of size ")
+    │           │   ├── IDENTIFIER (max)
+    │           │   └── LITERAL ("\n")
+    │           └── FOR_ITER [var: i]
+    │               ├── RANGE_EXPR [1 arg(s)]
+    │               │   └── IDENTIFIER (max)
+    │               └── BLOCK
+    │                   ├── FOR_ITER [var: j]
+    │                   │   ├── RANGE_EXPR [1 arg(s)]
+    │                   │   │   └── IDENTIFIER (i)
+    │                   │   └── BLOCK
+    │                   │       └── PRINT_STMT
+    │                   │           └── LITERAL ("*")
+    │                   └── PRINT_STMT
+    │                       └── LITERAL ("\n")
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  main            | fn         | fn         |                          | 3:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    max_input       | let        | string     |                          | 4:9
+    max             | let        | int        |                          | 5:9
+
+
+--- PROGRAM OUTPUT ---
+Input an integer: 
+printing pyramid of size  5 
+
+
+
+*
+
+
+*
+*
+
+
+*
+*
+*
+
+
+*
+*
+*
+*
+
+
+
+--- FINAL HEAP STATE ---
+  ADDR     | TYPE           | VALUE
+  ----------------------------------------------------------------------
+  0x0001   | int            | 0
+  0x0002   | int            | 1
+  0x0003   | int            | 2
+  0x0004   | int            | 3
+  0x0005   | int            | 4
+  0x0006   | int            | 0
+  0x0007   | int            | 0
+  0x0008   | int            | 1
+  0x0009   | int            | 0
+  0x000a   | int            | 1
+  0x000b   | int            | 2
+  0x000c   | int            | 0
+  0x000d   | int            | 1
+  0x000e   | int            | 2
+  0x000f   | int            | 3
+
+
+================================================================================
+ NEW RUN: 2026-08-06 05:23:57 | Elapsed: 0s | Source: test_pyramid.bn
+================================================================================
+
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [max_input : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── INPUT_EXPR
+    │           │           └── LITERAL ("Input an integer: \n")
+    │           ├── LET_DECL [max : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── CAST_EXPR [as int]
+    │           │           └── IDENTIFIER (max_input)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("printing pyramid of size ")
+    │           │   ├── IDENTIFIER (max)
+    │           │   └── LITERAL ("\n")
+    │           └── FOR_ITER [var: i]
+    │               ├── RANGE_EXPR [1 arg(s)]
+    │               │   └── IDENTIFIER (max)
+    │               └── BLOCK
+    │                   ├── FOR_ITER [var: j]
+    │                   │   ├── RANGE_EXPR [1 arg(s)]
+    │                   │   │   └── IDENTIFIER (i)
+    │                   │   └── BLOCK
+    │                   │       └── PRINT_STMT
+    │                   │           └── LITERAL ("*")
+    │                   └── PRINT_STMT
+    │                       └── LITERAL ("\n")
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  main            | fn         | fn         |                          | 3:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    max             | let        | int        |                          | 5:9
+    max_input       | let        | string     |                          | 4:9
+
+
+--- PROGRAM OUTPUT ---
+Input an integer: 
+printing pyramid of size  10 
+
+*
+**
+***
+****
+*****
+******
+*******
+********
+*********
+
+--- FINAL HEAP STATE ---
+  ADDR     | TYPE           | VALUE
+  ----------------------------------------------------------------------
+  0x0001   | int            | 0
+  0x0002   | int            | 1
+  0x0003   | int            | 2
+  0x0004   | int            | 3
+  0x0005   | int            | 4
+  0x0006   | int            | 5
+  0x0007   | int            | 6
+  0x0008   | int            | 7
+  0x0009   | int            | 8
+  0x000a   | int            | 9
+  0x000b   | int            | 0
+  0x000c   | int            | 0
+  0x000d   | int            | 1
+  0x000e   | int            | 0
+  0x000f   | int            | 1
+  0x0010   | int            | 2
+  0x0011   | int            | 0
+  0x0012   | int            | 1
+  0x0013   | int            | 2
+  0x0014   | int            | 3
+  0x0015   | int            | 0
+  0x0016   | int            | 1
+  0x0017   | int            | 2
+  0x0018   | int            | 3
+  0x0019   | int            | 4
+  0x001a   | int            | 0
+  0x001b   | int            | 1
+  0x001c   | int            | 2
+  0x001d   | int            | 3
+  0x001e   | int            | 4
+  0x001f   | int            | 5
+  0x0020   | int            | 0
+  0x0021   | int            | 1
+  0x0022   | int            | 2
+  0x0023   | int            | 3
+  0x0024   | int            | 4
+  0x0025   | int            | 5
+  0x0026   | int            | 6
+  0x0027   | int            | 0
+  0x0028   | int            | 1
+  0x0029   | int            | 2
+  0x002a   | int            | 3
+  0x002b   | int            | 4
+  0x002c   | int            | 5
+  0x002d   | int            | 6
+  0x002e   | int            | 7
+  0x002f   | int            | 0
+  0x0030   | int            | 1
+  0x0031   | int            | 2
+  0x0032   | int            | 3
+  0x0033   | int            | 4
+  0x0034   | int            | 5
+  0x0035   | int            | 6
+  0x0036   | int            | 7
+  0x0037   | int            | 8

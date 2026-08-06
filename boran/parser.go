@@ -171,6 +171,10 @@ func (p *Parser) parseStmt() Stmt {
 			return p.parseBreakStmt()
 		case "continue":
 			return p.parseContinueStmt()
+		case "try":
+			return p.parseTryCatchStmt()
+		case "throw":
+			return p.parseThrowStmt()
 		}
 	}
 
@@ -206,6 +210,31 @@ func (p *Parser) parseContinueStmt() *ContinueStmt {
 	start := p.consumeKeyword("continue")
 	p.consume(TOKEN_SEMICOLON)
 	return &ContinueStmt{pos: pos{start.Line, start.Col}}
+}
+
+// <try_catch_stmt> → 'try' <block> 'catch' '(' <identifier> ')' <block>
+//
+// The catch binding is always a plain string -- no type annotation, no
+// separate 'error' type -- so it's declared directly in the checker/
+// interpreter as SymLet/string rather than going through the general
+// <param>-style ':' <datatype> machinery.
+func (p *Parser) parseTryCatchStmt() *TryCatchStmt {
+	start := p.consumeKeyword("try")
+	tryBlock := p.parseBlock()
+	p.consumeKeyword("catch")
+	p.consume(TOKEN_LPAREN)
+	name := p.consume(TOKEN_IDENTIFIER)
+	p.consume(TOKEN_RPAREN)
+	catchBlock := p.parseBlock()
+	return &TryCatchStmt{pos: pos{start.Line, start.Col}, Try: tryBlock, CatchVar: name.Literal, Catch: catchBlock}
+}
+
+// <throw_stmt> → 'throw' <expr>
+func (p *Parser) parseThrowStmt() *ThrowStmt {
+	start := p.consumeKeyword("throw")
+	val := p.parseExpr()
+	p.consume(TOKEN_SEMICOLON)
+	return &ThrowStmt{pos: pos{start.Line, start.Col}, Value: val}
 }
 
 // parseIdentOrThisStmt parses a statement that begins with an identifier or

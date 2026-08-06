@@ -194,6 +194,29 @@ type ContinueStmt struct {
 
 func (s *ContinueStmt) stmtNode() {}
 
+// TryCatchStmt represents 'try { ... } catch (e) { ... }'. The catch
+// binding is always a string (Boran doesn't have a distinct error type --
+// a caught value, whether from an explicit 'throw' or one of the native
+// runtime faults try/catch can intercept, is just the message string).
+type TryCatchStmt struct {
+	pos
+	Try      *Block
+	CatchVar string
+	Catch    *Block
+}
+
+func (s *TryCatchStmt) stmtNode() {}
+
+// ThrowStmt represents 'throw <expr>;'. Value must evaluate to a string;
+// it unwinds to the nearest enclosing TryCatchStmt (or terminates the
+// program if there isn't one).
+type ThrowStmt struct {
+	pos
+	Value Expr
+}
+
+func (s *ThrowStmt) stmtNode() {}
+
 // ExprStmt wraps a bare function/method call used as a statement.
 type ExprStmt struct {
 	pos

@@ -67,6 +67,7 @@ var keywords = map[string]TokenType{
 	"if": TOKEN_KEYWORD, "else": TOKEN_KEYWORD, "for": TOKEN_KEYWORD,
 	"in": TOKEN_KEYWORD, "return": TOKEN_KEYWORD,
 	"print": TOKEN_KEYWORD, "input": TOKEN_KEYWORD, "range": TOKEN_KEYWORD, "new": TOKEN_KEYWORD,
+	"try": TOKEN_KEYWORD, "catch": TOKEN_KEYWORD, "throw": TOKEN_KEYWORD,
 	"true": TOKEN_BOOL_LIT, "false": TOKEN_BOOL_LIT,
 	"null": TOKEN_KEYWORD, "this": TOKEN_KEYWORD, "as": TOKEN_KEYWORD,
 }

@@ -30,6 +30,26 @@ func rtPanic(line, col int, format string, args ...interface{}) {
 	panic(&RuntimeError{Line: line, Col: col, Message: fmt.Sprintf(format, args...)})
 }
 
+// BoranThrow is raised via panic/recover for a *catchable* runtime fault:
+// either an explicit 'throw' statement, or one of the handful of native
+// errors try/catch can intercept (division by zero, a nonnumeric-string
+// cast, a null-pointer dereference). Distinct from RuntimeError (which is
+// always fatal) so execTryCatch's recover can tell the two apart --
+// anything else that panics is re-raised unchanged and still terminates
+// the program even inside a try block.
+type BoranThrow struct {
+	Line, Col int
+	Message   string
+}
+
+func (e *BoranThrow) Error() string {
+	return fmt.Sprintf("%d:%d: uncaught throw: %s", e.Line, e.Col, e.Message)
+}
+
+func rtThrow(line, col int, format string, args ...interface{}) {
+	panic(&BoranThrow{Line: line, Col: col, Message: fmt.Sprintf(format, args...)})
+}
+
 // ============================================================================
 // Control-flow signals
 //
@@ -126,6 +146,16 @@ func (i *Interpreter) Run(prog *Program) (err error) {
 				err = re
 				return
 			}
+			if bt, ok := r.(*BoranThrow); ok {
+				// A 'throw' (or native-error throw) that escaped every
+				// enclosing try/catch -- same fatal treatment as an
+				// uncaught RuntimeError, just reported as an uncaught
+				// throw rather than a generic runtime error.
+				re := &RuntimeError{Line: bt.Line, Col: bt.Col, Message: "uncaught throw: " + bt.Message}
+				i.Errors = append(i.Errors, re)
+				err = re
+				return
+			}
 			panic(r)
 		}
 	}()
@@ -180,6 +210,13 @@ func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 			var declType *DatatypeNode
 			if slot.Heap {
 				declType = i.declaredTypeAtAddr(slot.Addr)
+			} else if _, isPtr := slot.Value.(*PtrVal); isPtr {
+				// Inline pointer slot: declaredTypeAtAddr only recovers a
+				// type from a heap-boxed struct, so a plain 'p = null;'
+				// would otherwise lose the pointer-type context a fresh
+				// 'let p : T* = null' declaration gets -- see the
+				// *ExprValue/'null' case in evalValue.
+				declType = &DatatypeNode{Kind: "ptr"}
 			}
 			val := i.evalValue(n.Value, env, declType)
 			if newSv, isSv := val.(*StructVal); isSv && n.Target.Kind == TargetThis && isStructInstanceLiteral(n.Value) && slot.Heap {
@@ -422,6 +459,18 @@ func (i *Interpreter) execStmt(s Stmt, env *Environment) ctrlSignal {
 	case *ExprStmt:
 		i.evalExpr(n.Call, env)
 		return sigNone
+
+	case *ThrowStmt:
+		v := i.evalExpr(n.Value, env)
+		sv, ok := v.(*StringVal)
+		if !ok {
+			rtPanic(line, col, "'throw' requires a string value, got %s", v.TypeTag())
+		}
+		rtThrow(line, col, "%s", sv.Val)
+		return sigNone // unreachable -- rtThrow always panics
+
+	case *TryCatchStmt:
+		return i.execTryCatch(n, env)
 	}
 
 	return sigNone
@@ -752,6 +801,66 @@ func (i *Interpreter) teardown(env *Environment) {
 	}
 }
 
+// execTryCatch implements 'try { ... } catch (e) { ... }'. The try block
+// runs in its own child scope, same as an ordinary Block; if it completes
+// normally (including via a return/break/continue that should keep
+// propagating), that signal is returned unchanged and the catch block
+// never runs. If it panics with a *BoranThrow (an explicit 'throw', or
+// one of the native errors division-by-zero/bad-cast/null-deref raise),
+// runTryBlock recovers it and this method runs the catch block instead,
+// with the caught message bound to CatchVar as a plain string. Any other
+// panic (a *RuntimeError, or a genuine Go runtime panic) is NOT ours to
+// catch and propagates past this call unchanged, exactly like it would
+// through an ordinary Block.
+func (i *Interpreter) execTryCatch(n *TryCatchStmt, env *Environment) ctrlSignal {
+	sig, threw, msg := i.runTryBlock(n.Try, env)
+	if !threw {
+		return sig
+	}
+
+	catchEnv := NewEnvironment(env)
+	catchEnv.Define(n.CatchVar, &StringVal{Val: msg})
+	for _, st := range n.Catch.Statements {
+		csig := i.execStmt(st, catchEnv)
+		if csig.kind != ctrlNone {
+			i.teardown(catchEnv)
+			return csig
+		}
+	}
+	i.teardown(catchEnv)
+	return sigNone
+}
+
+// runTryBlock executes one try-block's statements in their own child
+// scope, recovering a *BoranThrow rather than letting it unwind further.
+// Whatever locals the block managed to declare before the throw still get
+// torn down (teardown runs unconditionally, before the recover check), so
+// a throw partway through a try block doesn't leak whatever it already
+// allocated. Anything other than a *BoranThrow is re-panicked so it keeps
+// propagating exactly as if this try block weren't here.
+func (i *Interpreter) runTryBlock(block *Block, env *Environment) (sig ctrlSignal, threw bool, msg string) {
+	tryEnv := NewEnvironment(env)
+	defer func() {
+		i.teardown(tryEnv)
+		if r := recover(); r != nil {
+			if bt, ok := r.(*BoranThrow); ok {
+				threw = true
+				msg = bt.Message
+				return
+			}
+			panic(r)
+		}
+	}()
+	for _, st := range block.Statements {
+		s := i.execStmt(st, tryEnv)
+		if s.kind != ctrlNone {
+			sig = s
+			return
+		}
+	}
+	return
+}
+
 // addressOfTarget resolves an AssignStmt's AssignTarget (the specialized
 // lvalue-chain type, distinct from a general Expr) down to the heap address
 // that should actually be overwritten.
@@ -795,7 +904,7 @@ func (i *Interpreter) addressOfTarget(t AssignTarget, env *Environment) int {
 		} else {
 			box, gok := i.Heap.Get(addr)
 			if !gok {
-				rtPanic(line, col, "dereference of invalid/freed pointer")
+				rtThrow(line, col, "null pointer dereference")
 			}
 			ptr, ok = box.Value.(*PtrVal)
 		}
@@ -881,7 +990,7 @@ func (i *Interpreter) addressOfExpr(e Expr, env *Environment) int {
 				rtPanic(line, col, "cannot dereference non-pointer value")
 			}
 			if _, ok := i.Heap.Get(ptr.Addr); !ok {
-				rtPanic(line, col, "dereference of invalid/freed pointer")
+				rtThrow(line, col, "null pointer dereference")
 			}
 			return ptr.Addr
 		}
@@ -982,6 +1091,17 @@ func (i *Interpreter) evalValue(v Value, env *Environment, dtype *DatatypeNode) 
 	}
 	switch val := v.(type) {
 	case *ExprValue:
+		// A bare 'null' literal being placed into a pointer-typed slot:
+		// evalExpr/evalLiteral has no type context of its own and would
+		// otherwise hand back a generic NullVal, which isn't a *PtrVal
+		// and so can never actually trigger the catchable "null pointer
+		// dereference" throw on '*p' -- it would instead hit the
+		// unrelated (and uncatchable) "not a pointer" type error. Give
+		// it a real null pointer (address 0, non-owning -- nothing to
+		// ever free) whenever we know the target type is a pointer.
+		if lit, ok := val.Expr.(*Literal); ok && lit.Kind == TOKEN_KEYWORD && lit.Value == "null" && dtype != nil && dtype.Kind == "ptr" {
+			return &PtrVal{Addr: 0}
+		}
 		return i.evalExpr(val.Expr, env)
 
 	case *ArrLiteral:
@@ -1375,7 +1495,7 @@ func (i *Interpreter) evalUnary(n *UnaryExpr, env *Environment) RTValue {
 		}
 		box, ok := i.Heap.Get(ptr.Addr)
 		if !ok {
-			rtPanic(line, col, "dereference of invalid/freed pointer")
+			rtThrow(line, col, "null pointer dereference")
 		}
 		return box.Value
 
@@ -1487,12 +1607,12 @@ func (i *Interpreter) arith(op string, l, r RTValue, line, col int) RTValue {
 			return &IntVal{Val: li * ri}
 		case "/":
 			if ri == 0 {
-				rtPanic(line, col, "division by zero")
+				rtThrow(line, col, "division by zero")
 			}
 			return &IntVal{Val: li / ri}
 		case "%":
 			if ri == 0 {
-				rtPanic(line, col, "division by zero")
+				rtThrow(line, col, "division by zero")
 			}
 			return &IntVal{Val: li % ri}
 		}
@@ -1506,7 +1626,7 @@ func (i *Interpreter) arith(op string, l, r RTValue, line, col int) RTValue {
 		return &FloatVal{Val: lf * rf}
 	case "/":
 		if rf == 0 {
-			rtPanic(line, col, "division by zero")
+			rtThrow(line, col, "division by zero")
 		}
 		return &FloatVal{Val: lf / rf}
 	case "%":
@@ -1684,7 +1804,7 @@ func castToInt(v RTValue, line, col int) RTValue {
 	case *StringVal:
 		n, err := strconv.ParseInt(strings.TrimSpace(val.Val), 10, 64)
 		if err != nil {
-			rtPanic(line, col, "cannot cast string %q to int: not a valid integer", val.Val)
+			rtThrow(line, col, "cannot cast string %q to int: not a valid integer", val.Val)
 		}
 		return &IntVal{Val: n}
 	}
@@ -1708,7 +1828,7 @@ func castToFloat(v RTValue, line, col int) RTValue {
 	case *StringVal:
 		f, err := strconv.ParseFloat(strings.TrimSpace(val.Val), 64)
 		if err != nil {
-			rtPanic(line, col, "cannot cast string %q to float: not a valid number", val.Val)
+			rtThrow(line, col, "cannot cast string %q to float: not a valid number", val.Val)
 		}
 		return &FloatVal{Val: f}
 	}

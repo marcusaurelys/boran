@@ -1,6 +1,6 @@
 ================================================================
   Boran Language — Context-Free Grammar Specification
-  Version 2.3
+  Version 2.4
 ================================================================
 
 Authors:      Joel Ethan Batac
@@ -8,7 +8,40 @@ Authors:      Joel Ethan Batac
 
 Last Updated:   06 August 2026
 
-Changelog (2.2 -> 2.3):
+Changelog (2.3 -> 2.4):
+  - Revised error handling's surface syntax (superseding the 2.2->2.3
+    entry below, which is now out of date): there is no separate 'error'
+    datatype after all. A caught value is just an ordinary string, so the
+    'catch' clause takes a single untyped binding rather than a
+    ':' <datatype> pair:
+        try {
+          throw "out of range";
+        } catch (e) {
+          print(e);
+        }
+    <try_catch_stmt> ::= 'try' <block> 'catch' '(' <identifier> ')' <block>
+    <throw_stmt>     ::= 'throw' <expr>
+    'throw' requires its <expr> to evaluate to a string (a static type
+    error otherwise) and unwinds to the nearest enclosing 'catch', which
+    binds it as a plain string local scoped to the catch block. Only
+    THREE new reserved words: 'try', 'catch', 'throw' -- 'error' is not a
+    keyword and remains available as an identifier.
+  - In addition to an explicit 'throw', exactly three native runtime
+    faults are now catchable the same way (as a string describing the
+    fault) rather than always terminating the program:
+      * division by zero (int or float, '/' or '%')
+      * an invalid cast to a numeric type, i.e. 'as int'/'as float' on a
+        non-numeric string (e.g. "abc" as int)
+      * a null-pointer dereference ('*p' where p is null, or points at a
+        freed cell)
+    Every other runtime fault (array-index-out-of-bounds, calling a
+    non-function value, an undeclared-variable reference that somehow
+    reaches runtime, etc.) is still always fatal, try/catch or not --
+    these three are a deliberate, curated subset, not a general
+    exception mechanism. An uncaught throw (explicit or native) still
+    terminates the program, same as any other uncaught runtime error.
+
+Changelog (2.2 -> 2.3) [ORIGINAL ERROR-HANDLING DESIGN, SUPERSEDED ABOVE]:
   - Added dynamic heap allocation via a new 'new(...)' keyword-led primary
     expression: <new_expr>. Takes exactly one argument, an atomic literal
     value (int, float, char, string, or bool), allocates space for it on
@@ -111,7 +144,7 @@ Lexical Rules.
             | 'let' <identifier> ':' <identifier> '=' <value>
             | 'let' <identifier> ':' <identifier>
 
-<datatype> ::= 'int' | 'float' | 'char' | 'string' | 'bool' | 'error'
+<datatype> ::= 'int' | 'float' | 'char' | 'string' | 'bool'
                           | <arr_type> | <fn_type> | <ptr_type>
                           | 'struct' | 'enum'
 
@@ -268,7 +301,9 @@ Lexical Rules.
 <break_stmt> ::= 'break'
 <continue_stmt> ::= 'continue'
 
-<try_catch_stmt>                      ::= 'try' <block> 'catch' '(' <identifier> ':' 'error' ')' <block>
+<try_catch_stmt>                      ::= 'try' <block> 'catch' '(' <identifier> ')' <block>
+                                       (the catch binding is always a plain
+                                        string -- no type annotation)
 
 <throw_stmt>                          ::= 'throw' <expr>
 
