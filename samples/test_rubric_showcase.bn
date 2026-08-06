@@ -63,68 +63,71 @@ const main : fn = () : int => {
 
     # simple_math
     let simple_math : int = a + b;
-    print("simple_math (a + b):", simple_math);
+    print("simple_math (a + b):", simple_math, "\n");
 
     # complex_math -- exercises + - * / % and parenthesized grouping
     let complex_math : int = (a + b) * c - a / c % b;
-    print("complex_math ((a+b)*c - a/c%b):", complex_math);
+    print("complex_math ((a+b)*c - a/c%b):", complex_math, "\n");
 
     # simple_boolean
     let simple_boolean : bool = a > b;
-    print("simple_boolean (a > b):", simple_boolean);
+    print("simple_boolean (a > b):", simple_boolean, "\n");
 
     # complex_boolean -- relational + one logical operator
     let complex_boolean : bool = a > b && c <= b;
-    print("complex_boolean (a > b && c <= b):", complex_boolean);
+    print("complex_boolean (a > b && c <= b):", complex_boolean, "\n");
 
     # complex_logical -- nested grouping, !, &&, ||, mixed relational ops
     let complex_logical : bool = (a > b && c <= b) || !(a == b) && (c != a);
-    print("complex_logical:", complex_logical);
+    print("complex_logical:", complex_logical, "\n");
 
     # === Arrays: literals, for-in, index access + assignment =====
     let grid : int[4] = [1, 2, 3, 4];
     grid[0] = grid[0] + grid[1];
-    print("grid[0] after grid[0]+grid[1]:", grid[0]);
+    print("grid[0] after grid[0]+grid[1]:", grid[0], "\n");
 
     let total : int = 0;
     for v in grid {
         total = total + v;
     }
-    print("sum of grid:", total);
+    print("sum of grid:", total, "\n");
 
     # === Structs: nested composition, methods, 'this' rebinding ===
     let bodies : Body[2] = [
         { position : { x : 0.0, y : 0.0 }, velocity : { x : 1.0, y : 0.0 } },
         { position : { x : 5.0, y : 5.0 }, velocity : { x : 0.0, y : -1.0 } }
     ];
+
+
     for body in bodies {
-        body.step();
-    }
-    print("body[0].position.x after step:", bodies[0].position.x);
+          body.step();
+      }
+
+    print("body[0].position.x after step:", bodies[0].position.x, "\n");
 
     let v : Vector2 = { x : 3.0, y : 4.0 };
     v.scale(2.0);
-    print("v scaled by 2 -> magnitude:", v.magnitude());
+    print("v scaled by 2 -> magnitude:", v.magnitude(), "\n");
 
     # === Enums =====================================================
     let facing : Direction = Direction.north;
     if facing == Direction.north {
-        print("facing: north");
+        print("facing: north", "\n");
     } else if facing == Direction.east {
-        print("facing: east");
+        print("facing: east", "\n");
     } else {
-        print("facing: elsewhere");
+        print("facing: elsewhere", "\n");
     }
 
     # === Pointers: address-of, dereference, mutation through it ===
     let health : int = 100;
     let hpPtr : int* = &health;
     *hpPtr = *hpPtr - 25;
-    print("health after damage via pointer:", health);
+    print("health after damage via pointer:", health, "\n");
 
     # === Functions: recursion + higher-order ======================
-    print("factorial(5):", factorial(5));
-    print("applyTwice(doubleIt, 5):", applyTwice(doubleIt, 5));
+    print("factorial(5):", factorial(5), "\n");
+    print("applyTwice(doubleIt, 5):", applyTwice(doubleIt, 5), "\n");
 
     # === Control flow: while-form, break, continue =================
     let i : int = 0;
@@ -136,13 +139,13 @@ const main : fn = () : int => {
         if i == 7 {
             break;
         }
-        print("while-loop i =", i);
+        print("while-loop i =", i, "\n");
     }
 
     # === Control flow: repeat-until form ============================
     let counter : int = 3;
     for {
-        print("repeat-until counter =", counter);
+        print("repeat-until counter =", counter, "\n");
         counter--;
     } counter == 0;
 

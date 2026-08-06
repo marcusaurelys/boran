@@ -1,0 +1,656 @@
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [Direction : enum]
+    │   └── ENUM_DEFINITION
+    ├── CONST_DECL [Vector2 : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [let x : float]
+    │       │   └── VALUE_EXPR
+    │       │       └── LITERAL (0.0)
+    │       ├── FIELD_DEF [let y : float]
+    │       │   └── VALUE_EXPR
+    │       │       └── LITERAL (0.0)
+    │       ├── FIELD_DEF [const magnitude : fn]
+    │       │   └── FN_LITERAL
+    │       │       └── BLOCK
+    │       │           └── RETURN_STMT
+    │       └── FIELD_DEF [let scale : fn]
+    │           └── FN_LITERAL
+    │               └── BLOCK
+    │                   └── ASSIGNMENT -> this
+    │                       └── STRUCT_INSTANCE
+    │                           ├── FIELD_INIT [x]
+    │                           │   └── VALUE_EXPR
+    │                           │       └── BINARY_OP (*)
+    │                           │           ├── MEMBER_ACCESS [.x]
+    │                           │           │   └── THIS
+    │                           │           └── IDENTIFIER (factor)
+    │                           └── FIELD_INIT [y]
+    │                               └── VALUE_EXPR
+    │                                   └── BINARY_OP (*)
+    │                                       ├── MEMBER_ACCESS [.y]
+    │                                       │   └── THIS
+    │                                       └── IDENTIFIER (factor)
+    ├── CONST_DECL [Body : struct]
+    │   └── STRUCT_DEFINITION
+    │       ├── FIELD_DEF [let position : Vector2]
+    │       │   └── STRUCT_INSTANCE
+    │       │       ├── FIELD_INIT [x]
+    │       │       │   └── VALUE_EXPR
+    │       │       │       └── LITERAL (0.0)
+    │       │       └── FIELD_INIT [y]
+    │       │           └── VALUE_EXPR
+    │       │               └── LITERAL (0.0)
+    │       ├── FIELD_DEF [let velocity : Vector2]
+    │       │   └── STRUCT_INSTANCE
+    │       │       ├── FIELD_INIT [x]
+    │       │       │   └── VALUE_EXPR
+    │       │       │       └── LITERAL (1.0)
+    │       │       └── FIELD_INIT [y]
+    │       │           └── VALUE_EXPR
+    │       │               └── LITERAL (1.0)
+    │       └── FIELD_DEF [let step : fn]
+    │           └── FN_LITERAL
+    │               └── BLOCK
+    │                   ├── ASSIGNMENT -> this.position.x
+    │                   │   └── VALUE_EXPR
+    │                   │       └── BINARY_OP (+)
+    │                   │           ├── MEMBER_ACCESS [.x]
+    │                   │           │   └── MEMBER_ACCESS [.position]
+    │                   │           │       └── THIS
+    │                   │           └── MEMBER_ACCESS [.x]
+    │                   │               └── MEMBER_ACCESS [.velocity]
+    │                   │                   └── THIS
+    │                   └── ASSIGNMENT -> this.position.y
+    │                       └── VALUE_EXPR
+    │                           └── BINARY_OP (+)
+    │                               ├── MEMBER_ACCESS [.y]
+    │                               │   └── MEMBER_ACCESS [.position]
+    │                               │       └── THIS
+    │                               └── MEMBER_ACCESS [.y]
+    │                                   └── MEMBER_ACCESS [.velocity]
+    │                                       └── THIS
+    ├── CONST_DECL [factorial : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── IF_STMT
+    │           │   ├── BINARY_OP (<=)
+    │           │   │   ├── IDENTIFIER (n)
+    │           │   │   └── LITERAL (1)
+    │           │   └── BLOCK
+    │           │       └── RETURN_STMT
+    │           └── RETURN_STMT
+    ├── CONST_DECL [doubleIt : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           └── RETURN_STMT
+    ├── CONST_DECL [applyTwice : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [once : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (op)
+    │           │           └── IDENTIFIER (seed)
+    │           ├── LET_DECL [twice : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── FN_CALL (op)
+    │           │           └── IDENTIFIER (once)
+    │           └── RETURN_STMT
+    ├── CONST_DECL [main : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── LET_DECL [a : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (10)
+    │           ├── LET_DECL [b : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (3)
+    │           ├── LET_DECL [c : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (2)
+    │           ├── LET_DECL [simple_math : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── IDENTIFIER (a)
+    │           │           └── IDENTIFIER (b)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("simple_math (a + b):")
+    │           │   ├── IDENTIFIER (simple_math)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [complex_math : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (-)
+    │           │           ├── BINARY_OP (*)
+    │           │           │   ├── PAREN_EXPR
+    │           │           │   │   └── BINARY_OP (+)
+    │           │           │   │       ├── IDENTIFIER (a)
+    │           │           │   │       └── IDENTIFIER (b)
+    │           │           │   └── IDENTIFIER (c)
+    │           │           └── BINARY_OP (%)
+    │           │               ├── BINARY_OP (/)
+    │           │               │   ├── IDENTIFIER (a)
+    │           │               │   └── IDENTIFIER (c)
+    │           │               └── IDENTIFIER (b)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("complex_math ((a+b)*c - a/c%b):")
+    │           │   ├── IDENTIFIER (complex_math)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [simple_boolean : bool]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (>)
+    │           │           ├── IDENTIFIER (a)
+    │           │           └── IDENTIFIER (b)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("simple_boolean (a > b):")
+    │           │   ├── IDENTIFIER (simple_boolean)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [complex_boolean : bool]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (&&)
+    │           │           ├── BINARY_OP (>)
+    │           │           │   ├── IDENTIFIER (a)
+    │           │           │   └── IDENTIFIER (b)
+    │           │           └── BINARY_OP (<=)
+    │           │               ├── IDENTIFIER (c)
+    │           │               └── IDENTIFIER (b)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("complex_boolean (a > b && c <= b):")
+    │           │   ├── IDENTIFIER (complex_boolean)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [complex_logical : bool]
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (||)
+    │           │           ├── PAREN_EXPR
+    │           │           │   └── BINARY_OP (&&)
+    │           │           │       ├── BINARY_OP (>)
+    │           │           │       │   ├── IDENTIFIER (a)
+    │           │           │       │   └── IDENTIFIER (b)
+    │           │           │       └── BINARY_OP (<=)
+    │           │           │           ├── IDENTIFIER (c)
+    │           │           │           └── IDENTIFIER (b)
+    │           │           └── BINARY_OP (&&)
+    │           │               ├── UNARY_OP (!)
+    │           │               │   └── PAREN_EXPR
+    │           │               │       └── BINARY_OP (==)
+    │           │               │           ├── IDENTIFIER (a)
+    │           │               │           └── IDENTIFIER (b)
+    │           │               └── PAREN_EXPR
+    │           │                   └── BINARY_OP (!=)
+    │           │                       ├── IDENTIFIER (c)
+    │           │                       └── IDENTIFIER (a)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("complex_logical:")
+    │           │   ├── IDENTIFIER (complex_logical)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [grid : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (1)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (2)
+    │           │       ├── VALUE_EXPR
+    │           │       │   └── LITERAL (3)
+    │           │       └── VALUE_EXPR
+    │           │           └── LITERAL (4)
+    │           ├── ASSIGNMENT -> grid[LITERAL(0)]
+    │           │   ├── LITERAL (0)
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (+)
+    │           │           ├── INDEX_ACCESS
+    │           │           │   ├── IDENTIFIER (grid)
+    │           │           │   └── LITERAL (0)
+    │           │           └── INDEX_ACCESS
+    │           │               ├── IDENTIFIER (grid)
+    │           │               └── LITERAL (1)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("grid[0] after grid[0]+grid[1]:")
+    │           │   ├── INDEX_ACCESS
+    │           │   │   ├── IDENTIFIER (grid)
+    │           │   │   └── LITERAL (0)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [total : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_ITER [var: v]
+    │           │   ├── IDENTIFIER (grid)
+    │           │   └── BLOCK
+    │           │       └── ASSIGNMENT -> total
+    │           │           └── VALUE_EXPR
+    │           │               └── BINARY_OP (+)
+    │           │                   ├── IDENTIFIER (total)
+    │           │                   └── IDENTIFIER (v)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("sum of grid:")
+    │           │   ├── IDENTIFIER (total)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [bodies : array]
+    │           │   └── ARRAY_LITERAL
+    │           │       ├── STRUCT_INSTANCE
+    │           │       │   ├── FIELD_INIT [position]
+    │           │       │   │   └── STRUCT_INSTANCE
+    │           │       │   │       ├── FIELD_INIT [x]
+    │           │       │   │       │   └── VALUE_EXPR
+    │           │       │   │       │       └── LITERAL (0.0)
+    │           │       │   │       └── FIELD_INIT [y]
+    │           │       │   │           └── VALUE_EXPR
+    │           │       │   │               └── LITERAL (0.0)
+    │           │       │   └── FIELD_INIT [velocity]
+    │           │       │       └── STRUCT_INSTANCE
+    │           │       │           ├── FIELD_INIT [x]
+    │           │       │           │   └── VALUE_EXPR
+    │           │       │           │       └── LITERAL (1.0)
+    │           │       │           └── FIELD_INIT [y]
+    │           │       │               └── VALUE_EXPR
+    │           │       │                   └── LITERAL (0.0)
+    │           │       └── STRUCT_INSTANCE
+    │           │           ├── FIELD_INIT [position]
+    │           │           │   └── STRUCT_INSTANCE
+    │           │           │       ├── FIELD_INIT [x]
+    │           │           │       │   └── VALUE_EXPR
+    │           │           │       │       └── LITERAL (5.0)
+    │           │           │       └── FIELD_INIT [y]
+    │           │           │           └── VALUE_EXPR
+    │           │           │               └── LITERAL (5.0)
+    │           │           └── FIELD_INIT [velocity]
+    │           │               └── STRUCT_INSTANCE
+    │           │                   ├── FIELD_INIT [x]
+    │           │                   │   └── VALUE_EXPR
+    │           │                   │       └── LITERAL (0.0)
+    │           │                   └── FIELD_INIT [y]
+    │           │                       └── VALUE_EXPR
+    │           │                           └── UNARY_OP (-)
+    │           │                               └── LITERAL (1.0)
+    │           ├── FOR_ITER [var: body]
+    │           │   ├── IDENTIFIER (bodies)
+    │           │   └── BLOCK
+    │           │       └── EXPR_STMT
+    │           │           └── METHOD_CALL [.step]
+    │           │               └── IDENTIFIER (body)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("body[0].position.x after step:")
+    │           │   ├── MEMBER_ACCESS [.x]
+    │           │   │   └── MEMBER_ACCESS [.position]
+    │           │   │       └── INDEX_ACCESS
+    │           │   │           ├── IDENTIFIER (bodies)
+    │           │   │           └── LITERAL (0)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [v : Vector2]
+    │           │   └── STRUCT_INSTANCE
+    │           │       ├── FIELD_INIT [x]
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── LITERAL (3.0)
+    │           │       └── FIELD_INIT [y]
+    │           │           └── VALUE_EXPR
+    │           │               └── LITERAL (4.0)
+    │           ├── EXPR_STMT
+    │           │   └── METHOD_CALL [.scale]
+    │           │       ├── IDENTIFIER (v)
+    │           │       └── LITERAL (2.0)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("v scaled by 2 -> magnitude:")
+    │           │   ├── METHOD_CALL [.magnitude]
+    │           │   │   └── IDENTIFIER (v)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [facing : Direction]
+    │           │   └── VALUE_EXPR
+    │           │       └── MEMBER_ACCESS [.north]
+    │           │           └── IDENTIFIER (Direction)
+    │           ├── IF_STMT
+    │           │   ├── BINARY_OP (==)
+    │           │   │   ├── IDENTIFIER (facing)
+    │           │   │   └── MEMBER_ACCESS [.north]
+    │           │   │       └── IDENTIFIER (Direction)
+    │           │   ├── BLOCK
+    │           │   │   └── PRINT_STMT
+    │           │   │       ├── LITERAL ("facing: north")
+    │           │   │       └── LITERAL ("\n")
+    │           │   └── IF_STMT
+    │           │       ├── BINARY_OP (==)
+    │           │       │   ├── IDENTIFIER (facing)
+    │           │       │   └── MEMBER_ACCESS [.east]
+    │           │       │       └── IDENTIFIER (Direction)
+    │           │       ├── BLOCK
+    │           │       │   └── PRINT_STMT
+    │           │       │       ├── LITERAL ("facing: east")
+    │           │       │       └── LITERAL ("\n")
+    │           │       └── BLOCK
+    │           │           └── PRINT_STMT
+    │           │               ├── LITERAL ("facing: elsewhere")
+    │           │               └── LITERAL ("\n")
+    │           ├── LET_DECL [health : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (100)
+    │           ├── LET_DECL [hpPtr : ptr]
+    │           │   └── VALUE_EXPR
+    │           │       └── UNARY_OP (&)
+    │           │           └── IDENTIFIER (health)
+    │           ├── ASSIGNMENT -> *hpPtr
+    │           │   └── VALUE_EXPR
+    │           │       └── BINARY_OP (-)
+    │           │           ├── UNARY_OP (*)
+    │           │           │   └── IDENTIFIER (hpPtr)
+    │           │           └── LITERAL (25)
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("health after damage via pointer:")
+    │           │   ├── IDENTIFIER (health)
+    │           │   └── LITERAL ("\n")
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("factorial(5):")
+    │           │   ├── FN_CALL (factorial)
+    │           │   │   └── LITERAL (5)
+    │           │   └── LITERAL ("\n")
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("applyTwice(doubleIt, 5):")
+    │           │   ├── FN_CALL (applyTwice)
+    │           │   │   ├── IDENTIFIER (doubleIt)
+    │           │   │   └── LITERAL (5)
+    │           │   └── LITERAL ("\n")
+    │           ├── LET_DECL [i : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (0)
+    │           ├── FOR_WHILE
+    │           │   ├── BINARY_OP (<)
+    │           │   │   ├── IDENTIFIER (i)
+    │           │   │   └── LITERAL (10)
+    │           │   └── BLOCK
+    │           │       ├── ASSIGNMENT -> i
+    │           │       │   └── VALUE_EXPR
+    │           │       │       └── BINARY_OP (+)
+    │           │       │           ├── IDENTIFIER (i)
+    │           │       │           └── LITERAL (1)
+    │           │       ├── IF_STMT
+    │           │       │   ├── BINARY_OP (==)
+    │           │       │   │   ├── IDENTIFIER (i)
+    │           │       │   │   └── LITERAL (3)
+    │           │       │   └── BLOCK
+    │           │       │       └── CONTINUE_STMT
+    │           │       ├── IF_STMT
+    │           │       │   ├── BINARY_OP (==)
+    │           │       │   │   ├── IDENTIFIER (i)
+    │           │       │   │   └── LITERAL (7)
+    │           │       │   └── BLOCK
+    │           │       │       └── BREAK_STMT
+    │           │       └── PRINT_STMT
+    │           │           ├── LITERAL ("while-loop i =")
+    │           │           ├── IDENTIFIER (i)
+    │           │           └── LITERAL ("\n")
+    │           ├── LET_DECL [counter : int]
+    │           │   └── VALUE_EXPR
+    │           │       └── LITERAL (3)
+    │           ├── FOR_REPEAT_UNTIL
+    │           │   ├── BLOCK
+    │           │   │   ├── PRINT_STMT
+    │           │   │   │   ├── LITERAL ("repeat-until counter =")
+    │           │   │   │   ├── IDENTIFIER (counter)
+    │           │   │   │   └── LITERAL ("\n")
+    │           │   │   └── EXPR_STMT
+    │           │   │       └── UNARY_OP (--) (postfix)
+    │           │   │           └── IDENTIFIER (counter)
+    │           │   └── BINARY_OP (==)
+    │           │       ├── IDENTIFIER (counter)
+    │           │       └── LITERAL (0)
+    │           ├── LET_DECL [name : string]
+    │           │   └── VALUE_EXPR
+    │           │       └── INPUT_EXPR
+    │           │           └── LITERAL ("Enter your name: ")
+    │           ├── PRINT_STMT
+    │           │   ├── LITERAL ("Hello,")
+    │           │   └── IDENTIFIER (name)
+    │           └── RETURN_STMT
+    └── EXPR_STMT
+        └── FN_CALL (main)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  Direction       | enum       | enum       |                          | 11:7
+  Vector2         | struct     | struct     |                          | 13:7
+  Body            | struct     | struct     |                          | 26:7
+  factorial       | fn         | fn         |                          | 38:7
+  doubleIt        | fn         | fn         |                          | 45:7
+  applyTwice      | fn         | fn         |                          | 49:7
+  main            | fn         | fn         |                          | 57:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    factor          | param      | float      |                          | 21:23
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    n               | param      | int        |                          | 38:25
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    n               | param      | int        |                          | 45:24
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    op              | param      | fn         |                          | 49:26
+    seed            | param      | int        |                          | 49:35
+    once            | let        | int        |                          | 50:9
+    twice           | let        | int        |                          | 51:9
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    total           | let        | int        |                          | 89:9
+    v               | let        | Vector2    |                          | 108:9
+    counter         | let        | int        |                          | 146:9
+    facing          | let        | Direction  |                          | 113:9
+    health          | let        | int        |                          | 123:9
+    a               | let        | int        |                          | 60:9
+    b               | let        | int        |                          | 61:9
+    c               | let        | int        |                          | 62:9
+    simple_math     | let        | int        |                          | 65:9
+    complex_boolean | let        | bool       |                          | 77:9
+    complex_logical | let        | bool       |                          | 81:9
+    i               | let        | int        |                          | 133:9
+    name            | let        | string     |                          | 153:9
+    complex_math    | let        | int        |                          | 69:9
+    simple_boolean  | let        | bool       |                          | 73:9
+    grid            | let        | array      | length=4, elem=int       | 85:9
+    bodies          | let        | array      | length=2, elem=Body      | 96:9
+    hpPtr           | let        | ptr        | points to int            | 124:9
+
+
+--- PROGRAM OUTPUT ---
+  (AST tree-walking execution skipped: running via TAC, per --ir)
+
+--- IR / OPTIMIZATION PIPELINE ---
+(main() function found; note: function calls are unsupported currently so all functions should be inlined into main() :3 )
+
+(15 statement(s) outside the IR's arithmetic/control-flow subset were NOT lowered -- they do not run at all when TAC is the execution channel)
+   85:5: not lowered to IR ("grid"'s initializer is not a plain expression (array/struct/enum/fn literal)) -- runs only in the tree-walking interpreter
+   86:5: not lowered to IR (assignment target is not a plain identifier (struct/array/pointer lvalue)) -- runs only in the tree-walking interpreter
+   87:5: not lowered to IR (print argument uses an unsupported expression form) -- runs only in the tree-walking interpreter
+   90:5: not lowered to IR (statement type *main.ForIterStmt is outside the IR's arithmetic/control-flow subset) -- runs only in the tree-walking interpreter
+   96:5: not lowered to IR ("bodies"'s initializer is not a plain expression (array/struct/enum/fn literal)) -- runs only in the tree-walking interpreter
+   102:5: not lowered to IR (statement type *main.ForIterStmt is outside the IR's arithmetic/control-flow subset) -- runs only in the tree-walking interpreter
+   106:5: not lowered to IR (print argument uses an unsupported expression form) -- runs only in the tree-walking interpreter
+   108:5: not lowered to IR ("v"'s initializer is not a plain expression (array/struct/enum/fn literal)) -- runs only in the tree-walking interpreter
+   109:5: not lowered to IR (statement type *main.ExprStmt is outside the IR's arithmetic/control-flow subset) -- runs only in the tree-walking interpreter
+   110:5: not lowered to IR (print argument uses an unsupported expression form) -- runs only in the tree-walking interpreter
+   114:5: not lowered to IR (if-condition uses an unsupported expression form) -- runs only in the tree-walking interpreter
+   125:5: not lowered to IR (assignment target is not a plain identifier (struct/array/pointer lvalue)) -- runs only in the tree-walking interpreter
+   129:5: not lowered to IR (print argument uses an unsupported expression form) -- runs only in the tree-walking interpreter
+   130:5: not lowered to IR (print argument uses an unsupported expression form) -- runs only in the tree-walking interpreter
+   147:5: not lowered to IR (statement type *main.ForRepeatStmt is outside the IR's arithmetic/control-flow subset) -- runs only in the tree-walking interpreter
+
+--- TAC (before optimization) ---
+    a = 10
+    b = 3
+    c = 2
+    t0 = a ADD b
+    simple_math = t0
+    print simple_math (a + b):, simple_math, 
+
+    t1 = a ADD b
+    t2 = t1 MUL c
+    t3 = a DIV c
+    t4 = t3 MOD b
+    t5 = t2 SUB t4
+    complex_math = t5
+    print complex_math ((a+b)*c - a/c%b):, complex_math, 
+
+    t6 = a GT b
+    simple_boolean = t6
+    print simple_boolean (a > b):, simple_boolean, 
+
+    t7 = a GT b
+    t8 = c LE b
+    t9 = t7 AND t8
+    complex_boolean = t9
+    print complex_boolean (a > b && c <= b):, complex_boolean, 
+
+    t10 = a GT b
+    t11 = c LE b
+    t12 = t10 AND t11
+    t13 = a EQ b
+    t14 = NOT t13
+    t15 = c NE a
+    t16 = t14 AND t15
+    t17 = t12 OR t16
+    complex_logical = t17
+    print complex_logical:, complex_logical, 
+
+    total = 0
+    print sum of grid:, total, 
+
+    health = 100
+    print health after damage via pointer:, health, 
+
+    i = 0
+L0:
+    t18 = i LT 10
+    ifFalse t18 goto L1
+    t19 = i ADD 1
+    i = t19
+    t20 = i EQ 3
+    ifFalse t20 goto L2
+    goto L0
+L2:
+    t21 = i EQ 7
+    ifFalse t21 goto L3
+    goto L1
+L3:
+    print while-loop i =, i, 
+
+    goto L0
+L1:
+    counter = 3
+    print Hello,, name
+    return 0
+
+--- TAC (after optimization) ---
+    a = 10
+    b = 3
+    c = 2
+    simple_math = 13
+    print simple_math (a + b):, 13, 
+
+    complex_math = 24
+    print complex_math ((a+b)*c - a/c%b):, 24, 
+
+    simple_boolean = true
+    print simple_boolean (a > b):, true, 
+
+    complex_boolean = true
+    print complex_boolean (a > b && c <= b):, true, 
+
+    complex_logical = true
+    print complex_logical:, true, 
+
+    total = 0
+    print sum of grid:, 0, 
+
+    health = 100
+    print health after damage via pointer:, 100, 
+
+    i = 0
+L0:
+    t18 = i LT 10
+    ifFalse t18 goto L1
+    t19 = i ADD 1
+    i = t19
+    t20 = i EQ 3
+    ifFalse t20 goto L2
+    goto L0
+L2:
+    t21 = i EQ 7
+    ifFalse t21 goto L3
+    goto L1
+L3:
+    print while-loop i =, i, 
+
+    goto L0
+L1:
+    counter = 3
+    print Hello,, name
+    return 0
+
+--- OPTIMIZATION REPORT ---
+  fixed point reached after 6 round(s)
+  constants propagated : 47
+  expressions folded   : 18
+  subexpressions reused (CSE) : 0
+  dead instructions removed   : 18
+  instruction count: 55 -> 37
+
+--- PARITY CHECK ---
+  unoptimized TAC run error: 0:0: runtime error: TAC: undefined variable "name"
+  optimized TAC run error: 0:0: runtime error: TAC: undefined variable "name"
+  unoptimized TAC output:
+    simple_math (a + b): 13 
+    
+    complex_math ((a+b)*c - a/c%b): 24 
+    
+    simple_boolean (a > b): true 
+    
+    complex_boolean (a > b && c <= b): true 
+    
+    complex_logical: true 
+    
+    sum of grid: 0 
+    
+    health after damage via pointer: 100 
+    
+    while-loop i = 1 
+    
+    while-loop i = 2 
+    
+    while-loop i = 4 
+    
+    while-loop i = 5 
+    
+    while-loop i = 6 
+  optimized TAC output:
+    simple_math (a + b): 13 
+    
+    complex_math ((a+b)*c - a/c%b): 24 
+    
+    simple_boolean (a > b): true 
+    
+    complex_boolean (a > b && c <= b): true 
+    
+    complex_logical: true 
+    
+    sum of grid: 0 
+    
+    health after damage via pointer: 100 
+    
+    while-loop i = 1 
+    
+    while-loop i = 2 
+    
+    while-loop i = 4 
+    
+    while-loop i = 5 
+    
+    while-loop i = 6 
+  MATCH: optimized TAC produces identical output to unoptimized TAC.
+

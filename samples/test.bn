@@ -1,0 +1,8 @@
+let x : int[5] = [0, 0, 0, 0, 0];
+for i in range(5){
+    x[i] = i;
+}
+
+for j in x {
+    print(j, "\n");
+}

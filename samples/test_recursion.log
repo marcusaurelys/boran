@@ -1,0 +1,44 @@
+--- PARSE TREE ---
+└── PROGRAM
+    ├── CONST_DECL [fibonacci : fn]
+    │   └── FN_LITERAL
+    │       └── BLOCK
+    │           ├── IF_STMT
+    │           │   ├── BINARY_OP (<=)
+    │           │   │   ├── IDENTIFIER (x)
+    │           │   │   └── LITERAL (1)
+    │           │   └── BLOCK
+    │           │       └── RETURN_STMT
+    │           └── RETURN_STMT
+    └── CONST_DECL [main : fn]
+        └── FN_LITERAL
+            └── BLOCK
+                ├── LET_DECL [val : int]
+                │   └── VALUE_EXPR
+                │       └── FN_CALL (fibonacci)
+                │           └── LITERAL (3)
+                └── PRINT_STMT
+                    └── IDENTIFIER (val)
+
+--- SYMBOL TABLE ---
+Scope Level 0:
+  NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+  --------------------------------------------------------------------------------
+  fibonacci       | fn         | fn         |                          | 1:7
+  main            | fn         | fn         |                          | 8:7
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    x               | param      | int        |                          | 1:25
+
+  Scope Level 1:
+    NAME            | KIND       | TYPE       | DETAILS                  | LINE:COL  
+    --------------------------------------------------------------------------------
+    val             | let        | int        |                          | 9:9
+
+
+--- PROGRAM OUTPUT ---
+
+--- FINAL HEAP STATE ---
+  (empty)
