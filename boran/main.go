@@ -6,161 +6,234 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
 
-func printBlockScopes(scope *Scope, depth int) {
-	indent := ""
-	for i := 0; i < depth; i++ {
-		indent += "  "
+// Exit codes. Kept small and stable so the caller (shell script, test
+// harness, whatever) can branch on $? without parsing stderr text.
+const (
+	exitOK          = 0
+	exitUsage       = 1 // bad args, file not found, couldn't write a requested log file
+	exitSyntaxErr   = 2
+	exitSemanticErr = 3
+	exitRuntimeErr  = 4
+)
+
+type runFlags struct {
+	step bool
+	ir   bool
+	log  bool
+	vs   bool
+}
+
+func parseArgs(args []string) (path string, flags runFlags, err error) {
+	if len(args) < 1 {
+		return "", flags, fmt.Errorf("usage: boran <source_file> [--step] [--ir] [--log] [--vs]")
 	}
-	for name, sym := range scope.Symbols {
-		fmt.Printf("%s- %s : %s (%s) @%d:%d\n", indent, name, sym.TypeName, sym.Kind, sym.Line, sym.Col)
+	path = args[0]
+	for _, a := range args[1:] {
+		switch a {
+		case "--step":
+			flags.step = true
+		case "--ir":
+			flags.ir = true
+		case "--log":
+			flags.log = true
+		case "--vs":
+			flags.vs = true
+		default:
+			return "", flags, fmt.Errorf("usage: boran <source_file> [--step] [--ir] [--log] [--vs] (unknown flag %q)", a)
+		}
 	}
-	for _, child := range scope.Children {
-		fmt.Printf("%sscope {\n", indent)
-		printBlockScopes(child, depth+1)
-		fmt.Printf("%s}\n", indent)
+	return path, flags, nil
+}
+
+// logFilePath decides where the combined-or-not log file goes: next to the
+// source file, overwritten each run. --ir (with or without --log) targets
+// <base>_ir.log; --log alone targets <base>.log; when both are set,
+// everything -- full dump AND the IR report -- goes into the single
+// <base>_ir.log per the agreed "combine into one file" behavior.
+func logFilePath(dir, base string, flags runFlags) string {
+	if flags.ir {
+		return filepath.Join(dir, base+"_ir.log")
 	}
+	return filepath.Join(dir, base+".log")
+}
+
+func writeLog(dir, base string, flags runFlags, buf *bytes.Buffer) {
+	path := logFilePath(dir, base, flags)
+	if err := os.WriteFile(path, buf.Bytes(), 0644); err != nil {
+		fmt.Fprintf(os.Stderr, "warning: could not write log file %q: %v\n", path, err)
+		return
+	}
+	fmt.Fprintf(os.Stderr, "wrote %s\n", path)
 }
 
 func main() {
-	if len(os.Args) < 2 || len(os.Args) > 3 {
-		fmt.Fprintln(os.Stderr, "usage: boran <source_file> [--step | --ir]")
-		os.Exit(1)
-	}
-	stepMode := false
-	irMode := false
-	if len(os.Args) == 3 {
-		switch os.Args[2] {
-		case "--step":
-			stepMode = true
-		case "--ir":
-			irMode = true
-		default:
-			fmt.Fprintln(os.Stderr, "usage: boran <source_file> [--step | --ir]")
-			os.Exit(1)
-		}
-	}
-
-	data, err := os.ReadFile(os.Args[1])
+	path, flags, err := parseArgs(os.Args[1:])
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: could not read %q: %v\n", os.Args[1], err)
-		os.Exit(1)
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(exitUsage)
 	}
 
-	start := time.Now()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: could not read %q: %v\n", path, err)
+		os.Exit(exitUsage)
+	}
+
+	base := strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+	dir := filepath.Dir(path)
+
 	tokens, _ := TokenizeAll(string(data))
 	parser := NewParser(tokens)
 	program := parser.ParseProgram()
-	elapsed := time.Since(start)
 
-	// 1. Open the file in APPEND mode.
-	// O_APPEND: adds to the end. O_CREATE: makes it if missing. O_WRONLY: write only.
-	outFile, err := os.OpenFile("parse_results.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: could not open log file: %v\n", err)
-		os.Exit(1)
+	// logBuf accumulates the file-only report content. It only exists (and
+	// only gets written out) when the person actually asked for a file via
+	// --log and/or --ir -- the default run touches disk not at all.
+	var logBuf *bytes.Buffer
+	if flags.log || flags.ir {
+		logBuf = &bytes.Buffer{}
+		fmt.Fprintln(logBuf, "--- PARSE TREE ---")
+		DrawTree(program, logBuf)
+		fmt.Fprintln(logBuf, "\n--- SYMBOL TABLE ---")
+		PrintSymbolTable(parser.Symbols.Global, 0, logBuf)
 	}
-	defer outFile.Close()
 
-	// 2. Add a unique header for this run
-	timestamp := time.Now().Format("2006-01-02 15:04:05")
-	separator := strings.Repeat("=", 80)
-	fmt.Fprintf(outFile, "\n\n%s\n", separator)
-	fmt.Fprintf(outFile, " NEW RUN: %s | Elapsed: %s | Source: %s\n", timestamp, elapsed, os.Args[1])
-	fmt.Fprintf(outFile, "%s\n", separator)
-
-	// 3. Print the Tree
-	fmt.Fprintln(outFile, "\n--- PARSE TREE ---")
-	DrawTree(program, outFile)
-
-	// 4. Print the Symbol Table
-	fmt.Fprintln(outFile, "\n--- SYMBOL TABLE ---")
-	PrintSymbolTable(parser.Symbols.Global, 0, outFile)
-
-	// 5. Print Errors if any
 	if len(parser.Errors) > 0 {
-		fmt.Fprintf(outFile, "\n--- SYNTAX ERRORS (%d) ---\n", len(parser.Errors))
 		for _, e := range parser.Errors {
-			fmt.Fprintln(outFile, "  ", e.Error())
+			fmt.Fprintln(os.Stderr, e.Error())
 		}
+		if logBuf != nil {
+			fmt.Fprintf(logBuf, "\n--- SYNTAX ERRORS (%d) ---\n", len(parser.Errors))
+			for _, e := range parser.Errors {
+				fmt.Fprintln(logBuf, "  ", e.Error())
+			}
+			writeLog(dir, base, flags, logBuf)
+		}
+		os.Exit(exitSyntaxErr)
 	}
 
-	// 6. Static semantic analysis (only meaningful once the source parses
-	//    cleanly enough to produce a usable AST -- still run it regardless,
-	//    since parseStmtRecover keeps as much of the tree as it can).
+	// Static semantic analysis -- only meaningful once the source parses
+	// cleanly enough to produce a usable AST, but run it regardless since
+	// parseStmtRecover keeps as much of the tree as it can.
 	checker := NewTypeChecker()
 	semErrors := checker.Check(program)
 	if len(semErrors) > 0 {
-		fmt.Fprintf(outFile, "\n--- SEMANTIC ERRORS (%d) ---\n", len(semErrors))
 		for _, e := range semErrors {
-			fmt.Fprintln(outFile, "  ", e.Error())
+			fmt.Fprintln(os.Stderr, e.Error())
 		}
+		if logBuf != nil {
+			fmt.Fprintf(logBuf, "\n--- SEMANTIC ERRORS (%d) ---\n", len(semErrors))
+			for _, e := range semErrors {
+				fmt.Fprintln(logBuf, "  ", e.Error())
+			}
+			writeLog(dir, base, flags, logBuf)
+		}
+		os.Exit(exitSemanticErr)
 	}
 
-	// 7. Execute -- only when the program parsed and type-checked clean.
-	//    Running a program full of unresolved names/type errors would just
-	//    produce a wall of cascading runtime errors on top of diagnostics
-	//    already reported above.
-	programOutputBuf := &bytes.Buffer{}
-	if len(parser.Errors) == 0 && len(semErrors) == 0 {
-		fmt.Fprintln(outFile, "\n--- PROGRAM OUTPUT ---")
+	// Past this point the program parsed and type-checked clean. Decide
+	// which interpreter(s) actually run:
+	//   default / --log / --step        -> AST tree-walker only
+	//   --ir (no --vs)                  -> TAC only, TAC IS the execution
+	//   --vs (with or without --ir)     -> both, timed against each other
+	execAST := !flags.ir || flags.vs
+	execTAC := flags.ir || flags.vs
 
-		// One shared reader over stdin: the program's own input() calls
-		// and the step-controller's "press Enter to continue" prompts
-		// read from the same stream, so they can't fight over buffered
-		// input across two separate bufio.Readers on the same fd.
+	var runtimeErr error
+	var astElapsed time.Duration
+	var astOutput string
+
+	if execAST {
 		stdinReader := bufio.NewReader(os.Stdin)
-
-		out := io.MultiWriter(outFile, programOutputBuf)
-		if stepMode {
-			fmt.Println("\n--- LINE-BY-LINE EXECUTION ---")
-		}
+		programOutputBuf := &bytes.Buffer{}
+		out := io.MultiWriter(os.Stdout, programOutputBuf)
 
 		interp := NewInterpreterWithReader(out, stdinReader)
 		var sc *stepController
-		if stepMode {
+		if flags.step {
 			sc = newStepController(stdinReader, programOutputBuf)
 			interp.OnStep = sc.hook
 		}
 
-		if err := interp.Run(program); err != nil {
-			fmt.Fprintf(outFile, "\n--- RUNTIME ERROR ---\n  %s\n", err.Error())
-			if stepMode {
-				fmt.Println("\n--- RUNTIME ERROR ---\n ", err.Error())
+		start := time.Now()
+		runErr := interp.Run(program)
+		astElapsed = time.Since(start)
+
+		if flags.step {
+			sc.FlushOutput()
+		}
+		if runErr != nil {
+			fmt.Fprintln(os.Stderr, runErr.Error())
+			runtimeErr = runErr
+		}
+
+		astOutput = programOutputBuf.String()
+
+		if logBuf != nil {
+			fmt.Fprintln(logBuf, "\n--- PROGRAM OUTPUT ---")
+			logBuf.WriteString(astOutput)
+			if runErr != nil {
+				fmt.Fprintf(logBuf, "\n--- RUNTIME ERROR ---\n  %s\n", runErr.Error())
+			}
+			fmt.Fprintln(logBuf, "\n--- FINAL HEAP STATE ---")
+			fmt.Fprint(logBuf, interp.Heap.String())
+		}
+	} else if logBuf != nil {
+		fmt.Fprintln(logBuf, "\n--- PROGRAM OUTPUT ---\n  (AST tree-walking execution skipped: running via TAC, per --ir)")
+	}
+
+	if execTAC {
+		// --ir alone: TAC is the real execution channel, so stream the
+		// optimized run's output live to stdout as it happens. --vs (with
+		// or without --ir) already got its "real" output from the AST run
+		// above, so the TAC run here is silent/timed-only.
+		var mirror io.Writer
+		if flags.ir && !flags.vs {
+			mirror = os.Stdout
+		}
+		ir := runIR(program, mirror, astOutput, execAST)
+
+		if ir.Unsupported > 0 {
+			if flags.ir && !flags.vs {
+				fmt.Fprintf(os.Stderr, "note: %d statement(s) fell outside the TAC-lowerable subset and did NOT execute (see %s)\n", ir.Unsupported, logFilePath(dir, base, flags))
+			} else {
+				fmt.Fprintf(os.Stderr, "note: %d statement(s) fell outside the TAC-lowerable subset; --vs comparison covers the AST-only remainder too\n", ir.Unsupported)
 			}
 		}
-		if stepMode {
-			sc.FlushOutput() // the last statement's output has no following hook() call to flush it
+
+		if logBuf != nil {
+			fmt.Fprintln(logBuf, "\n"+ir.Report)
 		}
-		fmt.Fprintln(outFile, "\n--- FINAL HEAP STATE ---")
-		fmt.Fprint(outFile, interp.Heap.String())
-		if stepMode {
-			fmt.Println("\n--- FINAL HEAP STATE ---")
-			fmt.Print(interp.Heap.String())
+
+		if flags.ir && !flags.vs {
+			// TAC was the actual execution: its error (if any) is *the*
+			// runtime error for exit-code purposes.
+			if ir.OptErr != nil {
+				fmt.Fprintln(os.Stderr, ir.OptErr.Error())
+				runtimeErr = ir.OptErr
+			}
 		}
-	} else {
-		fmt.Fprintln(outFile, "\n--- PROGRAM OUTPUT ---\n  (skipped: syntax/semantic errors present)")
+
+		if flags.vs {
+			report := vsReport(astElapsed, ir)
+			fmt.Print("\n" + report)
+			if logBuf != nil {
+				fmt.Fprintln(logBuf, "\n"+report)
+			}
+		}
 	}
 
-	// 8. IR / optimization pipeline -- entirely separate from normal
-	//    execution above. Lowers the arithmetic/control-flow subset to
-	//    TAC, prints it before and after optimization, then runs both
-	//    forms through the standalone TAC interpreter and diffs their
-	//    output against each other and against the tree-walking
-	//    interpreter's own output, as a correctness parity check.
-	if irMode && len(parser.Errors) == 0 && len(semErrors) == 0 {
-		runIRPipeline(program, outFile, programOutputBuf.String())
+	if logBuf != nil {
+		writeLog(dir, base, flags, logBuf)
 	}
 
-	fmt.Printf("Analysis appended to 'parse_results.txt' (Run: %s)\n", timestamp)
-
-
-	for i:=0;i<5;i++{
-fmt.Printf("%d"  ,i)
+	if runtimeErr != nil {
+		os.Exit(exitRuntimeErr)
 	}
-
-
+	os.Exit(exitOK)
 }
