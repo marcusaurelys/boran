@@ -484,6 +484,9 @@ func (i *Interpreter) execDecl(name, typeTag string, dtype *DatatypeNode, val Va
 		i.enumDefs[name] = eb
 	}
 	rv := i.evalValue(val, env, dtype)
+	if val != nil {
+		i.checkDeclType(name, dtype, rv, val)
+	}
 	if td, ok := rv.(*TypeDefVal); ok {
 		td.Name = name
 	}
@@ -505,6 +508,26 @@ func (i *Interpreter) execDecl(name, typeTag string, dtype *DatatypeNode, val Va
 		return
 	}
 	env.Define(name, rv)
+}
+
+// checkDeclType enforces that a 'let'/'const' declaration's actual
+// initializer value matches its declared scalar type. This is the direct
+// counterpart to checkReturnValue and closes a gap that one alone doesn't:
+// checkReturnValue only fires when some *enclosing* function's own
+// declared return type also disagrees with what actually came back, so a
+// mismatched value flowing into a typed local inside a void-returning (or
+// otherwise untyped) wrapper function would still slip through silently
+// without this. Scoped to the same five scalar kinds as
+// checkReturnValue/scalarTypeKind, for the same reason.
+func (i *Interpreter) checkDeclType(name string, dtype *DatatypeNode, rv RTValue, val Value) {
+	want, ok := scalarTypeKind(dtype)
+	if !ok {
+		return
+	}
+	if !runtimeMatchesScalar(want, rv) {
+		line, col := val.Pos()
+		rtThrow(line, col, "%q declared as %s but initialized with %s", name, want, describeRTType(rv))
+	}
 }
 
 // declaredTypeAtAddr recovers a struct's declared type from whatever's
@@ -1042,6 +1065,53 @@ func typeTagOf(dtype *DatatypeNode) string {
 	return dtype.Kind
 }
 
+// scalarTypeKind reports the primitive scalar kind ("int", "float",
+// "string", "bool", "char") a declared type names, or ok=false for
+// anything else (arrays, structs, enums, fn, ptr, or an unset/nil type).
+// The runtime return-type check below is deliberately scoped to just these
+// five kinds -- they're the ones with an unambiguous 1:1 RTValue mapping,
+// so checking them can't produce a false positive against a legitimate
+// container/struct/enum value.
+func scalarTypeKind(dtype *DatatypeNode) (string, bool) {
+	if dtype == nil {
+		return "", false
+	}
+	switch dtype.Kind {
+	case "int", "float", "string", "bool", "char":
+		return dtype.Kind, true
+	}
+	return "", false
+}
+
+// runtimeMatchesScalar reports whether rv's runtime type satisfies the
+// declared scalar kind "want". int and float are treated as mutually
+// interchangeable, matching typecheck.go's own numeric-tower leniency
+// (isNumeric/typesCompatible) -- everything else must match exactly.
+func runtimeMatchesScalar(want string, rv RTValue) bool {
+	got := rv.TypeTag()
+	if want == got {
+		return true
+	}
+	if (want == "int" || want == "float") && (got == "int" || got == "float") {
+		return true
+	}
+	return false
+}
+
+// describeRTType renders v's runtime type for an error message, unwrapping
+// the "struct:Name" / "enum:Name" tags TypeTag() uses internally into
+// something readable on its own.
+func describeRTType(v RTValue) string {
+	tag := v.TypeTag()
+	if rest, ok := strings.CutPrefix(tag, "struct:"); ok {
+		return rest + " (struct)"
+	}
+	if rest, ok := strings.CutPrefix(tag, "enum:"); ok {
+		return rest + " (enum)"
+	}
+	return tag
+}
+
 // zeroValueFor builds the zero/default value for dtype: the scalar zero
 // (0 / 0.0 / "" / false / '\0' / null-ptr) for primitives, and a real,
 // properly-shaped, heap-backed zero container for array and named-struct
@@ -1489,6 +1559,7 @@ func (i *Interpreter) invoke(fn *FnVal, args []RTValue, thisAddr *int, label str
 		sig := i.execStmt(st, callEnv)
 		if sig.kind == ctrlReturn {
 			i.teardown(callEnv)
+			i.checkReturnValue(fn.Lit.ReturnType, sig.value, label, line, col)
 			return sig.value
 		}
 		if sig.kind == ctrlBreak || sig.kind == ctrlContinue {
@@ -1497,6 +1568,32 @@ func (i *Interpreter) invoke(fn *FnVal, args []RTValue, thisAddr *int, label str
 	}
 	i.teardown(callEnv)
 	return &NullVal{}
+}
+
+// checkReturnValue enforces that a function's actual returned value matches
+// its own declared return type, for the scalar kinds (int/float/string/
+// bool/char) the static checker cannot always verify. The gap this closes:
+// typecheck.go's *FnCall case deliberately skips this exact check when the
+// callee is resolved through a generic 'fn'-typed parameter (sym.FnSig ==
+// nil, e.g. a higher-order function's callback argument) -- there's no way
+// to know statically which concrete function will be passed. Left
+// unchecked at runtime too, a function declared to return int that
+// actually returns a string flows silently into a typed 'let'/'const',
+// e.g. wrong-typed data landing in an int variable with no error at all.
+// A bare 'return;' (NullVal, no declared value) is intentionally exempt,
+// so a function that falls through without an explicit return in every
+// branch isn't newly broken by this check.
+func (i *Interpreter) checkReturnValue(returnType *DatatypeNode, rv RTValue, label string, line, col int) {
+	want, ok := scalarTypeKind(returnType)
+	if !ok {
+		return
+	}
+	if _, isNull := rv.(*NullVal); isNull {
+		return
+	}
+	if !runtimeMatchesScalar(want, rv) {
+		rtThrow(line, col, "%q declared to return %s but returned %s", label, want, describeRTType(rv))
+	}
 }
 
 // ---- Unary / binary operators ----------------------------------------
